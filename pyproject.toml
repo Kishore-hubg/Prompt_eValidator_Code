@@ -1,0 +1,22 @@
+[project]
+name = "prompt-validator"
+version = "1.0.0"
+description = "Prompt Validator MVP — FastAPI backend"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.0",
+    "sqlalchemy>=2.0",
+    "python-docx>=1.1.0",
+    "pymongo>=4.8",
+    "PyJWT[crypto]>=2.10",
+    "python-dotenv>=1.0",
+    "botbuilder-core>=4.17",
+    "botbuilder-integration-aiohttp>=4.17",
+    "aiohttp>=3.9",
+    "httpx>=0.27",
+]
+
+[project.scripts]
+app = "app.main:app"

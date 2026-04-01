@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  # ------------------------------------------------------------------
+  # Prompt Validator API  (FastAPI / Uvicorn)
+  # ------------------------------------------------------------------
+  validator_api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: prompt_validator_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ------------------------------------------------------------------
+  # Teams Bot  (aiohttp / BotFrameworkAdapter)
+  # ------------------------------------------------------------------
+  teams_bot:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.teams_bot
+    container_name: prompt_validator_teams_bot
+    restart: unless-stopped
+    ports:
+      - "${TEAMS_BOT_PORT:-3975}:${TEAMS_BOT_PORT:-3975}"
+    env_file:
+      - ../.env
+    environment:
+      - TEAMS_BOT_HOST=0.0.0.0
+      - VALIDATOR_API_BASE=http://validator_api:8000
+    depends_on:
+      validator_api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${TEAMS_BOT_PORT:-3975}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

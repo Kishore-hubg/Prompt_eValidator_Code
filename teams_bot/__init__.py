@@ -1,0 +1,2 @@
+"""Teams bot bridge service."""
+

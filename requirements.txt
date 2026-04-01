@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+python-dotenv>=1.0
+pydantic
+sqlalchemy
+python-docx
+pymongo
+PyJWT[crypto]
+botbuilder-core
+botbuilder-integration-aiohttp
+aiohttp
+httpx

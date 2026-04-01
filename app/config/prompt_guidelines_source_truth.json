@@ -1,0 +1,160 @@
+{
+  "strict_mode": true,
+  "strict_penalty_per_miss": 3,
+  "strict_penalty_cap": 15,
+  "claude_friendly_mode": true,
+  "sources": [
+    {
+      "file_name": "Anthropic Claude \u2014 Official Prompt Engineering Best Practices (Verbatim Reference).docx",
+      "file_path": "docs/source_of_truth/prompt_guidelines/Anthropic Claude \u2014 Official Prompt Engineering Best Practices (Verbatim Reference).docx"
+    },
+    {
+      "file_name": "Community & Public Sources \u2014 Prompt Engineering Best Practices (Verbatim Reference).docx",
+      "file_path": "docs/source_of_truth/prompt_guidelines/Community & Public Sources \u2014 Prompt Engineering Best Practices (Verbatim Reference).docx"
+    },
+    {
+      "file_name": "Google Gemini \u2014 Official Prompt Engineering Best Practices (Verbatim Reference).docx",
+      "file_path": "docs/source_of_truth/prompt_guidelines/Google Gemini \u2014 Official Prompt Engineering Best Practices (Verbatim Reference).docx"
+    },
+    {
+      "file_name": "Perplexity AI \u2014 Official Prompt Engineering & API Best Practices (Verbatim Reference).docx",
+      "file_path": "docs/source_of_truth/prompt_guidelines/Perplexity AI \u2014 Official Prompt Engineering & API Best Practices (Verbatim Reference).docx"
+    },
+    {
+      "file_name": "Prompt Engineering Best Practices  A Complete Breakdown by Provider.docx",
+      "file_path": "docs/source_of_truth/prompt_guidelines/Prompt Engineering Best Practices  A Complete Breakdown by Provider.docx"
+    }
+  ],
+  "frontier_model_applicability": {
+    "anthropic_claude": [
+      "clear_direct_action",
+      "context_grounding",
+      "output_format_control",
+      "constraints_present",
+      "structured_for_complexity",
+      "factual_grounding_for_analysis"
+    ],
+    "google_gemini": [
+      "clear_direct_action",
+      "context_grounding",
+      "output_format_control",
+      "constraints_present",
+      "structured_for_complexity",
+      "factual_grounding_for_analysis"
+    ],
+    "perplexity": [
+      "clear_direct_action",
+      "context_grounding",
+      "output_format_control",
+      "constraints_present",
+      "factual_grounding_for_analysis"
+    ]
+  },
+  "claude_curated_priorities": [
+    "Be clear and direct with explicit actions.",
+    "Always include context and intended audience.",
+    "Specify output format and constraints.",
+    "For analytical prompts, require source-grounded output and citations.",
+    "Use structure for complex prompts (steps, sections, tags)."
+  ],
+  "global_checks": [
+    {
+      "id": "clear_direct_action",
+      "description": "Prompt starts with a clear action verb and direct instruction.",
+      "keywords": [
+        "summarize",
+        "draft",
+        "extract",
+        "analyze",
+        "explain",
+        "create",
+        "generate",
+        "rewrite",
+        "review"
+      ],
+      "issue_if_missing": "Start with a clear action verb and direct task instruction."
+    },
+    {
+      "id": "context_grounding",
+      "description": "Prompt includes context, source, or motivation for the task.",
+      "keywords": [
+        "based on",
+        "context",
+        "source",
+        "document",
+        "given",
+        "from",
+        "audience",
+        "purpose"
+      ],
+      "issue_if_missing": "Add context about source material, audience, and purpose."
+    },
+    {
+      "id": "output_format_control",
+      "description": "Prompt declares expected output format and structure.",
+      "keywords": [
+        "bullet",
+        "table",
+        "paragraph",
+        "json",
+        "yaml",
+        "xml",
+        "numbered",
+        "steps",
+        "template"
+      ],
+      "issue_if_missing": "Specify the required output format and structure."
+    },
+    {
+      "id": "constraints_present",
+      "description": "Prompt defines constraints such as tone, length, scope, or exclusions.",
+      "keywords": [
+        "tone",
+        "word",
+        "limit",
+        "scope",
+        "include",
+        "exclude",
+        "must",
+        "should",
+        "do not"
+      ],
+      "issue_if_missing": "Add explicit constraints (tone, length, scope, inclusions/exclusions)."
+    },
+    {
+      "id": "structured_for_complexity",
+      "description": "Complex prompts should use structure (steps, tags, or sections).",
+      "keywords": [
+        "step",
+        "1.",
+        "2.",
+        "<",
+        "section",
+        "format",
+        "schema"
+      ],
+      "issue_if_missing": "For complex prompts, use explicit structure (steps/sections/tags).",
+      "min_word_count": 25
+    },
+    {
+      "id": "factual_grounding_for_analysis",
+      "description": "Analytical extraction tasks should request grounded/cited output.",
+      "applies_when_any": [
+        "analyze",
+        "extract",
+        "compare",
+        "summarize",
+        "requirements"
+      ],
+      "keywords": [
+        "based on",
+        "source",
+        "cite",
+        "citation",
+        "only explicit",
+        "do not infer"
+      ],
+      "issue_if_missing": "For analysis/extraction tasks, require grounded output with source references."
+    }
+  ]
+}

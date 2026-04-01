@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prompt Validator — Technical Documentation</title>
+  <style>
+    :root {
+      --brand: #1e3a5f;
+      --accent: #2f80ed;
+      --accent2: #27ae60;
+      --warn: #e67e22;
+      --danger: #e74c3c;
+      --light: #f4f7fc;
+      --border: #d1dbe8;
+      --text: #2c3e50;
+      --mono: 'Courier New', Courier, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: var(--text); background: #fff; line-height: 1.7; }
+
+    /* ── NAV ── */
+    nav { background: var(--brand); color: #fff; padding: 18px 40px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; gap: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+    nav .logo { font-size: 1.2rem; font-weight: 700; letter-spacing: 0.5px; }
+    nav .subtitle { font-size: 0.85rem; opacity: 0.75; }
+
+    /* ── LAYOUT ── */
+    .wrapper { display: flex; min-height: 100vh; }
+    aside { width: 260px; min-width: 260px; background: var(--light); border-right: 1px solid var(--border); padding: 24px 16px; position: sticky; top: 60px; height: calc(100vh - 60px); overflow-y: auto; }
+    aside h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #7f8c8d; margin-bottom: 10px; margin-top: 20px; }
+    aside h3:first-child { margin-top: 0; }
+    aside a { display: block; padding: 5px 10px; border-radius: 4px; color: var(--text); text-decoration: none; font-size: 0.88rem; transition: background 0.15s; }
+    aside a:hover { background: var(--border); color: var(--accent); }
+    main { flex: 1; padding: 40px 48px; max-width: 1100px; }
+
+    /* ── HEADINGS ── */
+    h1 { font-size: 2rem; color: var(--brand); border-bottom: 3px solid var(--accent); padding-bottom: 10px; margin-bottom: 24px; }
+    h2 { font-size: 1.45rem; color: var(--brand); margin-top: 48px; margin-bottom: 14px; border-left: 4px solid var(--accent); padding-left: 12px; }
+    h3 { font-size: 1.1rem; color: #2c3e50; margin-top: 28px; margin-bottom: 10px; }
+    h4 { font-size: 0.95rem; color: #555; margin-top: 18px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    p  { margin-bottom: 12px; }
+
+    /* ── BADGES ── */
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; margin-left: 6px; }
+    .badge-blue  { background: #dbeafe; color: #1d4ed8; }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-warn  { background: #fef3c7; color: #92400e; }
+    .badge-red   { background: #fee2e2; color: #991b1b; }
+
+    /* ── CODE ── */
+    pre { background: #1e2d3d; color: #e8f1fa; padding: 18px 22px; border-radius: 8px; font-size: 0.82rem; overflow-x: auto; margin: 14px 0 20px; line-height: 1.5; }
+    code { font-family: var(--mono); font-size: 0.88em; background: #eef2f7; padding: 2px 6px; border-radius: 3px; }
+    pre code { background: none; padding: 0; font-size: inherit; }
+
+    /* ── TABLES ── */
+    table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 0.88rem; }
+    thead th { background: var(--brand); color: #fff; padding: 10px 14px; text-align: left; }
+    tbody tr:nth-child(even) { background: var(--light); }
+    td, th { padding: 9px 14px; border: 1px solid var(--border); vertical-align: top; }
+
+    /* ── CALLOUTS ── */
+    .callout { padding: 14px 18px; border-radius: 6px; margin: 16px 0; border-left: 5px solid; }
+    .callout.info  { background: #eff6ff; border-color: var(--accent); }
+    .callout.ok    { background: #f0fdf4; border-color: var(--accent2); }
+    .callout.warn  { background: #fffbeb; border-color: var(--warn); }
+    .callout.error { background: #fef2f2; border-color: var(--danger); }
+    .callout strong { display: block; margin-bottom: 4px; }
+
+    /* ── FLOW DIAGRAM ── */
+    .flow { display: flex; flex-direction: column; gap: 0; margin: 20px 0; }
+    .flow-step { display: flex; align-items: flex-start; gap: 16px; }
+    .flow-step .connector { display: flex; flex-direction: column; align-items: center; }
+    .flow-step .circle { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+    .flow-step .line { width: 2px; background: var(--border); flex: 1; min-height: 24px; margin: 0 auto; }
+    .flow-step .content { padding-bottom: 20px; flex: 1; }
+    .flow-step .content h4 { margin-top: 4px; font-size: 0.95rem; }
+    .flow-step.last .line { display: none; }
+
+    /* ── ARCH BOXES ── */
+    .arch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin: 20px 0; }
+    .arch-box { background: var(--light); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+    .arch-box .arch-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.8px; color: #7f8c8d; margin-bottom: 4px; }
+    .arch-box .arch-title { font-size: 1rem; font-weight: 700; color: var(--brand); margin-bottom: 6px; }
+    .arch-box p { font-size: 0.83rem; color: #555; margin: 0; }
+
+    /* ── MISC ── */
+    hr { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+    ul { margin: 10px 0 14px 22px; }
+    ul li { margin-bottom: 5px; font-size: 0.92rem; }
+    .toc-section { margin-bottom: 4px; }
+    .meta { font-size: 0.8rem; color: #7f8c8d; margin-bottom: 28px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">🔍 Prompt Validator</div>
+  <div class="subtitle">Technical Documentation — End-to-End Implementation &amp; LLM Workflow</div>
+</nav>
+
+<div class="wrapper">
+
+<!-- ── SIDEBAR ── -->
+<aside>
+  <h3>Overview</h3>
+  <a href="#intro">Introduction</a>
+  <a href="#tech-stack">Tech Stack</a>
+  <a href="#architecture">Architecture</a>
+
+  <h3>API Layer</h3>
+  <a href="#endpoints">API Endpoints</a>
+  <a href="#request-response">Request / Response</a>
+
+  <h3>Validation Pipeline</h3>
+  <a href="#pipeline">Pipeline Overview</a>
+  <a href="#cache">Cache &amp; Pre-screen</a>
+  <a href="#static-engine">Static Rules Engine</a>
+  <a href="#llm-eval">LLM Evaluation</a>
+  <a href="#llm-rewrite">LLM Rewrite</a>
+  <a href="#fallback">Fallback Strategy</a>
+
+  <h3>LLM Integration</h3>
+  <a href="#groq">Groq Integration</a>
+  <a href="#anthropic">Anthropic Integration</a>
+  <a href="#llm-payload">LLM Payload Details</a>
+  <a href="#rate-limits">Rate Limit Handling</a>
+
+  <h3>Data &amp; Config</h3>
+  <a href="#personas">Personas</a>
+  <a href="#guidelines">Prompt Guidelines</a>
+  <a href="#scoring">Scoring Formula</a>
+  <a href="#database">Database</a>
+
+  <h3>Deployment</h3>
+  <a href="#settings">Settings &amp; .env</a>
+  <a href="#startup">Startup Sequence</a>
+  <a href="#integrations">Integrations</a>
+</aside>
+
+<!-- ── MAIN CONTENT ── -->
+<main>
+
+<h1 id="intro">Prompt Validator — Technical Documentation</h1>
+<p class="meta">Version 1.0 &nbsp;|&nbsp; Stack: FastAPI · Python 3.10+ · Groq LLM · MongoDB · React (Frontend) &nbsp;|&nbsp; Last Updated: April 2026</p>
+
+<p>
+  The <strong>Prompt Validator</strong> is a persona-aware, enterprise-grade prompt quality scoring and improvement engine
+  built at <strong>Infovision CoE AI/GenAI Practice</strong>. It evaluates user prompts against a curated source-of-truth
+  framework, scores them across multiple dimensions, and automatically rewrites them into structured, guideline-compliant
+  improved prompts using a multi-step LLM pipeline.
+</p>
+
+<div class="callout info">
+  <strong>Core Value Proposition</strong>
+  Users submit a raw prompt → the engine evaluates quality across 7+ weighted dimensions → assigns a 0–100 score → identifies gaps →
+  rewrites the prompt into a fully structured, persona-specific improved version — all in under 5 seconds.
+</div>
+
+<hr />
+
+<!-- ── TECH STACK ── -->
+<h2 id="tech-stack">Tech Stack</h2>
+
+<table>
+  <thead><tr><th>Layer</th><th>Technology</th><th>Purpose</th><th>Version</th></tr></thead>
+  <tbody>
+    <tr><td>Backend Framework</td><td>FastAPI</td><td>REST API, async routing, Pydantic validation</td><td>0.115+</td></tr>
+    <tr><td>Runtime</td><td>Python</td><td>Application runtime</td><td>3.10+</td></tr>
+    <tr><td>ASGI Server</td><td>Uvicorn</td><td>High-performance async server</td><td>0.30+</td></tr>
+    <tr><td>LLM Provider (Primary)</td><td>Groq API</td><td>LLM evaluation + prompt rewrite (llama-3.3-70b-versatile)</td><td>REST API</td></tr>
+    <tr><td>LLM Provider (Secondary)</td><td>Anthropic API</td><td>Fallback provider (claude-sonnet-4-6)</td><td>REST API</td></tr>
+    <tr><td>HTTP Client</td><td>HTTPX</td><td>Synchronous calls to Groq/Anthropic APIs</td><td>0.27+</td></tr>
+    <tr><td>Database (Primary)</td><td>MongoDB Atlas</td><td>Validation history, analytics, intelligence</td><td>Atlas (cloud)</td></tr>
+    <tr><td>Database (Alt)</td><td>SQLite + SQLAlchemy</td><td>Local development fallback</td><td>2.x</td></tr>
+    <tr><td>Data Validation</td><td>Pydantic</td><td>Request/response schema enforcement</td><td>v2</td></tr>
+    <tr><td>Auth / SSO</td><td>Microsoft Entra ID (AAD)</td><td>JWT token verification for Teams/web</td><td>OAuth 2.0</td></tr>
+    <tr><td>Frontend</td><td>React + Vite</td><td>Web UI for prompt submission and results</td><td>—</td></tr>
+    <tr><td>Teams Integration</td><td>Azure Bot Framework</td><td>Prompt validation via Teams chat</td><td>—</td></tr>
+    <tr><td>MCP Integration</td><td>Model Context Protocol</td><td>IDE-level prompt validation (VS Code/Cursor)</td><td>—</td></tr>
+    <tr><td>Dependency Injection</td><td>python-dotenv</td><td>Environment variable management</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<hr />
+
+<!-- ── ARCHITECTURE ── -->
+<h2 id="architecture">System Architecture</h2>
+
+<div class="arch-grid">
+  <div class="arch-box">
+    <div class="arch-label">Entry Points</div>
+    <div class="arch-title">🌐 Web / Teams / IDE</div>
+    <p>React UI, Microsoft Teams bot, and VS Code MCP integration all feed into the same REST API.</p>
+  </div>
+  <div class="arch-box">
+    <div class="arch-label">API Gateway</div>
+    <div class="arch-title">⚡ FastAPI</div>
+    <p>Routes requests, enforces API key auth, validates request schemas, dispatches to the validation service.</p>
+  </div>
+  <div class="arch-box">
+    <div class="arch-label">Validation Engine</div>
+    <div class="arch-title">🔬 Prompt Validation</div>
+    <p>Orchestrates cache, pre-screen, static engine, and LLM calls. Central coordinator of all scoring logic.</p>
+  </div>
+  <div class="arch-box">
+    <div class="arch-label">LLM Layer</div>
+    <div class="arch-title">🤖 Groq / Anthropic</div>
+    <p>Semantic evaluation and structured rewrite. Groq primary (70b), Anthropic fallback.</p>
+  </div>
+  <div class="arch-box">
+    <div class="arch-label">Rules Engine</div>
+    <div class="arch-title">📏 Static Scorer</div>
+    <p>Keyword-based dimension scoring. Runs instantly without LLM. Used for pre-screen and fallback.</p>
+  </div>
+  <div class="arch-box">
+    <div class="arch-label">Persistence</div>
+    <div class="arch-title">🗄️ MongoDB Atlas</div>
+    <p>Stores all validation history, user analytics, weekly intelligence, and leaderboard data.</p>
+  </div>
+</div>
+
+<hr />
+
+<!-- ── ENDPOINTS ── -->
+<h2 id="endpoints">API Endpoints</h2>
+
+<table>
+  <thead><tr><th>Method</th><th>Path</th><th>Description</th><th>Auth</th></tr></thead>
+  <tbody>
+    <tr><td><code>POST</code></td><td><code>/api/v1/validate</code></td><td>Core prompt validation — score, improve, evaluate</td><td>API Key</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/personas</code></td><td>List all available personas</td><td>API Key</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/guidelines</code></td><td>Return active prompt guidelines config</td><td>API Key</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/history</code></td><td>Fetch validation history (paginated)</td><td>API Key</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/health</code></td><td>Health check (DB + LLM ping)</td><td>None</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/mcp/validate</code></td><td>MCP-compatible validation for IDE integration</td><td>API Key</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/teams/message</code></td><td>Microsoft Teams bot webhook handler</td><td>Bot Token</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/oauth/resolve</code></td><td>Resolve Microsoft SSO token to persona mapping</td><td>JWT</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/analytics/summary</code></td><td>Aggregate analytics for dashboard</td><td>API Key</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/intelligence/leaderboard</code></td><td>Weekly leaderboard rankings</td><td>API Key</td></tr>
+  </tbody>
+</table>
+
+<!-- ── REQUEST / RESPONSE ── -->
+<h2 id="request-response">Request &amp; Response Schema</h2>
+
+<h3>ValidateRequest</h3>
+<pre><code>{
+  "prompt_text":  "Implement a FastAPI endpoint for user registration...",  // Required. 1–30,000 chars
+  "persona_id":   "persona_1",    // persona_0–persona_4. Default: persona_0
+  "channel":      "web",          // web | api | teams | mcp | ide
+  "user_email":   "user@org.com", // Optional — used for persona auto-mapping
+  "audience":     "developers",   // Optional context
+  "auto_improve": true            // true = also run LLM rewrite
+}</code></pre>
+
+<h3>ValidateResponse (key fields)</h3>
+<pre><code>{
+  "persona_id":   "persona_1",
+  "persona_name": "Developer + QA",
+  "score":        62.93,          // 0–100 final score
+  "rating":       "Needs Improvement",  // Excellent|Good|Needs Improvement|Poor
+  "strengths":    ["Clear task statement", "Includes error handling"],
+  "issues":       ["Missing codebase context", "No output format declared"],
+  "suggestions":  ["[Developer] Specify language and framework...", ...],
+  "improved_prompt": "## Role\nYou are a Senior...\n\n## Task\n...",
+  "dimension_scores": [
+    { "name": "technical_precision", "score": 18, "weight": 18, "passed": true, "notes": "..." },
+    ...
+  ],
+  "guideline_evaluation": {
+    "strict_mode": true, "penalty_applied": 9,
+    "checks": [{ "id": "clear_direct_action", "passed": true, "message": "Pass" }, ...],
+    "issues": ["Missing output format control"]
+  },
+  "llm_evaluation": {
+    "used": true, "provider": "groq", "model": "llama-3.3-70b-versatile",
+    "scoring_mode": "llm_only",    // llm_only|static_prescreen|rate_limit_fallback|static_fallback
+    "semantic_score": 73.0,
+    "rewrite_applied_guidelines": ["clear_direct_action", "context_grounding", ...],
+    "rewrite_unresolved_gaps": ["Version not specified for Java"]
+  }
+}</code></pre>
+
+<hr />
+
+<!-- ── PIPELINE ── -->
+<h2 id="pipeline">Validation Pipeline — End-to-End Flow</h2>
+
+<div class="flow">
+  <div class="flow-step">
+    <div class="connector"><div class="circle">1</div><div class="line"></div></div>
+    <div class="content">
+      <h4>Request Received — <code>POST /api/v1/validate</code></h4>
+      <p>FastAPI validates the request schema (Pydantic), checks the API key header, resolves the <code>persona_id</code>
+      (auto-mapped from <code>user_email</code> if provided), normalises the delivery channel, then calls
+      <code>run_llm_validation(prompt_text, persona_id, auto_improve)</code>.</p>
+    </div>
+  </div>
+
+  <div class="flow-step">
+    <div class="connector"><div class="circle">2</div><div class="line"></div></div>
+    <div class="content">
+      <h4>Cache Lookup <span class="badge badge-green">~0 ms</span></h4>
+      <p>A SHA-256 key is computed from <code>(persona_id + auto_improve + prompt_text)</code>.
+      If an identical request was made within the last <code>PROMPT_CACHE_TTL_SECONDS</code> (default 600 s / 10 min),
+      the cached result is returned immediately — no LLM or rules engine called.</p>
+      <pre><code>cache_key = SHA256(f"{persona_id}:{auto_improve}:{prompt_text.strip()}")
+if key in cache and time.monotonic() &lt; expire_ts:
+    return cached_result</code></pre>
+    </div>
+  </div>
+
+  <div class="flow-step">
+    <div class="connector"><div class="circle">3</div><div class="line"></div></div>
+    <div class="content">
+      <h4>Static Pre-screen <span class="badge badge-blue">~5–15 ms</span></h4>
+      <p>The lightweight keyword-based rules engine scores the prompt statically.
+      If <code>static_score ≥ STATIC_PRESCREEN_THRESHOLD</code> (default 70), the LLM evaluation call is skipped entirely.
+      This saves ~2,000–4,000 tokens per request for prompts that already score well.</p>
+      <pre><code>if static_score &gt;= STATIC_PRESCREEN_THRESHOLD:
+    scoring_mode = "static_prescreen"
+    skip LLM eval  # rewrite still runs if auto_improve=True</code></pre>
+    </div>
+  </div>
+
+  <div class="flow-step">
+    <div class="connector"><div class="circle">4</div><div class="line"></div></div>
+    <div class="content">
+      <h4>LLM Semantic Evaluation <span class="badge badge-warn">~2–5 s</span></h4>
+      <p>If the static pre-screen doesn't short-circuit, the prompt is sent to the LLM for deep semantic evaluation.
+      The LLM receives a structured payload containing the persona dimensions, guideline rules, and source-of-truth document
+      reference. It returns dimension pass/fail results, issues, strengths, and guideline checks in a strict JSON schema.</p>
+      <p>The server then <strong>recomputes the final score</strong> from the LLM's dimension pass/fail results
+      (overriding the LLM's own semantic_score to guarantee mathematical consistency).</p>
+    </div>
+  </div>
+
+  <div class="flow-step">
+    <div class="connector"><div class="circle">5</div><div class="line"></div></div>
+    <div class="content">
+      <h4>Score Computation</h4>
+      <pre><code>base_score   = (sum_passed_weights / sum_all_weights) × 100
+penalty      = min(failed_guideline_checks × penalty_per_miss, penalty_cap)
+final_score  = max(0, base_score − penalty)</code></pre>
+      <p>Zero-weight dimensions (TRACEABILITY, BUSINESS RELEVANCE) are filtered out of the response to prevent confusing 0/0 display.</p>
+    </div>
+  </div>
+
+  <div class="flow-step">
+    <div class="connector"><div class="circle">6</div><div class="line"></div></div>
+    <div class="content">
+      <h4>Suggestion Derivation</h4>
+      <p>The <code>suggestion_engine</code> maps identified issues to persona-specific, actionable suggestions.
+      For example, a missing "edge case" issue for persona_1 (Dev+QA) maps to:
+      <em>"[QA] Request explicit edge coverage: boundary values, null inputs, timeout, and error states."</em></p>
+      <p>These suggestions are also passed to the LLM rewrite as guided gaps to resolve.</p>
+    </div>
+  </div>
+
+  <div class="flow-step">
+    <div class="connector"><div class="circle">7</div><div class="line"></div></div>
+    <div class="content">
+      <h4>LLM Prompt Rewrite <span class="badge badge-warn">~2–4 s</span></h4>
+      <p>If <code>auto_improve=true</code>, the LLM is called a second time to rewrite the original prompt
+      into a fully structured, section-based improved prompt. This uses a 3-step system prompt:
+      <strong>Fact Extraction → Contradiction Detection → Write Improved Prompt</strong>.
+      The output is a JSON object containing <code>improved_prompt</code>, <code>applied_guidelines</code>,
+      and <code>unresolved_gaps</code>.</p>
+    </div>
+  </div>
+
+  <div class="flow-step">
+    <div class="connector"><div class="circle">8</div><div class="line"></div></div>
+    <div class="content">
+      <h4>Result Assembly &amp; Cache Store</h4>
+      <p>All results are assembled into a <code>ValidateResponse</code>, history is saved to MongoDB, analytics
+      events are captured, and the result is stored in the in-memory cache for future identical requests.</p>
+    </div>
+  </div>
+
+  <div class="flow-step last">
+    <div class="connector"><div class="circle">9</div><div class="line"></div></div>
+    <div class="content">
+      <h4>Response Returned <span class="badge badge-green">Total: ~4–8 s end-to-end</span></h4>
+      <p>The full <code>ValidateResponse</code> JSON is returned to the client — score, rating, dimension breakdown,
+      issues, suggestions, improved prompt, guideline evaluation, and LLM metadata.</p>
+    </div>
+  </div>
+</div>
+
+<hr />
+
+<!-- ── CACHE ── -->
+<h2 id="cache">In-Memory Cache &amp; Static Pre-screen</h2>
+
+<table>
+  <thead><tr><th>Feature</th><th>Setting</th><th>Default</th><th>Effect</th></tr></thead>
+  <tbody>
+    <tr><td>Cache TTL</td><td><code>PROMPT_CACHE_TTL_SECONDS</code></td><td>600 s (10 min)</td><td>Identical (prompt + persona + auto_improve) requests served from cache</td></tr>
+    <tr><td>Pre-screen Threshold</td><td><code>STATIC_PRESCREEN_THRESHOLD</code></td><td>70</td><td>Static score ≥ 70 → skip LLM eval entirely</td></tr>
+    <tr><td>Cache Key</td><td>SHA-256</td><td>—</td><td>Hash of persona_id + auto_improve + stripped prompt text</td></tr>
+    <tr><td>Cache Scope</td><td>In-process memory</td><td>—</td><td>Resets on server restart. Process-local only.</td></tr>
+  </tbody>
+</table>
+
+<hr />
+
+<!-- ── STATIC ENGINE ── -->
+<h2 id="static-engine">Static Rules Engine</h2>
+
+<p>The rules engine (<code>app/services/rules_engine.py</code>) scores prompts without any LLM call using two mechanisms:</p>
+
+<h3>1. Dimension Keyword Checks</h3>
+<p>Each persona defines a <code>keyword_checks</code> map in <code>persona_criteria_source_truth.json</code>.
+The engine checks whether any of the dimension's keywords are present in the prompt text.</p>
+
+<h3>2. Global Guideline Checks</h3>
+<p>A set of global checks from <code>prompt_guidelines.json</code> are evaluated against the prompt:</p>
+
+<table>
+  <thead><tr><th>Check ID</th><th>Description</th><th>Penalty if Failed</th></tr></thead>
+  <tbody>
+    <tr><td>clear_direct_action</td><td>Starts with an action verb or direct instruction</td><td>3 pts</td></tr>
+    <tr><td>context_grounding</td><td>Provides source material, audience, or purpose context</td><td>3 pts</td></tr>
+    <tr><td>output_format_control</td><td>Declares expected output format (list/JSON/table/code)</td><td>3 pts</td></tr>
+    <tr><td>constraints_present</td><td>Includes constraints: tone, length, scope, exclusions</td><td>3 pts</td></tr>
+    <tr><td>structured_for_complexity</td><td>Uses structure (steps/sections/tags) for complex requests</td><td>3 pts</td></tr>
+    <tr><td>factual_grounding_for_analysis</td><td>Requires grounded/cited output for analytical tasks</td><td>3 pts</td></tr>
+  </tbody>
+</table>
+
+<div class="callout warn">
+  <strong>Penalty Cap</strong>
+  Total guideline penalty is capped at <code>strict_penalty_cap</code> (default: 15 pts) regardless of how many checks fail.
+</div>
+
+<hr />
+
+<!-- ── LLM EVAL ── -->
+<h2 id="llm-eval">LLM Evaluation — What We Send &amp; Receive</h2>
+
+<h3>System Prompt (Role &amp; Rules)</h3>
+<p>The LLM is instructed to act as an <em>"enterprise prompt-quality auditor"</em> operating strictly against
+the provided source-of-truth framework. Key rules injected:</p>
+<ul>
+  <li>Evaluate ONLY the dimensions listed in <code>persona_dimensions</code> — do not add or remove any</li>
+  <li>Mark a dimension <code>passed=true</code> ONLY when the prompt explicitly contains keyword evidence AND satisfies at least one criterion</li>
+  <li>Compute score mathematically: <code>(sum_passed_weights / sum_all_weights) × 100 − guideline_penalty</code></li>
+  <li>List ONLY issues that are actually missing — max 6 unique issues</li>
+  <li>No hallucination — never credit the prompt for content not present in the text</li>
+</ul>
+
+<h3>User Payload (What We Send)</h3>
+<pre><code>{
+  "source_of_truth_document": "docs/source_of_truth/Infovision_Data_Strategy_Business_Rules.docx",
+  "persona_id":    "persona_1",
+  "persona_name":  "Developer + QA",
+  "persona_dimensions": [
+    {
+      "name": "technical_precision",
+      "weight": 18,
+      "pass_requires": "Prompt explicitly contains keyword evidence AND satisfies at least one criterion.",
+      "keyword_evidence": ["python", "java", "fastapi", "spring", "typescript"],
+      "criteria": ["Language and framework specified", "Version number included"],
+      "penalty_triggers": ["no language specified", "framework missing"]
+    },
+    // ... 6 more dimensions
+  ],
+  "org_guideline_priorities": ["clarity", "context", "output format", "constraints", "structure"],
+  "global_checks": [
+    { "id": "clear_direct_action", "description": "Starts with an action verb...", "keywords": ["implement","generate",...] },
+    // ...
+  ],
+  "user_prompt": "Implement a Java-based database connector using MongoDB..."
+}</code></pre>
+
+<h3>LLM Response Schema (JSON)</h3>
+<pre><code>{
+  "semantic_score": 73.0,
+  "dimension_scores": [
+    { "name": "technical_precision", "score": 18, "weight": 18, "passed": true,
+      "notes": "Prompt explicitly mentions Java and MongoDB." },
+    { "name": "edge_cases", "score": 0, "weight": 18, "passed": false,
+      "notes": "No explicit edge case keywords found." },
+    // ...
+  ],
+  "guideline_checks": [
+    { "id": "clear_direct_action", "passed": true,  "penalty": 0, "issue": "" },
+    { "id": "context_grounding",   "passed": false, "penalty": 3, "issue": "Missing context about codebase..." },
+    // ...
+  ],
+  "issues":    ["Lack of codebase context", "No output format declared"],
+  "strengths": ["Clear task statement", "Uses Java + MongoDB explicitly"]
+}</code></pre>
+
+<h3>Server-Side Score Recomputation</h3>
+<div class="callout warn">
+  <strong>Why We Recompute the Score</strong>
+  LLMs frequently return a <code>semantic_score</code> inconsistent with their own dimension evaluations
+  (e.g., all dimensions pass but score is 82 instead of ≥85). The server always recomputes the final score
+  from dimension pass/fail results to guarantee mathematical correctness.
+</div>
+
+<hr />
+
+<!-- ── LLM REWRITE ── -->
+<h2 id="llm-rewrite">LLM Prompt Rewrite — 3-Step Process</h2>
+
+<p>When <code>auto_improve=true</code>, a second LLM call rewrites the original prompt using a strict 3-step system prompt:</p>
+
+<div class="flow">
+  <div class="flow-step">
+    <div class="connector"><div class="circle">1</div><div class="line"></div></div>
+    <div class="content">
+      <h4>STEP 1 — Extract Immutable Facts (Silent)</h4>
+      <p>Before writing anything, the LLM scans the original prompt and extracts every <strong>explicit fact</strong>:
+      programming language, frameworks, versions, endpoint paths, field names, HTTP status codes,
+      output format directives, edge cases, test requirements. These facts are <em>immutable</em> — they must be
+      carried forward unchanged into the improved prompt.</p>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="connector"><div class="circle">2</div><div class="line"></div></div>
+    <div class="content">
+      <h4>STEP 2 — Detect &amp; Flag Contradictions</h4>
+      <p>The LLM checks for 5 contradiction patterns:</p>
+      <ul>
+        <li><strong>C1</strong> — Framework ↔ Language mismatch (e.g., FastAPI + Java)</li>
+        <li><strong>C2</strong> — Conflicting output formats (e.g., JSON AND Markdown table)</li>
+        <li><strong>C3</strong> — Conflicting scope (include auth AND auth is out-of-scope)</li>
+        <li><strong>C4</strong> — "Latest version" ambiguity</li>
+        <li><strong>C5</strong> — Missing critical fields (for prompts &lt;20 words)</li>
+      </ul>
+      <p>Contradictions are flagged in <code>unresolved_gaps</code> — never silently resolved.</p>
+    </div>
+  </div>
+  <div class="flow-step last">
+    <div class="connector"><div class="circle">3</div><div class="line"></div></div>
+    <div class="content">
+      <h4>STEP 3 — Write Improved Prompt</h4>
+      <p>The improved prompt is written using <strong>persona-specific section headings</strong> in a fixed order.
+      Each section is populated from Step 1 facts expanded into clear expert sentences.
+      A specific expert role is derived from the task domain (e.g., <em>"You are a Senior Java Engineer specialising in MongoDB integration"</em>).</p>
+    </div>
+  </div>
+</div>
+
+<h3>Persona Section Maps</h3>
+<table>
+  <thead><tr><th>Persona</th><th>Section Structure</th></tr></thead>
+  <tbody>
+    <tr><td>persona_0 — Enterprise</td><td>## Role → ## Task → ## Context → ## Output Format → ## Constraints</td></tr>
+    <tr><td>persona_1 — Dev + QA</td><td>## Role → ## Task → ## Codebase Context → ## Acceptance Criteria → ## Edge Cases → ## Output Format</td></tr>
+    <tr><td>persona_2 — PM</td><td>## Role → ## Report Type → ## Sprint / Project Context → ## Data References → ## Output Format → ## Constraints</td></tr>
+    <tr><td>persona_3 — BA / PO</td><td>## Role → ## Task → ## Source Documents → ## Inference Policy → ## Output Format</td></tr>
+    <tr><td>persona_4 — Support</td><td>## Role → ## Tone Directive → ## Customer Context → ## Policy / SLA Constraints → ## Output Format → ## Next Action</td></tr>
+  </tbody>
+</table>
+
+<h3>Rewrite User Payload</h3>
+<pre><code>{
+  "Persona": "Developer + QA (persona_1)",
+  "Org guideline priorities": ["clarity", "context", "output format", ...],
+  "Guideline checks to satisfy": ["clear_direct_action: ...", "context_grounding: ..."],
+  "Gaps to resolve": [
+    "- Missing codebase context (language/framework/version)",
+    "- No output format declared"
+  ],
+  "Prompt to rewrite": "Implement a Java-based database connector using MongoDB..."
+}</code></pre>
+
+<h3>Rewrite Response Schema</h3>
+<pre><code>{
+  "improved_prompt": "## Role\nYou are a Senior Java Engineer...\n\n## Task\n...",
+  "applied_guidelines": ["clear_direct_action", "context_grounding", "output_format_control"],
+  "unresolved_gaps":    ["Ambiguity: Java version not specified — pin for reproducibility"]
+}</code></pre>
+
+<hr />
+
+<!-- ── FALLBACK ── -->
+<h2 id="fallback">Fallback Strategy</h2>
+
+<table>
+  <thead><tr><th>Scenario</th><th>Scoring Mode</th><th>Eval Source</th><th>Rewrite Source</th><th>Response Time</th></tr></thead>
+  <tbody>
+    <tr><td>Normal — LLM succeeds</td><td><code>llm_only</code></td><td>LLM (70b)</td><td>LLM (70b)</td><td>4–8 s</td></tr>
+    <tr><td>Static pre-screen ≥ 70</td><td><code>static_prescreen</code></td><td>Rules engine</td><td>LLM (70b)</td><td>2–5 s</td></tr>
+    <tr><td>Groq rate-limited (retry-after &gt; 10s)</td><td><code>rate_limit_fallback</code></td><td>Rules engine</td><td>Template</td><td>&lt; 1 s</td></tr>
+    <tr><td>LLM generic error</td><td><code>static_fallback</code></td><td>Rules engine</td><td>Template</td><td>&lt; 1 s</td></tr>
+    <tr><td>LLM provider fallover (Groq→Anthropic)</td><td><code>llm_fallback_provider</code></td><td>Anthropic</td><td>Anthropic</td><td>5–10 s</td></tr>
+  </tbody>
+</table>
+
+<div class="callout ok">
+  <strong>User Experience Guarantee</strong>
+  Regardless of LLM availability or rate limits, the user <strong>always receives a score and improved prompt</strong>.
+  The fallback cascade ensures zero error pages for prompt validation requests.
+</div>
+
+<hr />
+
+<!-- ── GROQ ── -->
+<h2 id="groq">Groq LLM Integration</h2>
+
+<h3>Models Used</h3>
+<table>
+  <thead><tr><th>Setting</th><th>Model</th><th>Used For</th></tr></thead>
+  <tbody>
+    <tr><td><code>GROQ_MODEL</code></td><td>llama-3.3-70b-versatile</td><td>Semantic evaluation</td></tr>
+    <tr><td><code>GROQ_REWRITE_MODEL</code></td><td>llama-3.3-70b-versatile</td><td>Prompt rewrite</td></tr>
+  </tbody>
+</table>
+
+<h3>Rate Limit Handling</h3>
+<pre><code>Free tier limits:
+  ~30 requests/minute
+  ~14,400 tokens/minute  (for llama-3.3-70b-versatile)
+
+Retry logic:
+  max_retries = 3
+  On 429:
+    wait = parse Retry-After header (or exponential backoff)
+    if wait &gt; 10 seconds → raise GroqRateLimitError IMMEDIATELY
+      (prevents 60s hang; triggers static fallback in &lt;1s)
+    else → sleep(wait) and retry
+
+Process-wide cooldown:
+    _next_groq_request_at = monotonic() + wait_seconds
+    Next request checks cooldown BEFORE sending:
+      if cooldown &gt; 10s → raise immediately (no waiting)</code></pre>
+
+<h3>Client-Side Pacing</h3>
+<pre><code>GROQ_REQUESTS_PER_MINUTE = 25
+min_interval = 60 / 25 = 2.4 seconds between requests
+Enforced via _enforce_client_side_pacing() before every Groq call</code></pre>
+
+<hr />
+
+<!-- ── ANTHROPIC ── -->
+<h2 id="anthropic">Anthropic LLM Integration</h2>
+
+<p>Anthropic (<code>claude-sonnet-4-6</code>) is the secondary LLM provider. It activates when:</p>
+<ul>
+  <li><code>LLM_PROVIDER=anthropic</code> — explicitly configured</li>
+  <li><code>LLM_PROVIDER=auto</code> — Groq is unavailable or unconfigured</li>
+  <li>Groq returns 429 AND <code>LLM_PROVIDER=auto</code> — automatic failover to Anthropic</li>
+</ul>
+
+<div class="callout info">
+  <strong>Production Recommendation</strong>
+  For production deployments, set <code>LLM_PROVIDER=anthropic</code>. Anthropic has no per-minute token limits
+  comparable to Groq's free tier and produces consistently higher-quality evaluations and rewrites.
+</div>
+
+<hr />
+
+<!-- ── LLM PAYLOAD DETAILS ── -->
+<h2 id="llm-payload">LLM Payload Optimisations</h2>
+
+<table>
+  <thead><tr><th>Optimisation</th><th>Detail</th><th>Token Saving</th></tr></thead>
+  <tbody>
+    <tr><td>Dimension criteria cap</td><td>Max 4 criteria per dimension (was 6)</td><td>~30% reduction in eval payload</td></tr>
+    <tr><td>Keyword cap per dimension</td><td>Max 5 keywords (was unlimited)</td><td>~20% reduction</td></tr>
+    <tr><td>Global checks field pruning</td><td>Drop <code>applies_when_any</code> and <code>issue_if_missing</code> from LLM payload</td><td>~50–80 tokens/request</td></tr>
+    <tr><td>Guideline priorities cap</td><td>Top 5 priorities sent (was full list)</td><td>~40 tokens</td></tr>
+    <tr><td>Penalty triggers cap</td><td>Top 5 triggers (was 10)</td><td>~60 tokens</td></tr>
+    <tr><td>Rewrite rule lines cap</td><td>Top 8 guideline rules (was 15)</td><td>~200 tokens/rewrite</td></tr>
+    <tr><td>Temperature</td><td>0 for both eval and rewrite</td><td>Deterministic, no hallucination drift</td></tr>
+  </tbody>
+</table>
+
+<hr />
+
+<!-- ── PERSONAS ── -->
+<h2 id="personas">Personas</h2>
+
+<p>Personas are loaded from <code>app/config/persona_criteria_source_truth.json</code> at startup (LRU-cached).
+Each persona defines:</p>
+
+<table>
+  <thead><tr><th>Persona ID</th><th>Name</th><th>Target User</th><th>Primary Dimensions</th></tr></thead>
+  <tbody>
+    <tr><td>persona_0</td><td>Enterprise Assistant</td><td>Business users, executives</td><td>Context, Clarity, Output Format, Constraints</td></tr>
+    <tr><td>persona_1</td><td>Developer + QA</td><td>Software engineers, QA engineers</td><td>Technical Precision, Edge Cases, Testability, Specificity, Context, Reproducibility, Accuracy</td></tr>
+    <tr><td>persona_2</td><td>Project Manager</td><td>Delivery managers, scrum masters</td><td>Traceability, Business Relevance, Output Format, Context</td></tr>
+    <tr><td>persona_3</td><td>BA / Product Owner</td><td>Business analysts, product owners</td><td>Source Grounding, Inference Policy, Acceptance Criteria</td></tr>
+    <tr><td>persona_4</td><td>Customer Support</td><td>Support agents, CX teams</td><td>Tone, Policy Compliance, Customer Context, Next Action</td></tr>
+  </tbody>
+</table>
+
+<p>Each persona configuration includes: <code>weights</code> (per-dimension), <code>keyword_checks</code>,
+<code>validator_checks</code>, <code>penalty_triggers</code>, and <code>suggestions</code>.</p>
+
+<hr />
+
+<!-- ── GUIDELINES ── -->
+<h2 id="guidelines">Prompt Guidelines Configuration</h2>
+
+<p>Guidelines are loaded from <code>app/config/prompt_guidelines.json</code> and represent the
+<strong>source-of-truth framework</strong> that both the static engine and LLM use to evaluate prompts.
+Sources include:</p>
+<ul>
+  <li>Anthropic Claude Official Prompt Engineering Best Practices</li>
+  <li>Google Gemini Official Prompt Engineering Best Practices</li>
+  <li>Perplexity AI Official API Best Practices</li>
+  <li>Community &amp; Public Sources — Prompt Engineering Best Practices</li>
+  <li>Infovision Data Strategy Business Rules</li>
+</ul>
+
+<hr />
+
+<!-- ── SCORING ── -->
+<h2 id="scoring">Scoring Formula</h2>
+
+<pre><code>Step 1 — Dimension base score:
+  base_score = (Σ passed_dimension_weights / Σ all_dimension_weights) × 100
+
+Step 2 — Guideline penalty:
+  penalty = min(failed_guideline_check_count × penalty_per_miss, penalty_cap)
+  Default: 3 pts per miss, capped at 15 pts
+
+Step 3 — Final score:
+  final_score = max(0, base_score − penalty)
+
+Rating thresholds:
+  ≥ 85  →  Excellent
+  ≥ 70  →  Good
+  ≥ 50  →  Needs Improvement
+  &lt; 50  →  Poor</code></pre>
+
+<hr />
+
+<!-- ── DATABASE ── -->
+<h2 id="database">Database</h2>
+
+<table>
+  <thead><tr><th>Backend</th><th>Config</th><th>Use Case</th></tr></thead>
+  <tbody>
+    <tr><td>MongoDB Atlas</td><td><code>DATABASE_BACKEND=mongodb</code></td><td>Production — validation history, analytics, intelligence, leaderboard</td></tr>
+    <tr><td>SQLite</td><td><code>DATABASE_BACKEND=sqlite</code></td><td>Local development — file-based, no setup required</td></tr>
+  </tbody>
+</table>
+
+<p>MongoDB collections:</p>
+<ul>
+  <li><code>validations</code> — Full validation records with score, improved prompt, LLM metadata</li>
+  <li><code>persona_mappings</code> — Email → persona_id mappings</li>
+  <li><code>analytics_events</code> — Raw event stream for aggregation</li>
+  <li><code>intelligence_weekly</code> — Pre-computed weekly summaries and leaderboard</li>
+</ul>
+
+<hr />
+
+<!-- ── SETTINGS ── -->
+<h2 id="settings">Settings &amp; Environment Variables</h2>
+
+<table>
+  <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>LLM_PROVIDER</code></td><td>auto</td><td>auto | groq | anthropic — LLM provider selection</td></tr>
+    <tr><td><code>GROQ_API_KEY</code></td><td>—</td><td>Groq API key</td></tr>
+    <tr><td><code>GROQ_MODEL</code></td><td>llama-3.3-70b-versatile</td><td>Model for LLM evaluation</td></tr>
+    <tr><td><code>GROQ_REWRITE_MODEL</code></td><td>llama-3.3-70b-versatile</td><td>Model for prompt rewrite (same as eval for quality)</td></tr>
+    <tr><td><code>GROQ_TIMEOUT_SECONDS</code></td><td>60</td><td>HTTP timeout for Groq API calls</td></tr>
+    <tr><td><code>GROQ_REQUESTS_PER_MINUTE</code></td><td>25</td><td>Client-side pacing — requests per minute cap</td></tr>
+    <tr><td><code>ANTHROPIC_API_KEY</code></td><td>—</td><td>Anthropic API key (for fallback/production)</td></tr>
+    <tr><td><code>ANTHROPIC_MODEL</code></td><td>claude-sonnet-4-6</td><td>Anthropic model</td></tr>
+    <tr><td><code>STATIC_PRESCREEN_THRESHOLD</code></td><td>70</td><td>Skip LLM eval if static score ≥ this value</td></tr>
+    <tr><td><code>PROMPT_CACHE_TTL_SECONDS</code></td><td>600</td><td>In-memory cache TTL (0 = disable cache)</td></tr>
+    <tr><td><code>LLM_VALIDATE_REQUIRED</code></td><td>false</td><td>true = error on LLM failure | false = fall back to static</td></tr>
+    <tr><td><code>LLM_FALLBACK_ON_VALIDATE_FAILURE</code></td><td>true</td><td>Use static scoring when LLM fails</td></tr>
+    <tr><td><code>DATABASE_BACKEND</code></td><td>mongodb</td><td>mongodb | sqlite</td></tr>
+    <tr><td><code>MONGODB_URI</code></td><td>—</td><td>MongoDB Atlas connection string</td></tr>
+    <tr><td><code>PROMPT_VALIDATOR_API_KEY</code></td><td>—</td><td>API key for all endpoints (X-API-Key header)</td></tr>
+    <tr><td><code>PROMPT_VALIDATOR_OAUTH_PROVIDER</code></td><td>mock-oauth</td><td>microsoft | mock-oauth</td></tr>
+    <tr><td><code>MICROSOFT_TENANT_ID</code></td><td>—</td><td>Azure AD tenant ID for SSO</td></tr>
+  </tbody>
+</table>
+
+<hr />
+
+<!-- ── STARTUP ── -->
+<h2 id="startup">Startup Sequence</h2>
+
+<pre><code>uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+1. logging.basicConfig()          # Configure structured logging
+2. init_mongo_indexes()           # Create MongoDB indexes (if mongodb backend)
+3. FastAPI app created            # Title: "Prompt Validator MVP"
+4. CORSMiddleware added           # Allow all origins (for dev; restrict in prod)
+5. RequestLoggingMiddleware added # Log every request with method, path, status, duration
+6. Router mounted at /api/v1
+7. Static files mounted at /assets (React frontend)
+8. Root GET / → serves index.html (React SPA)
+9. Server ready at http://0.0.0.0:8000</code></pre>
+
+<hr />
+
+<!-- ── INTEGRATIONS ── -->
+<h2 id="integrations">Integration Channels</h2>
+
+<table>
+  <thead><tr><th>Channel</th><th>Entry Point</th><th>Auth</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Web UI</td><td><code>GET /</code> → React SPA</td><td>API Key (header)</td><td>Full feature access — score, improve, history, analytics</td></tr>
+    <tr><td>REST API</td><td><code>POST /api/v1/validate</code></td><td>X-API-Key header</td><td>Used by external tools, CI/CD pipelines</td></tr>
+    <tr><td>Microsoft Teams</td><td><code>POST /api/v1/teams/message</code></td><td>Bot App Password + SSO token</td><td>Users submit prompts in Teams chat; bot replies with score + improved prompt</td></tr>
+    <tr><td>MCP (Model Context Protocol)</td><td><code>POST /api/v1/mcp/validate</code></td><td>API Key</td><td>IDE integration for VS Code, Cursor, Claude Desktop</td></tr>
+    <tr><td>Microsoft SSO</td><td><code>POST /api/v1/oauth/resolve</code></td><td>Entra ID JWT</td><td>Auto-maps user email to persona based on role/team</td></tr>
+  </tbody>
+</table>
+
+<hr />
+
+<div class="callout ok">
+  <strong>Document End</strong>
+  This document covers the complete end-to-end implementation of the Prompt Validator system as of April 2026.
+  For source code, refer to <code>app/services/prompt_validation.py</code> (orchestrator),
+  <code>app/services/llm_groq.py</code> (LLM integration), and
+  <code>app/services/rules_engine.py</code> (static evaluation).
+</div>
+
+<p style="margin-top:40px; font-size:0.8rem; color:#999; text-align:center;">
+  Prompt Validator — Infovision CoE AI/GenAI Practice &nbsp;|&nbsp; Generated April 2026
+</p>
+
+</main>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0",
+  "id": "00000000-0000-0000-0000-000000000000",
+  "packageName": "com.infovision.promptvalidator",
+  "developer": {
+    "name": "Infovision",
+    "websiteUrl": "https://example.com",
+    "privacyUrl": "https://example.com/privacy",
+    "termsOfUseUrl": "https://example.com/terms"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "Prompt Validator",
+    "full": "Infovision Prompt Validator"
+  },
+  "description": {
+    "short": "Validate prompts in Teams",
+    "full": "Persona-aware prompt validation, issue feedback, and improved prompts directly in Microsoft Teams."
+  },
+  "accentColor": "#6264A7",
+  "bots": [
+    {
+      "botId": "89f80bcf-efa3-4a07-a4a4-e766f3557e98",
+      "scopes": ["personal", "team", "groupchat"],
+      "supportsFiles": false,
+      "isNotificationOnly": false
+    }
+  ],
+  "permissions": ["identity", "messageTeamMembers"],
+  "validDomains": []
+}

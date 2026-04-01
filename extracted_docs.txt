@@ -1,0 +1,1741 @@
+=== FILE 1: Distribution Strategy ===
+
+INFOVISION
+Enterprise Prompt Validator
+Phased Development Strategy & Executive Proposal
+One engine. Five personas. Four delivery channels. One consistent standard.
+3,000 Consultants · Global Delivery · Multiple Engagement Models
+Version 2.0  |  March 2026  |  Confidential — Internal Strategic Document
+Executive Summary
+Infovision operates across thousands of consultants, multiple geographies, and a wide range of client environments. As AI tools become embedded in daily workflows, the quality of the prompts our teams write directly influences the quality of the outputs they receive — and, by extension, the quality of the work we deliver to clients.
+This document presents the strategic plan for building the Infovision Enterprise Prompt Validator: a system that evaluates, scores, and improves prompts written by every consultant, across every role. It is built as a centralized intelligence platform and delivered progressively through multiple access channels — each one extending the same capabilities to a new environment or working context.
+The system is structured around a layered API architecture built in Phase 1: one universal enterprise-wide endpoint serving all employees, plus dedicated persona-specific endpoints calibrated for each role cluster. All endpoints share the same core intelligence. All phases connect to the same backend. No logic is ever duplicated.
+Each phase builds directly on the previous one. The backend grows more refined with use. Each new channel adds reach without adding complexity to the core.
+Context and Problem Statement
+The Challenge We Are Solving
+Infovision consultants use AI tools every day across every function. Developers write prompts to generate code. QA engineers write prompts to produce test cases. Business analysts write prompts to extract requirements from documents. Product owners write prompts to draft user stories. Support staff write prompts to compose customer responses. Project managers write prompts to generate status reports.
+Across all of these roles and use cases, the quality of the prompt is the primary determinant of the quality of the output. Yet today, Infovision has no consistent standard for what a good prompt looks like, no feedback mechanism to help consultants improve, and no organizational visibility into prompt quality across teams, roles, or engagements.
+The result is predictable: inconsistent AI output quality across every function, missed value from AI tools, unnecessary rework, and no structured path to improvement — for any persona.
+The Five Personas This System Serves
+The Prompt Validator is designed to serve every consultant who writes a prompt. This covers five organizational persona clusters, each with distinct prompting needs, quality dimensions, and scoring criteria:
+All five personas are served by the same backend engine from Phase 1 onward. The scoring criteria and quality dimensions differ per persona. The intelligence infrastructure does not.
+The Enterprise Reality We Are Designing For
+Our consultants operate across deeply varied working conditions that make a one-size-fits-all delivery model impractical:
+This is why the system is delivered through multiple channels across four phases — not because different personas require different phases, but because different environments require different access models. All personas must be reachable through every channel that works in their environment.
+System Architecture: One Engine, All Personas, Many Access Points
+The most important architectural decision in this system is the separation of intelligence from delivery. The validation logic — the scoring dimensions, the persona-calibrated evaluation criteria, the autofix generation, the improvement explanations — lives in one place: the Phase 1 backend engine. Every phase that follows is simply a new way to reach that same intelligence.
+The Layered API Architecture
+Phase 1 builds the backend engine with a layered API structure that serves all five personas simultaneously. This architecture has two tiers:
+Every API endpoint in this structure connects to the same core intelligence. The persona-specific endpoints apply a different scoring profile — different weights, different dimension priorities, different autofix guidance — but the underlying engine, the data model, and the storage layer are identical across all of them.
+When a Phase 3 chatbot serves a Support Staff member, it calls the Support Staff persona API. When it serves a Business Analyst, it calls the BA/PO persona API. The chatbot does not change. The backend applies the right evaluation. This is true for every channel in every phase.
+How Phases Relate to Personas
+Every cell in this grid is checkmarked because that is the design intent. No phase is scoped to a subset of personas. No persona is deferred to a later phase. The layered API architecture in Phase 1 ensures that all scoring profiles are available from the start. Each subsequent phase simply opens a new door into the same room.
+Phase 1 is the foundation and the substance of the entire system. It is not a stepping stone to a future product — it is the product itself. Everything built in Phases 2, 3, and 4 is simply a different way of reaching what Phase 1 creates.
+The defining characteristic of Phase 1 is completeness: the backend engine built here serves all five organizational personas from the moment it is deployed. This is not a phased persona rollout — all persona scoring profiles, all API endpoints, and all evaluation dimensions are built and operational in Phase 1. What changes in later phases is the channel through which people access this intelligence, not the intelligence itself.
+Phase 1 has three primary commitments: establish Infovision's formal, measurable definition of prompt quality for every persona; build the data collection and storage infrastructure that will power organizational analytics; and create an API architecture that is extensible, stable, and ready to support every channel from Phase 2 onward.
+Core Validation Intelligence
+Prompt ingestion and persona context routing: the engine accepts a prompt along with persona and context metadata, and routes it to the correct scoring profile
+Universal baseline scoring: every prompt is evaluated against the organization-wide baseline dimensions that apply to all employees regardless of role
+Persona-specific scoring layers: each prompt is additionally evaluated against the elevated dimensions calibrated for the declared persona — with different weights, different priorities, and different quality thresholds per role cluster
+Issue identification: clear articulation of what weakens the prompt and why it reduces AI output quality, expressed in language appropriate for that persona
+Improvement suggestions: specific, actionable recommendations written for the persona's context and typical use case
+Auto-fix generation: an automatically rewritten version of the original prompt that addresses all identified gaps, calibrated to the persona's prompting standards
+Side-by-side comparison: a structured output presenting the original prompt, the improved prompt, and a plain-language bullet-point explanation of each change made
+Layered API Architecture
+Universal enterprise API endpoint: accepts any Infovision employee's prompt and applies baseline scoring — the entry point for all general usage and the foundation for all persona-specific endpoints
+Developer + QA persona API: applies elevated scoring for technical precision, edge-case coverage, testability, constraint definition, and code-specific output standards
+PM / TPM persona API: applies elevated scoring for output format, reproducibility, context completeness, traceability, and sprint-and-report-specific quality dimensions
+BA + Product Owner persona API: applies elevated scoring for retrieval grounding, accuracy, business relevance, prioritization clarity, and document-synthesis standards
+Support Staff persona API: applies elevated scoring for tone and user empathy control, compliance, actionability, and customer-facing output quality
+All five API endpoints share the same core engine, the same data model, and the same storage layer — they differ only in their scoring profiles
+Data Collection and Organizational Intelligence Framework
+Prompt storage: every prompt evaluated is captured with full context — persona, channel, timestamp, score breakdown, identified issues, suggestions, and autofix output
+Scoring metadata: dimension-level scores are stored individually, enabling analysis of where specific personas or teams consistently underperform on specific quality criteria
+Improvement tracking: before-and-after prompt pairs are stored, creating a longitudinal record of how prompt quality evolves across the organization over time
+Analytics-ready data model: the storage structure is designed from day one to support organizational dashboards, team-level benchmarking, and training program design
+Channel attribution: every record captures which access channel submitted the prompt, enabling cross-channel performance comparison in later phases
+Extensibility and Channel-Readiness
+Stable, documented API contracts: the API surface is designed with future channels in mind — clean, predictable, and consistent, so that Phases 2, 3, and 4 can integrate without requiring backend changes
+Structured response format: all API responses follow a consistent schema that can be consumed by chatbots, LLM tools, IDE plugins, and web interfaces equally without transformation
+Versioning and backward compatibility: the API is built to accommodate future updates to scoring models without breaking existing channel integrations
+Environment configuration: the engine supports different operational modes — direct API, proxy-mediated, and limited mode — to accommodate the range of enterprise network conditions it will encounter across channels
+Phase 1 is governed by four non-negotiable priorities:
+Infovision has, for the first time, a formal and measurable definition of prompt quality — one that applies consistently across all five organizational personas
+All five persona scoring profiles are available immediately, meaning any channel built in later phases can serve the full organization from its launch day
+The data collection framework begins accumulating organizational intelligence from the first prompt evaluated, regardless of which channel submitted it
+The stable API architecture means Phase 2, 3, and 4 teams can begin integration planning in parallel, reducing the total time from Phase 1 completion to full system deployment
+Leadership and stakeholders gain confidence in the system's institutional design — it is not a tool with an unknown roadmap, but an engine with a clear architecture that will serve the organization for years
+Phase 1 has no dependencies — it is the origin of the system. It is also the only phase with no predecessor. All three subsequent phases depend on Phase 1 being complete, stable, and fully persona-capable before they begin integration:
+Phase 2 calls Phase 1's layered API to expose all five persona endpoints as LLM-native tools — all personas available via MCP tooling
+Phase 3 uses Phase 1's API to power chatbot interactions across Teams, Slack, and Discord — all personas accessible through chat
+Phase 4 connects to Phase 1's API for inline IDE validation — all personas served through development environment plugins
+Critically: no subsequent phase introduces new validation logic. If a scoring dimension changes, if a new persona is added, or if autofix quality is improved, that change happens once in Phase 1 and is automatically reflected across all channels.
+Phase 1 has no direct user interface — this is intentional. Building a UI in Phase 1 would create a dependency that constrains channel-agnostic design. The interface comes later, through the appropriate channels.
+Persona completeness requires upfront investment: building all five scoring profiles in Phase 1 is more work than building one. This investment pays back immediately when each subsequent channel launches with full organizational coverage rather than partial coverage.
+The data collection framework must be designed before volume exists, not in response to it — architectural decisions made under volume pressure are consistently worse than those made with care upfront.
+API stability is a Phase 1 responsibility: changes to API contracts after Phase 2 begins integration create cascading rework. The API surface must be treated as a commitment, not a prototype.
+Phase 2 does not add new intelligence. It adds a new way for every persona to reach the intelligence built in Phase 1.
+The Model Context Protocol (MCP) is an emerging standard that allows LLM systems to call external tools and services as part of their reasoning and response generation. By exposing the Prompt Validator as an MCP-compatible tool in Phase 2, all five persona endpoints become callable by any LLM-driven workflow — automatically, without requiring a separate submission step by the user.
+This phase matters for every persona, not just technical ones. A business analyst building an AI-assisted requirements pipeline, a product owner using an AI workflow to generate user stories, a support manager using an LLM-powered ticket system — all of them can have prompt validation embedded in their AI workflow through the MCP layer, calling the appropriate persona endpoint transparently in the background.
+MCP tool definitions for all five persona endpoints: each persona API from Phase 1 is formally defined as a callable MCP tool — with its own schema, input parameters, and structured output format — so LLM systems can invoke the correct persona validator as part of their pipeline
+Universal tool entry point: a single MCP tool definition that routes to the correct persona endpoint based on context declared in the calling workflow, enabling workflows that span multiple personas
+Structured LLM-consumable responses: all validation outputs (score, issues, suggestions, autofix) are formatted for programmatic consumption by LLM orchestrators, not just human readers
+Tool registration across relevant LLM environments: the persona-aware validator tools are made available in the AI assistant configurations, copilot integrations, and orchestration frameworks used across Infovision
+Composable pipeline integration: the validator tools are designed to work as components in multi-step AI pipelines — for example, validate a prompt, rewrite it, then pass the improved version to the next tool in the workflow
+Persona-aware tool exposure: each MCP tool definition must correctly route to the corresponding Phase 1 persona API, ensuring that LLM workflows trigger the right scoring profile automatically
+Standardized interoperability: MCP tool definitions must conform to LLM tool-calling conventions so they are compatible with the AI orchestration frameworks already in use across Infovision
+Minimal latency: tool invocation must add negligible processing time to workflows — validation should be fast enough that embedding it in an AI pipeline does not meaningfully slow the overall experience
+Consistent output: MCP responses must be identical in scoring substance to what the API returns in any other channel — no logic divergence, no persona scoring shortcuts
+All five personas gain access to automated, inline prompt validation within their AI-driven workflows — without any manual submission step
+Prompt quality is enforced at the pipeline level, not just as a manual check — for every persona whose work flows through an LLM system, validation becomes part of the process rather than an optional add-on
+Infovision teams building AI-powered internal tools can incorporate persona-aware validation as a native component, without building scoring logic from scratch
+Phase 2 data flows into Phase 1's storage layer, adding a new stream of organizational prompt quality intelligence alongside direct API usage
+Depends on Phase 1 completely: Phase 2 exposes what Phase 1 built. Without a complete, persona-aware Phase 1 backend, there is nothing useful to expose through MCP tooling.
+Does not depend on Phase 3 or Phase 4: Phase 2 can be developed in parallel with or ahead of chat and IDE integrations, as its target environment (LLM orchestration) is independent of messaging platforms and development environments
+Supports Phase 4: IDE plugin integrations that include copilot-style AI assistance can leverage Phase 2's MCP tool definitions to embed validation more deeply into AI-native development workflows
+MCP tool calling requires that the host LLM system supports tool use — this is available in most modern AI platforms but may be restricted in some client-controlled environments; Phase 2 is a progressive enhancement, not a prerequisite for Phase 3 or Phase 4
+Persona routing in automated workflows requires that the workflow system correctly declares the persona context when calling the validator tool — design guidance for workflow builders must accompany Phase 2 deployment
+Data routing through MCP must respect the same data sensitivity considerations as direct API calls — the tool must support environment-specific configuration to prevent data leaving restricted networks for any persona
+Phase 3 is the broadest adoption milestone in the roadmap. It brings the complete, persona-aware Prompt Validator into the conversational platforms that every Infovision consultant uses every day — Microsoft Teams, Slack, and Discord.
+Every persona is served through these interfaces. A support agent submitting a draft customer email prompt receives a tone and compliance evaluation. A project manager submitting a status report prompt receives an output format and context completeness evaluation. A business analyst submitting a requirements extraction prompt receives a retrieval grounding and accuracy evaluation. The same chatbot serves all of them — routing each submission to the correct persona API from Phase 1 and returning a conversationally formatted version of the evaluation.
+Phase 3 exists where it does in the roadmap because it requires Phase 1 to be fully operational — including all persona endpoints — and because chat-based interfaces are one of the most universally accessible channels across Infovision's varied working environments. Microsoft Teams bots, in particular, often function even on client-provided machines where external websites and installable plugins are blocked.
+Persona-aware chatbot deployments on Microsoft Teams, Slack, and Discord: each bot serves all five personas, routing submissions to the appropriate Phase 1 persona API based on declared or detected persona context
+Persona declaration within chat: users can set their persona at the start of a session or per submission, so the bot applies the correct scoring profile for each interaction
+Prompt submission via message: users paste or type a prompt into the chat, and the bot returns a structured, persona-appropriate evaluation in conversational format
+Full output within chat: the response includes a prompt score, dimension-level breakdown, identified issues, improvement suggestions, and the auto-fixed prompt — formatted for readable display within the messaging platform
+Iterative conversational interaction: users can ask follow-up questions, request re-evaluation with a specific change, or ask the bot to explain a particular scoring dimension — for any persona type
+Persona-specific response formatting: support staff receive outputs focused on tone and compliance; developers receive outputs focused on technical precision and edge cases; PMs receive outputs focused on format and reproducibility — the same bot, calibrated to the persona
+Unified logging: every chat-channel submission is stored in Phase 1's data framework with full persona and channel attribution, contributing to organizational analytics
+Zero installation friction for all personas: every employee, across every working environment, can access the validator through a chat platform without installing software, visiting a website, or configuring anything
+Persona-appropriate output formatting: the same evaluation must be presented differently depending on the persona — a developer receives technical output; a support agent receives customer-language-appropriate feedback
+Cross-environment reliability for all personas: Teams bots frequently work in client-provided and restricted environments where external web access is blocked, making Phase 3 one of the most universally reliable channels for all five personas
+Organic adoption spread: when a team member uses the bot in a shared channel, every other persona in that channel sees the interaction — awareness spreads naturally across personas without requiring a formal rollout campaign
+For the first time, every Infovision consultant — regardless of technical background, client environment, or device setup — can access persona-calibrated prompt validation through a channel they already use daily
+Support staff, business analysts, and product owners, who may never interact with an IDE or LLM tooling environment, now have a native, comfortable access point to the same validation intelligence that developers use
+All five persona data streams flow simultaneously into Phase 1's storage layer, creating the richest and most cross-functionally diverse source of prompt quality data the organization has seen
+The conversational format reduces the psychological barrier to improvement — receiving persona-appropriate feedback in a chat message feels collaborative and accessible, not evaluative or formal
+Depends on Phase 1 entirely: the chatbot is a persona-routing access layer; all scoring, autofix, and improvement logic comes from Phase 1's persona APIs
+Benefits from Phase 2 optionally: where MCP tool definitions are available, the chatbot can leverage them for more structured interactions, but Phase 2 is not a dependency for Phase 3 to launch
+Informs Phase 4: by building organizational familiarity with persona-calibrated prompt scoring through Phase 3, Infovision prepares all personas — including developers and QA — for the more embedded IDE experience in Phase 4
+Persona declaration must be managed: without automatic role detection tied to organizational identity systems, users must actively declare their persona for role-specific scoring; a default to the universal baseline API is a safe fallback when persona context is not provided
+Output formatting varies by platform: rich formatting (tables, side-by-side comparisons) may need to be simplified or text-only in some messaging platforms; persona-appropriate output must remain useful even in the most limited formatting context
+Data handling in chat: prompts submitted through chat are processed by the Phase 1 backend and must comply with Infovision's data handling policies, particularly for personas working on client-sensitive engagements
+Support Staff persona attention: this is the first channel where support agents interact with the validator at volume — their high-frequency, time-sensitive prompting pattern requires a fast, frictionless chat interaction design
+Phase 4 embeds the complete, persona-aware Prompt Validator directly into the development and knowledge-work environments where Infovision's consultants produce their most AI-intensive work. This is not a developer-only channel — it is the deepest and most contextually intelligent access model, designed to serve every persona that works within an IDE or similar structured editing environment.
+While developers and QA engineers are the most frequent IDE users and will see the highest volume of Phase 4 interactions, every persona in Infovision that uses a modern editing environment — including those writing requirements documents, drafting product specifications, composing support scripts, or building AI workflows — can access the full Phase 1 backend through this channel, with their persona-specific scoring applied automatically.
+Phase 4 is last in the roadmap because it requires the most integration effort, the most mature backend, and the highest performance expectations. By the time Phase 4 is built, the Phase 1 engine will have been tested and refined through months of real-world usage across Phases 2 and 3 — across all five personas and multiple access channels.
+VS Code extension serving all personas: the plugin connects to the Phase 1 API and applies the persona-appropriate scoring profile based on user configuration, detected context, or explicit persona declaration within the IDE
+Cursor IDE integration serving all personas: the same validation capability extended to the Cursor environment, which is increasingly adopted by AI-native teams across multiple functions
+Copilot-style inline validation: the improved prompt is presented as an inline suggestion within the editor — the validated, persona-appropriate version appears before the user submits, for any persona using the plugin
+Real-time or on-demand scoring: prompts can be evaluated as typed or on-demand before submission; the mode is configurable by the user to match their working style and persona-specific needs
+Autofix insertion as a single action: regardless of persona, the improved version of the prompt replaces the original in the editor with one action — no copying between tools, no context switching
+Persona-aware automatic context detection: the plugin infers the active persona from file type, project context, folder structure, or user configuration — a developer in a TypeScript project receives Developer scoring automatically; a user editing a requirements document receives BA/PO scoring
+Graceful degraded mode for restricted environments: where real-time API access is unavailable, the plugin provides structural validation based on universal baseline rules — serving the Persona 0 baseline for all personas without requiring network access
+Zero context switching for all personas: every persona receives validation without leaving their active editing environment — the most friction-free access model in the roadmap
+Persona detection accuracy: the plugin's ability to correctly identify the active persona from context is critical to delivering the right scoring profile automatically; misidentification results in the wrong quality dimensions being applied
+Speed across all personas: high-frequency users like developers and support staff have low tolerance for slow tools; the Phase 1 API must respond within the latency threshold established for inline usage
+Graceful degradation: the plugin must provide meaningful value for all personas even when full API access is unavailable — the universal baseline serves as the floor, not an error state
+Every persona working in an IDE environment can receive persona-calibrated validation at the moment of writing — before the AI is asked, not after the output disappoints
+For developers and QA engineers, validation is ambient — always present, never intrusive, and directly actionable within the workflow where code and test artifacts are produced
+For business analysts, product owners, and project managers working in structured editing environments, the plugin delivers the same value as it does for technical users — persona-appropriate feedback without context switching
+Phase 4 data, like all channel data, flows into Phase 1's storage layer — adding IDE-specific prompt patterns and persona-specific quality trends to the growing organizational dataset
+Over time, the passive coaching effect of inline validation accelerates prompt quality improvement across all personas — consultants naturally internalize the scoring dimensions as they see the feedback repeatedly, writing better initial prompts without needing to validate every submission
+Depends on Phase 1 completely: the plugin is a thin, persona-routing access layer; all scoring, autofix, and improvement logic — for all five personas — comes from Phase 1's layered API
+Benefits significantly from Phase 2: IDE copilot integrations can leverage Phase 2's MCP tool definitions for deeper AI-native embedding, making the validation feel native to copilot workflows rather than a separate plugin
+Builds on Phase 3 adoption: by Phase 4, all five personas will already be familiar with the scoring model through chat interactions; the IDE plugin introduces a higher-fidelity experience for a model they already understand and trust
+Installation requirements limit reach: IDE plugins must be installed, which is not possible on all client-provided machines — Phase 4 is explicitly designed for Infovision-controlled or lightly-restricted environments; Phases 2 and 3 serve the personas in environments where Phase 4 cannot reach
+Persona detection must degrade gracefully: when context is insufficient to determine a persona automatically, the plugin defaults to the universal baseline API — never fails, always provides some value
+Performance expectations are highest here: developers and QA engineers using inline validation have the lowest latency tolerance in the organization; the Phase 1 engine's response time is a critical dependency for Phase 4 success
+Data sensitivity across all personas: the IDE plugin transmits prompt content for validation; for all personas working in high-sensitivity client environments, local mode must be available to comply with data governance requirements
+End-to-End System Flow
+The Prompt Validator is not four separate systems built in sequence. It is one system — the Phase 1 backend engine — that is progressively made accessible through four delivery channels, each reaching the same five personas through a different access model.
+How the System Evolves Across Phases
+Phase 1 creates the complete organizational definition of prompt quality for all five personas. From the moment Phase 1 is operational, every scoring profile, every autofix model, and every persona API endpoint exists and is ready. The system knows what a high-quality prompt looks like for a developer, a business analyst, a support agent, a project manager, and a product owner.
+Phase 2 takes that complete intelligence and makes it callable by LLM systems and AI orchestration workflows — for all five personas. A requirements extraction AI workflow can call the BA persona validator automatically. A test generation pipeline can call the QA persona validator inline. An AI-powered reporting tool can validate a PM's prompt before generating the status report.
+Phase 3 takes the same complete intelligence and makes it accessible through conversational interfaces. A support agent in a Teams channel can validate a customer reply prompt and receive tone and compliance feedback without leaving the messaging platform. A product owner in Slack can validate a user story prompt and receive actionability and AC-completeness feedback. Every persona, through one consistent channel.
+Phase 4 takes the same complete intelligence into the development and knowledge-work environment. A developer validates a code generation prompt inline before it reaches the AI copilot. A business analyst validates a requirements extraction prompt while drafting in an editing environment. The validator is present at the moment of work, for every persona that uses an IDE-style tool.
+The Universal Data Loop
+Every interaction across every channel in every phase flows back into Phase 1's storage layer. A developer using Phase 4, a support agent using Phase 3, a business analyst using Phase 2 — all of their prompt evaluations are captured with full persona and channel attribution in the same data model.
+This creates an organizational dataset that is uniquely cross-functional. Leadership can see prompt quality trends not just for developers, but for all five personas — across all four channels — in a single view. Questions like 'which persona has the highest autofix adoption rate?' or 'which channel produces the most complete business analyst prompts?' become answerable from the data the system naturally generates.
+All Channels, All Personas: The Complete Picture
+Core Design Principles
+The following principles guide every decision in the design and phasing of the Prompt Validator. They are not aspirational — they are active design constraints that have shaped the architecture, the phase order, and every capability decision.
+Why This Approach Works
+It Serves Every Persona at Every Step
+A common failure mode in enterprise platform design is solving for the most visible or technically sophisticated users first, then expanding to other personas over time. This approach rejects that pattern entirely. By building all five persona scoring profiles into Phase 1, Infovision ensures that from the moment the first channel goes live, every consultant can access persona-calibrated validation — not a generic, one-size-fits-all evaluation that serves no one particularly well.
+A support agent using Phase 3 on day one gets tone and compliance scoring, not a developer scoring profile applied incorrectly to a customer reply prompt. A business analyst using Phase 2 gets retrieval grounding evaluation, not a generic clarity check. The persona-specific value is present from the first interaction, in every channel.
+It Matches Our Enterprise Reality
+Infovision's working environment is not a controlled lab. We work on client machines with varying levels of restriction, in VPN-controlled networks, and in accounts with strict data governance requirements. No single channel works everywhere for all five personas.
+The multi-channel strategy exists precisely to solve this. If an IDE plugin is blocked on a client machine, the same developer can use the Teams bot. If the Teams bot is unavailable, the same business analyst can submit via direct API call. If network access is restricted, the universal baseline runs locally. Every persona always has at least one working path to the same evaluation intelligence.
+It Avoids Duplication and Its Consequences
+When scoring logic lives in multiple places — one version in the chatbot, another in the plugin, a third in the LLM tool — they diverge. Updates are applied inconsistently. Different personas receive different quality evaluations for identical prompts depending on how they access the system. Trust in the standard erodes.
+Because all channels call Phase 1, there is one scoring model. When the BA/PO persona scoring dimensions are updated, every channel — the chatbot, the plugin, the MCP tool — reflects the change immediately without any additional work. Organizational confidence in the standard is maintained because the standard is, in practice, singular.
+It Delivers Value at Each Phase, for All Personas
+It Creates Organizational Learning Across All Personas
+Because all personas contribute to the same data layer, the organizational analytics are uniquely rich. Leadership can compare prompt quality maturity across roles — not just within a single persona group. They can identify whether the BA team has stronger context completeness than the PM team, whether support staff have improved their tone calibration after a training program, or whether developer prompts submitted through the IDE plugin score higher than those submitted through chat.
+This cross-persona, cross-channel view of prompt quality is only possible because the architecture routes all personas through the same engine and stores all interactions in the same data model. It cannot be recreated by aggregating data from separate, persona-specific tools.
+Final Summary
+Phase 1 builds the complete backend: five persona scoring profiles, a layered API architecture, an autofix engine, an improvement explanation system, and a data collection framework — all operational before the first channel goes live. This is the source of truth for prompt quality at Infovision. It does not grow in persona coverage across phases. It grows in reach.
+Phases 2, 3, and 4 are delivery channels. Each one extends the same backend capabilities — serving all five personas — to a new environment and working context. No phase introduces new validation logic. No phase is restricted to a subset of personas. The only thing that changes across phases is how people access what Phase 1 already knows.
+This architecture works because the intelligence is singular and the access is plural. The Prompt Validator is not four tools solving the same problem four ways. It is one solution reaching every corner of the organization — every persona, every environment, every phase — through the channel that works best in each context.
+Phase and Persona Relationship Summary
+Appendix: Access Channel and Persona Coverage Reference
+All channels connect to the same Phase 1 backend and serve all five personas. The differences between channels are access model, environment compatibility, and user experience depth — not the personas served or the intelligence applied.
+Regardless of channel or environment: every submission calls the same Phase 1 backend, every evaluation applies the declared or detected persona's scoring profile, and every interaction is recorded in the same organizational data store.
+[TABLE CELL]: 01
+Backend Engine
+(All Personas)
+[TABLE CELL]: 02
+MCP / LLM Layer
+(All Personas)
+[TABLE CELL]: 03
+Chat Interfaces
+(All Personas)
+[TABLE CELL]: 04
+IDE Plugins
+(All Personas)
+[TABLE CELL]: Every phase of this roadmap serves all five organizational personas. The phases are not separated by who they serve. They are separated by how the system is accessed. Phase 1 builds the complete, persona-aware engine. Phases 2, 3, and 4 each expose that same engine through a different delivery channel.
+[TABLE CELL]: Phase
+[TABLE CELL]: Name
+[TABLE CELL]: What It Does
+[TABLE CELL]: Personas Served
+[TABLE CELL]: 1
+[TABLE CELL]: Backend Engine
+[TABLE CELL]: Builds the complete, persona-aware validation intelligence: layered API architecture, persona-specific scoring, autofix, learning explanations, and data storage
+[TABLE CELL]: All 5 personas — from day one
+[TABLE CELL]: 2
+[TABLE CELL]: MCP / LLM Layer
+[TABLE CELL]: Exposes the full Phase 1 engine as a callable tool for LLM-driven workflows and AI-native environments
+[TABLE CELL]: All 5 personas — through LLM tooling
+[TABLE CELL]: 3
+[TABLE CELL]: Chat Interfaces
+[TABLE CELL]: Brings the complete validator into Microsoft Teams, Slack, and Discord for conversational access
+[TABLE CELL]: All 5 personas — through chat
+[TABLE CELL]: 4
+[TABLE CELL]: IDE Plugins
+[TABLE CELL]: Embeds the full validation capability inline within VS Code, Cursor, and Copilot-style environments
+[TABLE CELL]: All 5 personas — through IDEs
+[TABLE CELL]: Persona
+[TABLE CELL]: Primary Prompt Use Cases
+[TABLE CELL]: Critical Quality Needs
+[TABLE CELL]: All Employees (Baseline)
+[TABLE CELL]: Summarization, drafting, Q&A, plain-language explanation, content translation
+[TABLE CELL]: Clarity, context, output format, specificity
+[TABLE CELL]: Developer + QA Engineer
+[TABLE CELL]: Code generation, debugging, test case creation, automation scripting, code review
+[TABLE CELL]: Technical precision, edge cases, testability, constraint definition
+[TABLE CELL]: Technical PM / PM
+[TABLE CELL]: Sprint reports, estimate validation, capacity analysis, leadership updates
+[TABLE CELL]: Output format, reproducibility, context completeness, prioritization
+[TABLE CELL]: Business Analyst + PO
+[TABLE CELL]: Requirements extraction, document analysis, user story drafting, competitive analysis
+[TABLE CELL]: Retrieval grounding, business relevance, accuracy, prioritization
+[TABLE CELL]: Support Staff
+[TABLE CELL]: Customer reply drafts, ticket classification, escalation notes, KB lookup
+[TABLE CELL]: Tone, compliance, actionability, speed
+[TABLE CELL]: Environment Type
+[TABLE CELL]: Common Constraint
+[TABLE CELL]: Internal Infovision laptops
+[TABLE CELL]: Fewer restrictions; full tool and browser access typically available
+[TABLE CELL]: Client-provided laptops
+[TABLE CELL]: Strict security policies; external websites, plugins, or APIs may be blocked
+[TABLE CELL]: VPN-controlled environments
+[TABLE CELL]: Network routing limits direct API calls; all traffic may be proxied or filtered
+[TABLE CELL]: High data sensitivity accounts
+[TABLE CELL]: Strong restrictions against sending any data to external endpoints or cloud services
+[TABLE CELL]: Shared or locked environments
+[TABLE CELL]: No ability to install software, browser extensions, or IDE plugins
+[TABLE CELL]: The backend engine is the product. The delivery channels are the access points. Phases do not change what the system knows. They change how people reach it — and ensure it is reachable for every persona, in every environment.
+[TABLE CELL]: API Tier
+[TABLE CELL]: Serves
+[TABLE CELL]: Scoring Basis
+[TABLE CELL]: Universal Enterprise API
+[TABLE CELL]: All Infovision employees (Persona 0)
+[TABLE CELL]: Baseline universal dimensions: clarity, context, specificity, output format, ambiguity, constraints
+[TABLE CELL]: Persona API — Developer + QA
+[TABLE CELL]: Software engineers, architects, QA engineers, SDETs
+[TABLE CELL]: Elevated: technical precision, edge cases, testability, constraint definition, reproducibility
+[TABLE CELL]: Persona API — PM / TPM
+[TABLE CELL]: Technical project managers, project managers
+[TABLE CELL]: Elevated: output format, reproducibility, context completeness, traceability, prioritization
+[TABLE CELL]: Persona API — BA + Product Owner
+[TABLE CELL]: Business analysts, product owners
+[TABLE CELL]: Elevated: retrieval grounding, accuracy, business relevance, prioritization clarity, traceability
+[TABLE CELL]: Persona API — Support Staff
+[TABLE CELL]: Call center, help desk, operations, ticket handlers
+[TABLE CELL]: Elevated: tone/empathy, compliance, actionability, output format, specificity
+[TABLE CELL]: All Employees
+[TABLE CELL]: Dev + QA
+[TABLE CELL]: PM / TPM
+[TABLE CELL]: BA + PO
+[TABLE CELL]: Support
+[TABLE CELL]: Phase 1: Backend Engine
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: Phase 2: MCP / LLM Layer
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: Phase 3: Chat Interfaces
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: Phase 4: IDE Plugins
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: ✓ Served
+[TABLE CELL]: PHASE
+1
+[TABLE CELL]: Backend Prompt Validation Engine
+The Complete, Persona-Aware Source of Truth — Serving All Five Personas from Day One
+[TABLE CELL]: Phase Overview
+[TABLE CELL]: Phase 1 asks and answers one question: what does a high-quality prompt look like for every Infovision persona — and how do we measure it, improve it, and learn from it at scale?
+[TABLE CELL]: What Will Be Developed
+[TABLE CELL]: Focus Areas
+[TABLE CELL]: Focus Area
+[TABLE CELL]: What It Means and Why It Matters
+[TABLE CELL]: Robustness and reliability
+[TABLE CELL]: The backend engine is the single source of truth for all four phases. If it is unreliable, every channel fails. Reliability is not optional — it is the precondition for everything that follows.
+[TABLE CELL]: Persona completeness from day one
+[TABLE CELL]: All five persona scoring profiles must be fully operational before Phase 2 begins. Deferring a persona to a later phase would mean that channel launches with incomplete capability — an unacceptable inconsistency.
+[TABLE CELL]: Extensibility by design
+[TABLE CELL]: The API architecture, data model, and response schema must be built to support channels that do not yet exist. Short-term shortcuts in Phase 1 create disproportionate integration costs in later phases.
+[TABLE CELL]: Data collection framework
+[TABLE CELL]: Organizational learning is a long-term value proposition of this system. The data capture infrastructure must be in place before volume builds — retrofitting storage architecture after adoption is far more disruptive than building it correctly from the start.
+[TABLE CELL]: Value Delivered
+[TABLE CELL]: Relationship to Other Phases
+[TABLE CELL]: Constraints and Considerations
+[TABLE CELL]: PHASE
+2
+[TABLE CELL]: MCP / LLM-Native Exposure Layer
+All Five Personas, Accessible Within AI-Native Workflows and LLM Ecosystems
+[TABLE CELL]: Phase Overview
+[TABLE CELL]: In Phase 2, the Prompt Validator does not wait to be asked. For any persona whose work involves AI-driven workflows, validation can happen automatically — before the prompt ever reaches the target LLM — using the correct persona scoring profile from Phase 1.
+[TABLE CELL]: What Will Be Developed
+[TABLE CELL]: How Each Persona Benefits in Phase 2
+[TABLE CELL]: Persona
+[TABLE CELL]: Phase 2 Benefit
+[TABLE CELL]: Developer + QA
+[TABLE CELL]: AI coding workflows and test generation pipelines can automatically validate prompts for technical precision, edge-case coverage, and code-specific constraints before sending to the code generation model
+[TABLE CELL]: PM / TPM
+[TABLE CELL]: AI-assisted reporting and planning tools can validate report-generation prompts for context completeness, output format, and reproducibility before they produce leadership deliverables
+[TABLE CELL]: BA + PO
+[TABLE CELL]: AI-powered requirements extraction and user story workflows can validate prompts for grounding, accuracy, and citation standards before the analysis or drafting step begins
+[TABLE CELL]: Support Staff
+[TABLE CELL]: AI-assisted ticket response and knowledge base tools can validate tone, compliance, and actionability of support prompts before customer-facing content is generated
+[TABLE CELL]: All Employees
+[TABLE CELL]: Any LLM-driven workflow can call the universal baseline validator to apply foundational prompt quality checks before any AI interaction, regardless of persona
+[TABLE CELL]: Focus Areas
+[TABLE CELL]: Value Delivered
+[TABLE CELL]: Relationship to Other Phases
+[TABLE CELL]: Constraints and Considerations
+[TABLE CELL]: PHASE
+3
+[TABLE CELL]: Chat-Based Interfaces
+All Five Personas, Reached Where They Already Communicate — Teams, Slack, Discord
+[TABLE CELL]: Phase Overview
+[TABLE CELL]: Phase 3 eliminates the most common barrier to adoption: friction. It does not ask any persona to open a new application, visit a URL, or install a tool. It places the validator where every persona already communicates.
+[TABLE CELL]: What Will Be Developed
+[TABLE CELL]: How Each Persona Uses Phase 3
+[TABLE CELL]: Persona
+[TABLE CELL]: Typical Chat-Channel Interaction
+[TABLE CELL]: Developer + QA
+[TABLE CELL]: Paste a code-generation or test-case prompt into Teams before submitting to the AI tool; receive technical precision, edge-case, and constraint feedback inline within the chat
+[TABLE CELL]: PM / TPM
+[TABLE CELL]: Submit a draft status report or sprint summary prompt; receive output format, context completeness, and audience-appropriateness feedback before generating the leadership-facing document
+[TABLE CELL]: BA + PO
+[TABLE CELL]: Submit a requirements extraction or user story prompt; receive grounding, accuracy, and citation standard feedback; receive an improved prompt that includes proper document references
+[TABLE CELL]: Support Staff
+[TABLE CELL]: Submit a customer reply draft prompt; receive tone, compliance, and actionability evaluation; receive an improved prompt that corrects policy adherence or empathy calibration before the reply is sent
+[TABLE CELL]: All Employees
+[TABLE CELL]: Submit any general prompt; receive universal baseline evaluation covering clarity, context, output format, and specificity — regardless of role or project context
+[TABLE CELL]: Focus Areas
+[TABLE CELL]: Value Delivered
+[TABLE CELL]: Relationship to Other Phases
+[TABLE CELL]: Constraints and Considerations
+[TABLE CELL]: PHASE
+4
+[TABLE CELL]: IDE Plugins
+All Five Personas, Embedded Where Work Happens — VS Code, Cursor, Copilot-Style Environments
+[TABLE CELL]: Phase Overview
+[TABLE CELL]: Phase 4 is where validation becomes ambient. For every persona working in an IDE environment, the improved prompt is available before the AI is ever asked — not as an afterthought, but as the first action.
+[TABLE CELL]: What Will Be Developed
+[TABLE CELL]: How Each Persona Uses Phase 4
+[TABLE CELL]: Persona
+[TABLE CELL]: IDE Plugin Use Case
+[TABLE CELL]: Developer + QA
+[TABLE CELL]: Validate code-generation and test-case prompts inline before submission to the AI copilot; receive technical precision, edge-case, and constraint feedback directly in the editor where the code will be written
+[TABLE CELL]: PM / TPM
+[TABLE CELL]: Validate sprint report drafts, estimate validation prompts, and leadership update prompts within documentation-focused IDE configurations; receive format and context completeness feedback before generating leadership content
+[TABLE CELL]: BA + PO
+[TABLE CELL]: Validate requirements extraction, user story, and competitive analysis prompts within requirements-authoring environments; receive grounding and accuracy feedback inline before sending to the analysis AI
+[TABLE CELL]: Support Staff
+[TABLE CELL]: Validate customer reply and ticket summary prompts within support-script editing tools; receive tone and compliance feedback inline before the response is composed and delivered
+[TABLE CELL]: All Employees
+[TABLE CELL]: Access universal baseline validation for any prompt in any editing context; receive clarity, context, and format feedback without persona-specific configuration when no persona is declared
+[TABLE CELL]: Focus Areas
+[TABLE CELL]: Value Delivered
+[TABLE CELL]: Relationship to Other Phases
+[TABLE CELL]: Constraints and Considerations
+[TABLE CELL]: Channel
+[TABLE CELL]: Access Model
+[TABLE CELL]: Personas Served
+[TABLE CELL]: How Phase 1 Is Reached
+[TABLE CELL]: Direct API
+[TABLE CELL]: HTTP calls to the backend
+[TABLE CELL]: All 5 personas
+[TABLE CELL]: Direct persona API endpoint call
+[TABLE CELL]: MCP / LLM Tool (Phase 2)
+[TABLE CELL]: LLM tool call via MCP protocol
+[TABLE CELL]: All 5 personas
+[TABLE CELL]: Tool invocation routes to correct persona API
+[TABLE CELL]: Chat Bot — Teams / Slack / Discord (Phase 3)
+[TABLE CELL]: Conversational message submission
+[TABLE CELL]: All 5 personas
+[TABLE CELL]: Bot calls Phase 1 persona API; formats response for chat
+[TABLE CELL]: IDE Plugin — VS Code / Cursor (Phase 4)
+[TABLE CELL]: Inline editor suggestion and autofix
+[TABLE CELL]: All 5 personas
+[TABLE CELL]: Plugin calls Phase 1 persona API; renders inline in editor
+[TABLE CELL]: Principle
+[TABLE CELL]: What It Means in Practice
+[TABLE CELL]: All personas, all phases
+[TABLE CELL]: Every phase serves all five organizational personas. No persona is deferred, limited, or excluded by any phase boundary. Phase 1 builds all five scoring profiles. Phases 2–4 each extend all five profiles to a new channel.
+[TABLE CELL]: Build once, reuse everywhere
+[TABLE CELL]: The validation intelligence — scoring logic, autofix models, improvement explanations, data storage — is developed once in Phase 1 and reused by all four channels. No channel reimplements any part of the scoring system.
+[TABLE CELL]: Phases are channels, not personas
+[TABLE CELL]: The phased roadmap organizes delivery by access model, not by user group. Phase 2 is not 'the technical phase.' Phase 3 is not 'the business phase.' Each phase is a new way for all personas to reach the same intelligence.
+[TABLE CELL]: Channel-agnostic intelligence
+[TABLE CELL]: The Phase 1 engine has no opinion about how it is accessed. It accepts a prompt and persona context via API and returns a structured response. Whether the caller is a chatbot, a plugin, an LLM workflow, or a direct API call is irrelevant to the engine.
+[TABLE CELL]: Enterprise constraints first
+[TABLE CELL]: The system is designed for the hardest operating environment first. Phase 3 chat interfaces are deployed before Phase 4 IDE plugins precisely because chat works in environments where plugin installation is blocked — for all personas.
+[TABLE CELL]: Persona completeness from day one
+[TABLE CELL]: All five persona scoring profiles are built and operational in Phase 1. Deferring any persona to a later phase would mean that every channel from Phase 2 onward launches with incomplete coverage — an unacceptable inconsistency.
+[TABLE CELL]: Data as a first-class output
+[TABLE CELL]: Every prompt interaction from every channel generates organizational data. Storage is built in Phase 1, before any channel goes live, so that every interaction contributes to the same growing dataset of cross-persona, cross-channel prompt quality intelligence.
+[TABLE CELL]: Consistent scoring, regardless of channel
+[TABLE CELL]: The same prompt submitted by the same persona through Teams, an IDE plugin, or an MCP tool call must receive the same score. There is one scoring standard. All channels enforce it equally.
+[TABLE CELL]: Degrade gracefully, never fail entirely
+[TABLE CELL]: Where full API access is unavailable for any persona in any channel, the system provides baseline validation rather than failing. The universal enterprise API serves as the minimum viable experience for every persona in every environment.
+[TABLE CELL]: Phase
+[TABLE CELL]: Value Delivered — and for Whom
+[TABLE CELL]: 1
+[TABLE CELL]: All five personas gain a formal, measurable prompt quality standard. The data infrastructure to track quality trends across all personas and channels begins accumulating from the first evaluation.
+[TABLE CELL]: 2
+[TABLE CELL]: All five personas gain automated, inline validation within AI-driven workflows. BA requirements pipelines, PM reporting tools, support ticket systems, and developer code generators can all embed persona-calibrated validation automatically.
+[TABLE CELL]: 3
+[TABLE CELL]: All five personas gain friction-free access through the communication tools they already use every day. This is the broadest adoption milestone — every consultant in every environment can participate.
+[TABLE CELL]: 4
+[TABLE CELL]: All five personas working in IDE-style environments gain the highest-quality validation experience: ambient, inline, and directly actionable without a context switch.
+[TABLE CELL]: The Infovision Enterprise Prompt Validator is a single, persona-aware intelligence engine delivered progressively through four access channels — each serving all five organizational personas with the same consistent, role-calibrated evaluation standard.
+[TABLE CELL]: Phase
+[TABLE CELL]: Delivery Channel
+[TABLE CELL]: Personas
+[TABLE CELL]: Strategic Role
+[TABLE CELL]: 1
+[TABLE CELL]: Backend Engine + Layered APIs
+[TABLE CELL]: All 5
+[TABLE CELL]: Establishes the standard and the infrastructure. All persona scoring profiles built and operational.
+[TABLE CELL]: 2
+[TABLE CELL]: MCP / LLM Tool Layer
+[TABLE CELL]: All 5
+[TABLE CELL]: Embeds validation in AI-native workflows. Serves all personas through LLM orchestration systems.
+[TABLE CELL]: 3
+[TABLE CELL]: Chat (Teams / Slack / Discord)
+[TABLE CELL]: All 5
+[TABLE CELL]: Eliminates access friction for all personas. Broadest organizational reach across all environments.
+[TABLE CELL]: 4
+[TABLE CELL]: IDE Plugins
+[TABLE CELL]: All 5
+[TABLE CELL]: Deepest integration. Ambient, inline validation for all personas working in IDE-style environments.
+[TABLE CELL]: One engine. Five personas. Four channels. One consistent standard. That is the Infovision Enterprise Prompt Validator.
+[TABLE CELL]: Phase
+[TABLE CELL]: Core Contribution
+[TABLE CELL]: Depends On
+[TABLE CELL]: Personas Served
+[TABLE CELL]: Enables
+[TABLE CELL]: Phase 1
+Backend Engine
+[TABLE CELL]: Complete persona-aware intelligence: all 5 API endpoints, autofix, storage, data framework
+[TABLE CELL]: None — this is the foundation
+[TABLE CELL]: All 5 from day one
+[TABLE CELL]: All subsequent phases
+[TABLE CELL]: Phase 2
+MCP / LLM Layer
+[TABLE CELL]: LLM-native exposure of all 5 persona endpoints for AI workflow automation
+[TABLE CELL]: Phase 1
+[TABLE CELL]: All 5 — via LLM tooling
+[TABLE CELL]: Phase 4 copilot integration
+[TABLE CELL]: Phase 3
+Chat Interfaces
+[TABLE CELL]: Conversational access for all 5 personas through Teams, Slack, Discord
+[TABLE CELL]: Phase 1 (Phase 2 optional)
+[TABLE CELL]: All 5 — via chat
+[TABLE CELL]: Broad org adoption
+[TABLE CELL]: Phase 4
+IDE Plugins
+[TABLE CELL]: Inline ambient validation for all 5 personas in IDE-style environments
+[TABLE CELL]: Phase 1 (Phase 2 beneficial)
+[TABLE CELL]: All 5 — via IDE
+[TABLE CELL]: Highest-value embedding
+[TABLE CELL]: Channel
+[TABLE CELL]: Phase
+[TABLE CELL]: Personas Served
+[TABLE CELL]: Works in Restricted Environments?
+[TABLE CELL]: UX Depth
+[TABLE CELL]: Persona API Routing
+[TABLE CELL]: Direct API
+[TABLE CELL]: 1
+[TABLE CELL]: All 5
+[TABLE CELL]: Where API network access is permitted
+[TABLE CELL]: Developer-oriented
+[TABLE CELL]: Caller specifies persona in request
+[TABLE CELL]: Web Interface (Internal)
+[TABLE CELL]: 1 enablement
+[TABLE CELL]: All 5
+[TABLE CELL]: Yes — intranet access typically unrestricted
+[TABLE CELL]: Moderate
+[TABLE CELL]: User selects persona in UI
+[TABLE CELL]: Web Interface (External)
+[TABLE CELL]: 1 enablement
+[TABLE CELL]: All 5
+[TABLE CELL]: Variable — may be blocked on client networks
+[TABLE CELL]: Moderate
+[TABLE CELL]: User selects persona in UI
+[TABLE CELL]: MCP / LLM Tool
+[TABLE CELL]: 2
+[TABLE CELL]: All 5
+[TABLE CELL]: Where LLM tool-calling is available
+[TABLE CELL]: Automated
+[TABLE CELL]: Workflow declares persona; tool routes to API
+[TABLE CELL]: Chat Bot (Teams / Slack / Discord)
+[TABLE CELL]: 3
+[TABLE CELL]: All 5
+[TABLE CELL]: Generally yes — bots often permitted on client machines
+[TABLE CELL]: Conversational
+[TABLE CELL]: User declares or bot detects persona; routes to API
+[TABLE CELL]: CLI / Script Interface
+[TABLE CELL]: 1/2
+[TABLE CELL]: All 5
+[TABLE CELL]: Where outbound API access is allowed
+[TABLE CELL]: Developer-oriented
+[TABLE CELL]: Caller specifies persona in command or config
+[TABLE CELL]: IDE Plugin (VS Code / Cursor)
+[TABLE CELL]: 4
+[TABLE CELL]: All 5
+[TABLE CELL]: Requires installation; may be restricted
+[TABLE CELL]: Highest
+[TABLE CELL]: Plugin auto-detects or user configures persona
+[TABLE CELL]: Embedded Tool Integration (Jira, ServiceNow)
+[TABLE CELL]: Future/3+
+[TABLE CELL]: All 5
+[TABLE CELL]: Depends on client environment integration depth
+[TABLE CELL]: Contextual
+[TABLE CELL]: Tool context informs persona routing
+
+=== FILE 2: Prompt Validator v11 ===
+
+ENTERPRISE PROMPT VALIDATOR
+Role-Based Prompt Quality Reference Document
+Infovision — 3,000 Consultants | 2,500 India · 500 USA
+Managed Services | Fixed Bid | Time & Material | Staff Augmentation
+5 Personas | 6 Analysis Sections Each | Weighted Scoring Inputs | Validator Design Specifications
+Version 2.0  |  March 2026  |  Enterprise AI Enablement — Confidential Internal Reference
+Introduction & How to Use This Document
+This document is the foundational reference for the Infovision Enterprise Prompt Validator — an organization-wide scoring engine that evaluates and improves prompt quality across all AI tools, interfaces, and copilots used by Infovision consultants. It is designed to be used directly by engineers or AI agents building the validator.
+Document Purpose
+Define how each organizational cluster should prompt AI tools — and what makes a prompt high-quality for that specific role
+Establish Persona 0 as the organization-wide baseline: a universal training tier that every employee passes through before persona-specific scoring is applied
+Provide defensible, cluster-specific dimension weights as direct input for the prompt scoring engine
+Specify what the validator should check, penalize, and suggest in real time for each persona
+Enable the scoring model to be tied to employee email addresses: all employees are validated under Persona 0; personas 1–4 are assigned by role and applied as a second scoring layer
+Persona Architecture
+The validator uses a two-tier persona model:
+Persona Order and Implementation Priority
+Personas are ordered by Infovision headcount and delivery criticality, reflecting recommended rollout sequence:
+How to Use This Document
+Sections A–F (per persona): Use for cluster-specific validator configuration, scoring model design, and training material development
+Section C tables: Feed directly into the scoring dimension weight configuration for the prompt evaluation engine
+Section E tables: Use as percentage distribution inputs for visual dashboards, org-wide analytics, and persona-level benchmarking
+Section F: Configure real-time feedback rules and penalty thresholds per persona in the validator UI
+Section G: Read after the persona sections to understand what is uniquely important per cluster vs. what is covered by the Persona 0 baseline
+Role Responsibilities
+Any Infovision employee using an AI-powered tool, chat interface, IDE copilot, or internal AI product
+Spans all job functions: delivery, business, technical, operational, client-facing, and support
+May write prompts inside validator UIs, Jira/ServiceNow integrations, IDE extensions, or standalone chat interfaces
+Frequency of AI use ranges from occasional (management, operations) to continuous (developers, QA engineers)
+Prompts may target internal audiences (team, leadership) or external audiences (clients, customers)
+Decisions Supported
+Daily work task assistance: drafting, summarizing, analyzing, and explaining content
+Information retrieval and synthesis from documents, knowledge bases, or structured data
+Communication generation: internal updates, client messages, documentation, and status reports
+Process understanding: clarifying workflows, interpreting errors, and explaining technical concepts
+Iterative quality improvement: refining AI output through constrained follow-up prompts
+Prompting Mode Classification
+All prompt types: operational, analytical, strategic, technical, customer-facing, internal-facing
+Universal training tier — all employees are validated against this baseline before persona-specific scoring
+Entry-level quality threshold for the organization-wide prompt validator rollout
+Typical Prompt Types
+Document summarization: condense meeting notes, email threads, or project reports
+Content drafting: professional emails, status updates, announcements, and memos
+Question-answering: extract specific facts, decisions, or answers from provided source content
+Data interpretation: identify trends, anomalies, or key points from structured input
+Plain-language explanation: restate error messages, technical specs, or process descriptions accessibly
+Content translation: rewrite technical material for non-technical audiences and vice versa
+List extraction: pull action items, decisions, risks, or requirements from unstructured source text
+Common Use Cases
+Summarize this meeting transcript into 3 decisions and owner-assigned action items
+Draft a professional email to a client explaining a 2-day sprint delivery delay
+What are the top 3 risks identified in this project status document?
+Explain this error message in plain English and suggest what may have caused it
+Rewrite this technical architecture summary for a non-technical executive audience
+Extract all action items from this email thread and format them as a checklist with due dates
+Quality Dimension Importance
+Clarity: CRITICAL — applies universally; unclear prompts produce poor output regardless of role or tool
+Context Completeness: HIGH — all prompts benefit from context; output quality directly correlates with input quality
+Specificity: HIGH — vague prompts produce generic, non-actionable output across every use case
+Output Format: HIGH — declaring the expected format (list, paragraph, table) dramatically improves usability
+Ambiguity Reduction: HIGH — ambiguous task framing causes rework across all Infovision functions
+Constraint Definition: MEDIUM-HIGH — all employees work within limits (length, tone, scope) that should always be stated
+Actionability: MEDIUM-HIGH — outputs should enable next actions, not just surface information
+Accuracy Orientation: MEDIUM — grounding prompts in provided content reduces hallucination risk for all roles
+Clear task framing — Begin every prompt with an explicit action verb: Summarize / Draft / Extract / Analyze / Explain / Create. Never omit the action.
+Explicit context — Always provide: who you are, what the document or situation is, and what the output will be used for. Context is the single biggest driver of output quality.
+Output format declaration — Always specify how you want output formatted: bullet list, numbered steps, table, paragraph, or specific template. Without this, output structure is unpredictable.
+Constraint definition — State all relevant limits before submitting: tone (formal/casual), word count, audience level (technical/non-technical), and scope (what to include and exclude).
+Audience specification — Always declare who the output is for: internal team, external client, executive leadership, or end customer. Output language and depth must match the reader.
+Avoid open-ended prompting for professional outputs — 'Tell me about X' produces generic results. 'Summarize the top 3 risks in this document for a client executive in 5 bullet points' produces enterprise value.
+Prefer deterministic formatting for recurring outputs — Status updates, summaries, and reports benefit from fixed format requests. Always ask for consistent structure across recurring prompt types.
+Use examples as anchors — For non-obvious output types, include a 1–2 sentence example of what good output looks like. This eliminates format ambiguity.
+Refine iteratively, not from scratch — If output is close but not right, add a constraint or example in a follow-up prompt rather than rewriting from zero.
+Define acceptance criteria before submitting — Ask yourself: what does a good output look like for this prompt? If you cannot answer, the prompt is not ready.
+What the Validator Must Check
+Does the prompt begin with an explicit action verb (Summarize / Draft / Analyze / Explain / Create)?
+Is any context provided about the source material, situation, or purpose of the output?
+Is the expected output type or format declared (list, paragraph, table, template)?
+Is the prompt open-ended with no constraints on scope, tone, length, or audience?
+Is the intended audience or downstream use of the output mentioned?
+Penalty Triggers
+Zero context provided — HIGH penalty (AI has no grounding; output will be hallucinated or generic)
+No output format declaration — MEDIUM penalty (output structure will be unpredictable and inconsistent)
+Completely open-ended prompt with no constraints — HIGH penalty (violates the core baseline rule)
+Missing action verb — MEDIUM penalty (AI may misinterpret intent and produce the wrong output type)
+Single-word or single-phrase prompt with no context — HIGH penalty (insufficient for any professional output)
+Most Useful Real-Time Suggestions
+"Start with an action verb: Summarize / Draft / Extract / Explain / Analyze / Create"
+"Add context: describe what the document is, who the audience is, and what the output is for"
+"Declare output format: bullet list, table, paragraph, numbered steps, or named template"
+"Add constraints: specify tone, word count, audience level (technical/non-technical), and scope"
+"Define acceptance criteria: describe what a good output looks like before you submit your prompt"
+Cluster Overview
+Largest headcount cluster in Infovision; primary target for Phase 1 validator rollout
+Developer sub-profile: anyone spending >60% of time writing new code or fixing defects against story requirements
+QA sub-profile: anyone validating software quality through manual test execution, automation, or defect management
+SDET profile: hybrid — applies both Developer and QA guidelines; recommend composite persona assignment in the validator
+Both sub-profiles operate in high-precision, low-tolerance environments where prompt errors have direct delivery consequences
+Writes new code against user story requirements and technical design specifications
+Debugs, refactors, and optimizes existing codebases across frontend, backend, and services layers
+Designs architecture at component, service, and system level
+Conducts peer code reviews and integrates third-party APIs and services
+Uses AI copilots and chat for code generation, explanation, review, and documentation
+Developer — Decisions Supported
+Architecture and design pattern selection within project-approved stack
+Trade-off evaluation: performance vs. maintainability vs. delivery speed
+Library and dependency selection within organizational governance rules
+Code quality gate decisions: fix now vs. log as tech debt
+Designs test plans, strategies, and test suite architectures aligned to user story acceptance criteria
+Writes and executes manual and automated test cases across functional, regression, and UAT phases
+Files, tracks, and prioritizes defects through Jira or equivalent defect management tools
+Develops automation scripts (SDET) using Selenium, Cypress, Playwright, Appium, or similar frameworks
+Provides go/no-go release recommendations based on test coverage and open defect severity
+QA Engineer — Decisions Supported
+Test coverage scope: what to test, defer, or skip based on risk and sprint priority
+Defect severity classification: P1 blocker through P4 minor
+Go/no-go release recommendation
+Manual vs. automated execution strategy per release phase
+Shared Cluster Decisions
+Both sub-profiles contribute to sprint quality gate assessments
+Both use AI tools for artifact generation: code or test cases
+Both need to validate AI-generated output against acceptance criteria before use
+Prompting Mode Classification
+Developer: Technical-dominant (code generation, debugging, architecture, review)
+QA: Validation-focused-dominant (test case generation, edge case analysis, defect reporting)
+Both: Internal-facing, precision-critical, high consequence for output errors
+SDET: Combines both technical and validation prompt patterns — hybrid profile recommended
+Code generation from user story or functional specification
+Bug root cause analysis and fix generation
+Code explanation and inline documentation generation
+Architecture advice and design pattern recommendation
+Unit and integration test generation
+Code review, security audit, and optimization prompts
+API integration, data transformation, and database query generation
+Refactoring prompts for legacy code modernization
+Developer — Example Use Cases
+Generate a REST endpoint in Node.js/Express for POST /users with JWT authentication and input validation
+Debug this Python function — it returns None when the input list is empty instead of returning []
+Refactor this Java service class to follow the Repository pattern with interface abstraction
+Write Jest unit tests for this React component covering 5 user interactions including error states
+Review this PR for OWASP Top 10 security vulnerabilities and suggest fixes
+Test case generation from user stories or acceptance criteria
+Test plan and test strategy drafting for a sprint or release
+Edge case and boundary condition identification for a feature
+Test automation script generation (Cypress, Playwright, Selenium)
+Regression test suite design and prioritization
+API test scenario generation from endpoint documentation
+Test data generation for specific coverage and boundary scenarios
+Defect report formatting and triage summarization
+QA Engineer — Example Use Cases
+Generate 10 test cases for the login module covering happy path, invalid credentials, account lockout, and session expiry
+Write a Cypress automation script for the checkout flow based on these 5 acceptance criteria
+Identify all edge cases for this file upload feature including size limits, format validation, and network timeouts
+Create a regression test suite for the payment module covering 3 previous critical defects
+Generate boundary value test data for an age field accepting values 18–120
+Quality Dimension Importance (Cluster View)
+Technical Precision: CRITICAL for Developer (language, framework, version non-negotiable); HIGH for QA SDET automation
+Edge-Case Coverage: CRITICAL for QA (primary job is finding failure modes); HIGH for Developer (unhandled edges become bugs)
+Testability: CRITICAL for QA; HIGH for Developer (generated code should be verifiable)
+Specificity: CRITICAL for both sub-profiles — vague prompts produce boilerplate code or incomplete test coverage
+Context Completeness: HIGH for both — codebase context for Developer, user story context for QA
+Reproducibility: HIGH for both — reliable output for CI/CD (Developer) and consistent test execution (QA)
+Accuracy: HIGH for both — wrong code and wrong expected test results are both worse than no output
+Note: * Technical Precision score for QA Engineer is 7 for manual test case generation; rises to 10 for SDET automation scripting. Assign SDET profile as a composite of Developer + QA Engineer.
+[Both] Explicit context — ALWAYS include what is already built, what exists in the codebase or user story, and what environment is in scope. Context is the #1 quality driver for both sub-profiles.
+[Developer] Technical precision — Specify language, framework, and version exactly: 'TypeScript 5.x, Node.js 20, Express 4.' Never leave these implied.
+[QA] Edge cases first — Always include: 'Cover boundary conditions, invalid inputs, network failures, concurrent access, and empty/null states.' Do not leave edge case coverage to the AI's discretion.
+[Both] Constraint definition — Define what is not allowed: disallowed libraries and security patterns (Developer); out-of-scope features, environment limitations, and test data constraints (QA).
+[QA] Acceptance criteria anchor — Every test prompt must reference the specific AC being validated: 'Generate test cases for AC3: user cannot submit with empty required fields.'
+[Developer] Output schema — Declare code structure expectations: file name, class name, function signatures, return types, and error handling patterns.
+[QA] Output schema — Specify test case format exactly: 'TC-ID | Preconditions | Steps | Expected Result | Priority.'
+[Both] Acceptance criteria in prompts — Developer: state expected inputs and outputs for validation. QA: state what constitutes a passing vs. failing test outcome.
+[Developer] Chain/task decomposition — For complex features, sequence: define interface → implement → write tests. Never combine all three in one prompt.
+[QA] Chain/task decomposition — Sequence test suite generation: happy path first → negative cases → edge cases → regression coverage.
+[Both] Avoid open-ended prompting — Never: 'Write code for authentication' or 'Test the login module.' Always bound with language, scope, and output structure.
+[SDET] Use composite profile — Apply Developer constraints (language, framework, pattern) AND QA constraints (AC anchor, edge cases, test format) simultaneously.
+Shared Cluster Checks (Both Sub-Profiles)
+Feature context or user story reference is provided
+Scope constraints are defined (what is in scope vs. out of scope)
+Output format is declared (code structure or test case format)
+Task type is declared: new code, bug fix, refactor (Developer); manual test, automation script, or regression (QA)
+Developer-Specific Checks
+Programming language and framework (with version) are specified
+Existing code context, interface signatures, or class structure are provided when relevant
+Disallowed libraries, performance requirements, and security standards are stated
+Edge cases are explicitly requested
+For security-critical code: OWASP standard or specific CVE reference is included
+QA Engineer-Specific Checks
+Acceptance criteria are referenced or embedded in the prompt
+Edge cases are explicitly requested (boundaries, null inputs, error states, concurrency)
+Test case format is declared with all required fields
+For SDET prompts: automation framework, language, and pattern (e.g., Page Object Model) are specified
+Traceability is requested (user story ID or AC reference per test case)
+Penalty Triggers
+[Developer] Missing language/framework specification — HIGH (output may use wrong syntax or deprecated patterns)
+[Developer] No codebase context for non-trivial generation — HIGH (hallucinated imports and undefined references)
+[QA] No AC or user story context — HIGH (test cases will not align to acceptance criteria)
+[QA] Edge cases not explicitly requested — HIGH (produces happy-path-only coverage; misses most defects)
+[Both] Open-ended prompt with no constraints — HIGH (worst violation for this cluster)
+[Both] No output format specified — MEDIUM
+[Developer] Security-critical code with no security constraint — HIGH
+[QA] No test format specification — MEDIUM (inconsistent, non-executable output)
+Most Useful Real-Time Suggestions
+"[Developer] Specify language and framework: e.g., 'TypeScript 5.x, Node.js 20, Express 4'"
+"[Developer] Provide codebase context: paste the relevant interface, class, or function signature"
+"[QA] Add user story reference: 'For US-123, generate test cases for AC2: user cannot submit empty form'"
+"[QA] Request edge cases explicitly: add 'Include boundary values, null inputs, timeout, and error states'"
+"[QA] Specify test format: TC-ID | Preconditions | Test Steps | Expected Result | Priority"
+"[Both] Define scope: state which features, modules, or scenarios are in scope and which are not"
+Role Responsibilities
+Manages scrum-based delivery cycles across sprint planning, review, and retrospective events
+Validates developer and QA effort estimates and AI-generated timeline suggestions
+Tracks and manages project financials, resourcing, and risk registers
+Creates and distributes weekly status updates, delivery forecasts, and leadership reports
+Facilitates cross-functional communication between India-based delivery teams and US-based clients
+Conducts t-shirt sizing workshops and story point calibration sessions
+Monitors sprint velocity, burndown trends, and delivery health metrics
+Manages escalation paths and dependency resolution across all four engagement models
+Decisions Supported
+Sprint scope acceptance vs. push-back based on team capacity and velocity
+Estimate validation: accept, challenge, or escalate AI-generated timeline suggestions
+Escalation vs. resolution path for blockers and dependencies
+Resource allocation and skill-fit decisions for sprint staffing
+Risk prioritization and mitigation strategy selection per engagement model
+Prompting Mode Classification
+Operational: sprint tracking, standup synthesis, issue log updates
+Analytical: velocity analysis, capacity planning, estimate benchmarking using historical data
+Strategic: leadership reporting, roadmap risk forecasting, stakeholder alignment
+Internal-facing (team-level sprint communications) and leadership-facing (executive dashboards)
+Reproducibility-critical: weekly reports must be consistently structured across delivery cycles
+Typical Prompt Types
+Sprint summary and status report generation
+Timeline and capacity analysis from provided sprint data
+T-shirt sizing validation using reference velocity and comparable stories
+Risk log synthesis and dependency impact analysis
+Weekly/bi-weekly leadership update drafting (US client and internal)
+Developer and QA estimate validation using AI-assisted benchmarking
+Retrospective action item summarization with owner assignment
+Burndown and velocity trend analysis and narrative generation
+Resource utilization and allocation report generation
+Common Use Cases
+Generate a weekly status report from these sprint board snapshots for the US client in fixed-bid format
+Validate whether this 3-week estimate is reasonable given the team's last 4 sprints of velocity data
+Summarize this sprint retrospective transcript into action items with owners and due dates
+Identify timeline risks in this 8-sprint release plan based on team capacity and current dependencies
+Draft a leadership escalation note for the authentication module delay with root cause and mitigation
+T-shirt size these 10 user stories using this team's historical story point distribution
+Quality Dimension Importance
+Output Format: CRITICAL — leadership reports and sprint summaries must follow fixed, reusable templates; format is the #1 expectation
+Reproducibility: HIGH — weekly reports must maintain consistent structure across cycles; inconsistency erodes stakeholder trust
+Context: HIGH — sprint number, team composition, velocity baseline, dates, and scope must all be embedded in the prompt
+Specificity: HIGH — vague capacity inputs produce incorrect forecasts and unreliable estimate validation
+Prioritization: HIGH — work ordering, risk ranking, and dependency sequencing must be explicit
+Actionability: HIGH — every PM output must drive a stakeholder decision or team action
+Engagement model awareness: MEDIUM-HIGH — fixed bid vs. T&M vs. managed services changes what the report communicates
+Speed: MEDIUM — sprint cadence requires fast output, but accuracy must not be sacrificed
+Output schema first — ALWAYS declare the deliverable format before any other content: status report, risk log, sprint summary, estimate comparison table, or escalation note.
+Explicit context embedding — Always embed: sprint number, team name, velocity baseline, reporting period, dates, and engagement model. Never omit sprint context.
+Reproducibility template — For recurring deliverables, anchor to prior output: 'Use the same structure as last week's status report with the following updates.'
+Instruction hierarchy — For complex PM prompts, sequence the request: analyze the data first, summarize findings second, then provide a recommended action.
+Engagement model calibration — Always state: fixed bid, T&M, managed services, or staff augmentation. This changes the tone, detail level, and framing of client-facing reports.
+Constraints definition — Define audience level (executive vs. team), maximum word count, number of status bullets, and escalation criteria.
+Prioritization framing — For backlog, capacity, or risk prompts, include priority criteria explicitly: 'Rank risks by likelihood × impact.'
+Grounded references for estimates — For estimate validation, always provide: team velocity history, comparable story references, and sprint calendar. Never accept AI-generated estimates without data grounding.
+Chain/task decomposition — Break large PM prompts: first extract data insights, then structure the report narrative, then add recommendations with owners.
+Acceptance criteria — Define: 'The output should include: current sprint status, red/yellow/green indicators, top 3 blockers, and recommended next actions.'
+Avoid open-ended reporting prompts — Never: 'Summarize this project.' Always: 'Summarize sprint 14 status in 4 bullets for executive audience, flagging any items at risk of SLA breach.'
+What the Validator Must Check
+Output format or report type is explicitly declared at the start of the prompt
+Sprint context is fully embedded: sprint number, team, dates, scope, and velocity baseline
+Audience level is specified: executive, client, delivery team, or mixed
+Engagement model context is present for client-facing or financial reports
+Any estimate validation prompt includes reference velocity data or comparable story history
+Prompt is structured (not open-ended); specific output sections are requested
+Penalty Triggers
+No report format specified — HIGH penalty (output will lack professional structure and require full rework)
+Missing sprint or team context in analysis prompts — HIGH penalty (produces generic, non-deliverable output)
+Estimate validation without historical velocity data — MEDIUM penalty (AI will hallucinate estimates)
+Open-ended project summary request — MEDIUM penalty
+Leadership report prompt without audience specification — MEDIUM penalty
+Missing engagement model context for client-facing content — MEDIUM penalty
+Most Useful Real-Time Suggestions
+"Declare report format first: status report, risk log, sprint summary, estimate comparison, or escalation note"
+"Embed sprint context: sprint number, team name, velocity baseline, reporting period, start and end dates"
+"Specify audience: executive summary (3–5 bullets) vs. full operational report (detailed sections)"
+"Add engagement model: fixed bid, T&M, managed services, or staff augmentation"
+"For estimate validation: provide team velocity history (last 4 sprints) and 2–3 comparable story references"
+Cluster Overview
+Business Intelligence cluster covering two business-facing personas with overlapping but distinct prompt needs
+BA sub-profile: primarily analytical and document-heavy; prompts focus on extracting, synthesizing, and structuring information from large document sets
+PO sub-profile: primarily strategic and translation-focused; prompts focus on business-technical language conversion and product decision support
+Both sub-profiles produce structured deliverables (BRDs, SOPs, user stories, roadmaps) that feed directly into delivery execution
+BA and PO are the primary consumers of competitive, market, and stakeholder data within the organization
+Collects, documents, and manages business and functional requirements from stakeholder inputs
+Bridges business stakeholders and technical delivery teams through structured requirements documentation
+Analyzes large document repositories to extract specific business details and requirements
+Maps existing processes and identifies gaps for AI or automation conversion readiness
+Defines and documents standard operating procedures (SOPs) for process digitization
+Business Analyst — Decisions Supported
+Requirements scoping and prioritization (in scope vs. out of scope)
+Process gap identification and improvement opportunity classification
+SOP readiness assessment for AI/automation conversion
+Feasibility analysis for proposed business process changes
+Defines, maintains, and prioritizes the product backlog across all delivery tracks
+Translates business vision and client requirements into actionable user stories with acceptance criteria
+Converts technical capabilities and constraints into business-language feature descriptions for stakeholders
+Drives competitive product analysis and feature benchmarking for roadmap decisions
+Manages product roadmap communication across all four Infovision engagement models
+Product Owner — Decisions Supported
+Feature prioritization and roadmap sequencing (MoSCoW, WSJF, value vs. effort)
+MVP scope definition and scope change management
+Build vs. buy vs. partner evaluation
+Acceptance criteria sign-off on delivered user stories
+Shared Cluster Decisions
+Both contribute to requirements definition and validation
+Both translate between business stakeholders and technical delivery teams
+Both produce structured deliverables (BRDs, user stories, SOPs, roadmaps) that drive sprint execution
+Prompting Mode Classification
+BA: Analytical and document-heavy; output must trace to source documents, not be generated freely
+PO: Strategic and translation-focused; output must serve specific business or technical audiences
+Both: Internal-facing (delivery teams and leadership) and external-facing (client stakeholders)
+Both: Structured output-oriented — generic or unformatted responses have low professional value
+Requirements elicitation and documentation from stakeholder notes or interview transcripts
+Document synthesis: extracting specific details from large document sets (50+ pages)
+Process flow mapping and gap analysis against current-state descriptions
+SOP drafting from interview transcripts or operational process descriptions
+Data interpretation and pattern identification from pre-provided structured datasets
+AI readiness assessment: evaluating process suitability for automation
+Business Analyst — Example Use Cases
+Extract all functional requirements from this 50-page stakeholder interview transcript
+Compare these three vendor proposals and summarize feature capability gaps in a matrix
+Map this current-state process into a structured swim lane flow with decision points
+Identify which SOPs in this document set are candidates for AI automation based on these criteria
+Draft acceptance criteria for the requirements documented in Section 3 of this BRD
+User story drafting with acceptance criteria from business feature requests
+Business-to-technical feature translation for the development team
+Technical-to-business feature description for stakeholders and clients
+Competitive product analysis and feature gap identification
+Roadmap narrative and prioritization rationale drafting
+Product one-pager and executive brief generation
+Product Owner — Example Use Cases
+Convert this business requirement into 3 user stories with acceptance criteria for the dev team
+Rewrite these 5 technical API specifications as stakeholder-friendly feature descriptions
+Compare our product feature set against this competitor's published feature matrix
+Draft a prioritized Q3 product roadmap from these stakeholder interview notes
+Generate the sprint review summary for this sprint's delivered stories for client presentation
+Quality Dimension Importance (Cluster View)
+Context Completeness: CRITICAL for BA (document scope and domain boundaries); HIGH for PO (market, user, and engagement context)
+Retrieval Grounding: CRITICAL for BA (all findings must trace to source documents); MEDIUM for PO (competitive data should be grounded)
+Business Relevance: HIGH for BA (analysis must serve business decisions); CRITICAL for PO (every output must connect to product value)
+Output Format: HIGH for both — BRDs, SOPs, user stories, and roadmaps all have professional structural standards
+Specificity: HIGH for both — vague BA analysis is unusable; vague PO requirements create divergent builds
+Prioritization: LOW for BA; CRITICAL for PO — backlog and roadmap decisions require explicit priority framing
+Accuracy: HIGH for BA (requirements errors are expensive); MEDIUM-HIGH for PO (competitive claims must be accurate)
+Note: Prioritization Clarity score of 3 for BA reflects that BA analysis is not primarily ordered by priority; this dimension rises to 9 for PO as it is a core workflow dimension.
+[BA] Grounded references — ALWAYS specify: 'Based on [Document Name, Section X], extract/analyze/summarize.' Never allow unconstrained generation for BA work; hallucination in requirements is expensive.
+[PO] Clear task framing with audience declaration — State: 'Act as a PO. [Draft/Translate/Analyze] for [technical team / business stakeholder / client executive].' Audience must always be declared.
+[Both] Explicit context — BA: define business domain, project scope, and source document. PO: define product domain, user persona, sprint context, and engagement model.
+[Both] Output schema — BA: specify BRD section, requirements table, process flow, or gap analysis matrix. PO: specify user story format (As a / I want / So that / AC), PRD section, roadmap table, or executive brief.
+[BA] When to require citations — Always: require source document and section reference for every requirement or finding listed. No uncited requirements are acceptable.
+[PO] Acceptance criteria — For all user story prompts: always request explicit, testable, and numbered acceptance criteria. Minimum 3 ACs per story.
+[BA] Constraint definition — Define scope boundaries: 'Focus only on the customer onboarding process; exclude payment flows.' Prevents analysis sprawl across large documents.
+[PO] Prioritization framing — For backlog or roadmap prompts: include the prioritization framework explicitly (MoSCoW, WSJF, value vs. effort matrix).
+[Both] Chain/task decomposition — For complex analysis, sequence the work: extract first, classify second, prioritize third, recommend last. Never combine all steps in a single prompt.
+[BA] Inference boundary — State explicitly: 'List only requirements explicitly stated in the document. Do not infer or add unstated requirements.' Ambiguity in this instruction is costly.
+[PO] Examples — Provide a sample user story or feature brief format when onboarding the AI to a new product or project context.
+[Both] Avoid open-ended prompting — BA: never 'Analyze this document.' PO: never 'Write user stories for this feature.' Always bound with scope, audience, and output structure.
+Shared Cluster Checks (Both Sub-Profiles)
+Output format or deliverable type is declared (BRD, user story, process map, roadmap table, gap matrix)
+Scope boundaries are defined (what domain, module, or process is in focus)
+Target audience is specified (technical team, business stakeholder, or client executive)
+Business Analyst-Specific Checks
+Source document is explicitly referenced — unconstrained generation is never acceptable for BA prompts
+Citation requirement is stated: source document and section must be referenced for every finding
+Inference boundary is declared: explicitly state whether AI should list only explicit requirements or may infer
+Analysis scope is bounded to a specific domain, process, or document section
+Product Owner-Specific Checks
+Translation direction is declared (business-to-technical or technical-to-business)
+Target audience is named (scrum team, executive, client stakeholder)
+Acceptance criteria are requested for every user story prompt (minimum 3 per story)
+Prioritization framework is stated for backlog or roadmap prompts
+Penalty Triggers
+[BA] No source document reference for requirements extraction — HIGH penalty (hallucination risk is severe and expensive)
+[BA] Open-ended analysis prompt with no scope definition — HIGH penalty
+[BA] No inference boundary stated — MEDIUM penalty (AI may add requirements not present in source)
+[PO] Missing audience specification for translation prompts — HIGH penalty (output may be unusable for intended reader)
+[PO] User story prompt without acceptance criteria request — HIGH penalty
+[Both] Missing output format specification — MEDIUM penalty
+[PO] Competitive analysis prompt without source data reference — MEDIUM penalty
+[BA] No citation requirement stated — MEDIUM penalty
+Most Useful Real-Time Suggestions
+"[BA] Reference your source document: 'From [document name, section X], extract...'"
+"[BA] Add citation instruction: 'Reference the source section for each requirement listed'"
+"[BA] Define inference policy: 'List only explicitly stated requirements; do not infer unstated ones'"
+"[PO] Specify your target audience: development team, business stakeholder, or executive"
+"[PO] Add acceptance criteria request: 'Include 3–5 testable acceptance criteria per user story'"
+"[PO] Add prioritization framework: MoSCoW, WSJF, or value vs. effort matrix"
+"[Both] Define output format: BRD section, user story table, requirements matrix, or executive brief"
+Role Responsibilities
+Handles inbound and outbound customer and internal support tickets at high volume
+Resolves service requests via phone, chat, email, Jira, and ServiceNow platforms
+Follows scripted SOPs, escalation procedures, and approved response templates
+Performs ticket triaging, categorization, priority assignment, and routing
+Tracks SLA compliance and escalation threshold adherence
+Documents resolution steps and closes tickets post-resolution
+Bridges customers and internal resolver teams during incidents and critical issues
+Decisions Supported
+Ticket priority classification and routing (P1/P2/P3) based on impact and urgency
+Escalate vs. self-resolve determination against SLA and policy thresholds
+Response tone calibration per communication channel (email vs. phone vs. chat)
+Knowledge base article selection and recommendation for issue resolution
+Workaround vs. permanent fix recommendation communication to the customer
+Prompting Mode Classification
+Predominantly operational and customer-facing — highest volume, lowest prompt complexity of all clusters
+Tone-critical: wrong tone is immediately visible to the customer and has direct brand impact
+Compliance-critical: responses must not violate refund, SLA, escalation, or regulatory policies
+Template-driven: response format is often pre-defined; the prompt drives content, not layout
+Speed-first: high-volume environment penalizes slow prompt construction; prompts must be fast and reliable
+Typical Prompt Types
+Customer reply drafts for issue resolution (email, chat, phone script)
+Ticket summary and classification prompts for routing
+SOP lookup and knowledge base query prompts
+Escalation notes for resolver teams or Level 2 support
+Status update generation for tickets open past SLA threshold
+Macro and response template suggestion for common issue categories
+Sentiment analysis and rephrasing prompts for difficult customer interactions
+Common Use Cases
+Draft a polite but firm email declining a refund request that falls outside the 30-day policy window
+Summarize this 8-email thread into a one-paragraph Jira ticket description with key issue and current status
+Suggest the correct ServiceNow category and subcategory for a reported login failure on mobile
+Draft a follow-up email for a ticket that has been open 48 hours past SLA with an apology and ETA
+Rephrase this technical error message into plain English for a non-technical customer
+Write a warm-transfer script for handing this billing issue off to the Level 2 finance team
+Quality Dimension Importance
+Tone: CRITICAL — wrong tone damages customer relationships and brand trust; this is the #1 quality dimension for Support
+Compliance/Policy: HIGH — responses must never violate refund, SLA, escalation, or regulatory policies
+Speed: HIGH — high-volume environment penalizes slow or over-engineered prompt construction
+Clarity: HIGH — output must be immediately usable without heavy editing; rewriting wastes resolution time
+Reproducibility: MEDIUM-HIGH — same issue type should yield consistent response quality across all agents
+Context: MEDIUM-HIGH — ticket channel, customer tier, and issue type must be provided for accurate output
+Structure: MEDIUM — templates are often pre-defined; prompt drives content within an established structure
+Precision: MEDIUM — conversational responses need appropriate detail; exhaustive specification is counterproductive
+Clear task framing — Always state: 'Draft a [email/chat/phone script/internal note] for a customer experiencing [issue] via [channel].' Never omit output type and channel.
+Audience specification — Declare explicitly: customer-facing or internal note. These require completely different tone, language level, and content. Never leave this ambiguous.
+Tone constraints — Define tone before any other instruction: empathetic, firm, apologetic, informative, or neutral. Tone is the #1 validator check for Support prompts.
+Compliance grounding — Embed policy reference directly in the prompt: 'Per our 30-day return policy...' or 'Per SLA Tier 1 response time of 4 hours...' Do not leave policy application to the AI.
+Output schema — Specify expected output format: reply email, escalation note, closure message, ticket summary, or phone handoff script.
+Constraints — Define: maximum word count, greeting/closing format, and whether attachments or links should be referenced.
+Concise prompting — Support operates at speed; prompts must not be verbose or over-structured. Speed and tone accuracy are the primary success metrics.
+When to avoid open-ended prompting — Never use open-ended prompts for customer responses. Always bound with tone, policy, channel, and output type. No exceptions.
+Examples for non-standard tone — When tone requirements are unusual (e.g., 'firm but not confrontational'), provide a one-sentence example of the desired output tone.
+Deterministic formatting for recurring responses — Closure messages, SLA breach notifications, and escalation notes must follow fixed templates. Always request template adherence.
+What the Validator Must Check
+Tone directive is present: empathetic, firm, apologetic, informative, or neutral
+Communication channel is specified: email, live chat, phone script, or internal note
+Output format/type is declared: reply, escalation note, ticket summary, closure message
+Policy context is embedded or referenced directly in the prompt
+Customer context is provided: tier, issue type, urgency, and SLA status
+Prompt is not open-ended — every support prompt must be constrained by tone and output type
+Penalty Triggers
+Missing tone specification — HIGH penalty (this is the single most impactful failure for Support output quality)
+No channel context — MEDIUM penalty (email vs. chat vs. phone output differs significantly in structure and tone)
+Open-ended prompt with no output type — MEDIUM penalty
+Missing compliance or policy reference for sensitive issue types (refunds, SLA breach, legal) — HIGH penalty
+Prompt requesting multiple output formats without declaring priority — LOW penalty
+Most Useful Real-Time Suggestions
+"Add tone directive: specify empathetic, firm, apologetic, informative, or neutral"
+"Specify output channel: email, live chat, internal note, or phone transfer script"
+"Reference applicable policy: e.g., '30-day return policy' or 'SLA Tier 1 — 4-hour response'"
+"Narrow to a single output type to improve format consistency and reduce rework"
+"Add customer tier or account context to personalize the response correctly"
+[TABLE CELL]: 0
+[TABLE CELL]: All Infovision Employees
+Universal Baseline
+[TABLE CELL]: 1
+[TABLE CELL]: Developer + QA Engineer
+Technical Engineering Cluster
+[TABLE CELL]: 2
+[TABLE CELL]: Technical PM / Project Manager
+Project Intelligence
+[TABLE CELL]: 3
+[TABLE CELL]: Business Analyst + Product Owner
+Business Intelligence Cluster
+[TABLE CELL]: 4
+[TABLE CELL]: Support Staff
+Operational & CX Cluster
+[TABLE CELL]: Tier
+[TABLE CELL]: Persona
+[TABLE CELL]: Scope
+[TABLE CELL]: Tier 1 — Universal
+[TABLE CELL]: Persona 0
+[TABLE CELL]: Applied to ALL Infovision employees regardless of role; covers universal prompt hygiene
+[TABLE CELL]: Tier 2 — Role-Specific
+[TABLE CELL]: Personas 1–4
+[TABLE CELL]: Applied as a second scoring layer based on employee role assignment; elevates relevant dimensions
+[TABLE CELL]: Priority
+[TABLE CELL]: Persona
+[TABLE CELL]: Rationale
+[TABLE CELL]: 1st
+[TABLE CELL]: P0: All Employees
+[TABLE CELL]: Universal — Phase 0 rollout; establishes organizational baseline before role specificity
+[TABLE CELL]: 2nd
+[TABLE CELL]: P1: Developer + QA
+[TABLE CELL]: Largest headcount cluster; highest AI prompt volume; direct delivery quality impact
+[TABLE CELL]: 3rd
+[TABLE CELL]: P2: Technical PM / PM
+[TABLE CELL]: Sprint cadence creates high weekly report prompt volume; estimate validation is high-value use case
+[TABLE CELL]: 4th
+[TABLE CELL]: P3: BA + PO
+[TABLE CELL]: Document-heavy and product-critical; retrieval grounding enforcement has high ROI
+[TABLE CELL]: 5th
+[TABLE CELL]: P4: Support Staff
+[TABLE CELL]: Customer-facing; compliance and tone enforcement are non-negotiable but volume is more controlled
+[TABLE CELL]: PERSONA 0: All Infovision Employees
+Universal Baseline — Every Employee Using Any AI Tool, Interface, or Copilot
+[TABLE CELL]: SECTION A
+[TABLE CELL]: Role Summary
+What this persona does, what decisions they support, and their primary prompting mode
+[TABLE CELL]: SECTION B
+[TABLE CELL]: Prompt Usage Patterns
+Types of prompts, typical use cases, and how quality dimensions matter
+[TABLE CELL]: SECTION C
+[TABLE CELL]: Most Important Prompt Quality Dimensions
+Ranked 10–14 dimensions with objective scores (1 = minimum, 10 = maximum weight)
+[TABLE CELL]: Rank
+[TABLE CELL]: Quality Dimension
+[TABLE CELL]: Score (1–10)
+[TABLE CELL]: Rationale
+[TABLE CELL]: 1
+[TABLE CELL]: Clarity
+[TABLE CELL]: 10
+[TABLE CELL]: Applies universally; unclear prompts produce poor output in every role and tool context
+[TABLE CELL]: 2
+[TABLE CELL]: Context Completeness
+[TABLE CELL]: 9
+[TABLE CELL]: Every prompt benefits from context about purpose, audience, and source material
+[TABLE CELL]: 3
+[TABLE CELL]: Specificity
+[TABLE CELL]: 9
+[TABLE CELL]: Vague prompts produce generic, non-actionable output regardless of the AI tool used
+[TABLE CELL]: 4
+[TABLE CELL]: Output Format Clarity
+[TABLE CELL]: 8
+[TABLE CELL]: Declaring expected format (list, summary, table, paragraph) improves usability for all employees
+[TABLE CELL]: 5
+[TABLE CELL]: Ambiguity Reduction
+[TABLE CELL]: 8
+[TABLE CELL]: Ambiguity in task framing causes rework across every organizational function
+[TABLE CELL]: 6
+[TABLE CELL]: Constraint Definition
+[TABLE CELL]: 7
+[TABLE CELL]: Stating scope, length, tone, and audience constraints improves output relevance universally
+[TABLE CELL]: 7
+[TABLE CELL]: Actionability
+[TABLE CELL]: 7
+[TABLE CELL]: Outputs must enable next actions; information without direction has low enterprise value
+[TABLE CELL]: 8
+[TABLE CELL]: Accuracy Orientation
+[TABLE CELL]: 6
+[TABLE CELL]: Grounding prompts in provided facts reduces AI hallucination risk for all users
+[TABLE CELL]: 9
+[TABLE CELL]: Role / Task Alignment
+[TABLE CELL]: 5
+[TABLE CELL]: Framing the prompt to match the actual deliverable type improves output fit
+[TABLE CELL]: 10
+[TABLE CELL]: Business Relevance
+[TABLE CELL]: 5
+[TABLE CELL]: All employee prompts should connect to a real work objective, not purely exploratory use
+[TABLE CELL]: SECTION D
+[TABLE CELL]: Role-Specific Guideline Emphasis
+Prompting best practices ordered from most to least critical for this persona
+[TABLE CELL]: SECTION E
+[TABLE CELL]: Weighting Recommendation Input
+Percentage importance distribution. Sum = 100%. Graph-ready data.
+[TABLE CELL]: Quality Dimension
+[TABLE CELL]: Baseline Weight (%)
+[TABLE CELL]: Rationale
+[TABLE CELL]: Clarity
+[TABLE CELL]: 22%
+[TABLE CELL]: Highest universal weight; clear prompts improve output quality for every employee
+[TABLE CELL]: Context Completeness
+[TABLE CELL]: 18%
+[TABLE CELL]: Input quality is the top controllable driver of output relevance
+[TABLE CELL]: Specificity
+[TABLE CELL]: 16%
+[TABLE CELL]: Eliminates generic and non-actionable responses across all use cases
+[TABLE CELL]: Output Format Clarity
+[TABLE CELL]: 14%
+[TABLE CELL]: Format declaration directly improves downstream usability
+[TABLE CELL]: Ambiguity Reduction
+[TABLE CELL]: 12%
+[TABLE CELL]: Reduces rework across all organizational functions
+[TABLE CELL]: Constraint Definition
+[TABLE CELL]: 10%
+[TABLE CELL]: Scope and limit-setting improves output precision universally
+[TABLE CELL]: Actionability
+[TABLE CELL]: 5%
+[TABLE CELL]: Output-to-action linkage drives enterprise value
+[TABLE CELL]: Accuracy Orientation
+[TABLE CELL]: 3%
+[TABLE CELL]: Grounding request reduces hallucination baseline
+[TABLE CELL]: SECTION F
+[TABLE CELL]: Validator Design Implications
+What to check, what triggers penalties, and what real-time suggestions help most
+[TABLE CELL]: PERSONA 1: Developer + QA Engineer
+Technical Engineering Cluster | Software Engineers · Architects · QA Engineers · SDETs
+[TABLE CELL]: SECTION A
+[TABLE CELL]: Role Summary
+Cluster overview with sub-profile breakdown of responsibilities and decisions
+[TABLE CELL]: ▸ Developer — Role Responsibilities
+[TABLE CELL]: ▸ QA Engineer — Role Responsibilities
+[TABLE CELL]: SECTION B
+[TABLE CELL]: Prompt Usage Patterns
+Sub-profile prompt types, use cases, and dimension importance
+[TABLE CELL]: ▸ Developer — Prompt Types & Use Cases
+[TABLE CELL]: ▸ QA Engineer — Prompt Types & Use Cases
+[TABLE CELL]: SECTION C
+[TABLE CELL]: Most Important Prompt Quality Dimensions
+Dual-score view: Developer vs. QA Engineer scores (1 = minimum, 10 = maximum weight)
+[TABLE CELL]: Rank
+[TABLE CELL]: Quality Dimension
+[TABLE CELL]: Developer
+[TABLE CELL]: QA Engineer
+[TABLE CELL]: Rationale
+[TABLE CELL]: 1
+[TABLE CELL]: Specificity
+[TABLE CELL]: 10
+[TABLE CELL]: 9
+[TABLE CELL]: Vague prompts produce boilerplate code (Dev) or incomplete test coverage (QA)
+[TABLE CELL]: 2
+[TABLE CELL]: Technical Precision
+[TABLE CELL]: 10
+[TABLE CELL]: 7 / 10*
+[TABLE CELL]: Language/framework specificity is non-negotiable for Dev; elevated to 10 for SDET automation
+[TABLE CELL]: 3
+[TABLE CELL]: Edge-Case Coverage
+[TABLE CELL]: 8
+[TABLE CELL]: 10
+[TABLE CELL]: Unhandled edges become production bugs (Dev); QA's primary job is finding failure modes
+[TABLE CELL]: 4
+[TABLE CELL]: Testability
+[TABLE CELL]: 8
+[TABLE CELL]: 10
+[TABLE CELL]: Generated code must be verifiable (Dev); test cases must be executable (QA)
+[TABLE CELL]: 5
+[TABLE CELL]: Context Completeness
+[TABLE CELL]: 9
+[TABLE CELL]: 8
+[TABLE CELL]: Codebase/environment context (Dev); user story and AC context (QA)
+[TABLE CELL]: 6
+[TABLE CELL]: Constraint Definition
+[TABLE CELL]: 9
+[TABLE CELL]: 8
+[TABLE CELL]: Disallowed libraries, performance targets, security standards (Dev); test scope, data limits (QA)
+[TABLE CELL]: 7
+[TABLE CELL]: Accuracy Orientation
+[TABLE CELL]: 8
+[TABLE CELL]: 9
+[TABLE CELL]: Wrong code is worse than no code; incorrect expected results make tests useless
+[TABLE CELL]: 8
+[TABLE CELL]: Output Format Clarity
+[TABLE CELL]: 8
+[TABLE CELL]: 8
+[TABLE CELL]: Code format, file/class structure (Dev); test case ID, steps, expected result (QA)
+[TABLE CELL]: 9
+[TABLE CELL]: Reproducibility
+[TABLE CELL]: 8
+[TABLE CELL]: 8
+[TABLE CELL]: Consistent output for recurring CI/CD tasks (Dev); consistent test execution across testers (QA)
+[TABLE CELL]: 10
+[TABLE CELL]: Ambiguity Reduction
+[TABLE CELL]: 7
+[TABLE CELL]: 7
+[TABLE CELL]: Ambiguous prompts produce hallucinated logic paths (Dev) and inconsistent test steps (QA)
+[TABLE CELL]: 11
+[TABLE CELL]: Traceability
+[TABLE CELL]: 5
+[TABLE CELL]: 7
+[TABLE CELL]: Story ID reference (Dev); test cases must trace to AC and user story IDs (QA)
+[TABLE CELL]: 12
+[TABLE CELL]: Clarity
+[TABLE CELL]: 6
+[TABLE CELL]: 6
+[TABLE CELL]: Prompt clarity prevents misinterpretation of functional intent for both sub-profiles
+[TABLE CELL]: 13
+[TABLE CELL]: Role/Task Alignment
+[TABLE CELL]: 6
+[TABLE CELL]: 6
+[TABLE CELL]: Task type must be declared: new feature, bug fix, refactor (Dev); manual vs. automation test (QA)
+[TABLE CELL]: 14
+[TABLE CELL]: Compliance / Policy Sensitivity
+[TABLE CELL]: 5
+[TABLE CELL]: 5
+[TABLE CELL]: Security vulnerabilities, licensing (Dev); PII handling in test data, regulatory test requirements (QA)
+[TABLE CELL]: SECTION D
+[TABLE CELL]: Role-Specific Guideline Emphasis
+Best practices ordered by criticality. Tags: [Developer] / [QA Engineer] / [Both]
+[TABLE CELL]: SECTION E
+[TABLE CELL]: Weighting Recommendation Input
+Sub-profile percentage distributions. Each sums to 100%. Graph-ready.
+[TABLE CELL]: ▸ Developer Sub-Profile — Weight Distribution
+[TABLE CELL]: Quality Dimension
+[TABLE CELL]: Weight (%)
+[TABLE CELL]: Rationale
+[TABLE CELL]: Technical Precision
+[TABLE CELL]: 18%
+[TABLE CELL]: Primary code quality determinant; language and framework specificity is non-negotiable
+[TABLE CELL]: Specificity
+[TABLE CELL]: 15%
+[TABLE CELL]: Eliminates boilerplate and hallucinated logic
+[TABLE CELL]: Context Completeness
+[TABLE CELL]: 13%
+[TABLE CELL]: Codebase and environment grounding
+[TABLE CELL]: Constraint Definition
+[TABLE CELL]: 12%
+[TABLE CELL]: Guards against disallowed libraries, performance violations, and security gaps
+[TABLE CELL]: Edge-Case Coverage
+[TABLE CELL]: 10%
+[TABLE CELL]: Prevents production defects from unhandled scenarios
+[TABLE CELL]: Reproducibility
+[TABLE CELL]: 8%
+[TABLE CELL]: Consistency for recurring code generation tasks
+[TABLE CELL]: Output Format Clarity
+[TABLE CELL]: 7%
+[TABLE CELL]: Code structure and format standards
+[TABLE CELL]: Accuracy Orientation
+[TABLE CELL]: 6%
+[TABLE CELL]: Correctness is the primary acceptance criterion
+[TABLE CELL]: Testability
+[TABLE CELL]: 5%
+[TABLE CELL]: Verifiability of AI-generated code
+[TABLE CELL]: Ambiguity Reduction
+[TABLE CELL]: 4%
+[TABLE CELL]: Prevents silent logic errors from ambiguous prompts
+[TABLE CELL]: Role/Task Alignment
+[TABLE CELL]: 1%
+[TABLE CELL]: Task type declaration (feature vs. bug fix vs. refactor)
+[TABLE CELL]: Clarity
+[TABLE CELL]: 1%
+[TABLE CELL]: Prompt readability and intent clarity
+[TABLE CELL]: ▸ QA Engineer Sub-Profile — Weight Distribution
+[TABLE CELL]: Quality Dimension
+[TABLE CELL]: Weight (%)
+[TABLE CELL]: Rationale
+[TABLE CELL]: Edge-Case Coverage
+[TABLE CELL]: 18%
+[TABLE CELL]: QA's primary quality dimension — finding failure modes is the core deliverable
+[TABLE CELL]: Testability
+[TABLE CELL]: 16%
+[TABLE CELL]: Test cases must be directly executable; non-executable output has zero value
+[TABLE CELL]: Specificity
+[TABLE CELL]: 13%
+[TABLE CELL]: Drives complete vs. partial coverage
+[TABLE CELL]: Accuracy Orientation
+[TABLE CELL]: 11%
+[TABLE CELL]: Incorrect expected results make test cases worse than having none
+[TABLE CELL]: Context Completeness
+[TABLE CELL]: 10%
+[TABLE CELL]: User story, AC, build version, and environment context required
+[TABLE CELL]: Output Format Clarity
+[TABLE CELL]: 8%
+[TABLE CELL]: Test case format adherence is mandatory for team execution consistency
+[TABLE CELL]: Constraint Definition
+[TABLE CELL]: 7%
+[TABLE CELL]: Test scope, data limits, and environment boundaries
+[TABLE CELL]: Reproducibility
+[TABLE CELL]: 6%
+[TABLE CELL]: Consistent results across testers, builds, and environments
+[TABLE CELL]: Traceability
+[TABLE CELL]: 5%
+[TABLE CELL]: AC and story-level linkage for audit and coverage reporting
+[TABLE CELL]: Ambiguity Reduction
+[TABLE CELL]: 3%
+[TABLE CELL]: Clear test steps prevent inconsistent execution
+[TABLE CELL]: Technical Precision
+[TABLE CELL]: 2%
+[TABLE CELL]: Elevated for SDET automation scripting; lower for manual test generation
+[TABLE CELL]: Clarity
+[TABLE CELL]: 1%
+[TABLE CELL]: Step interpretability for all testers including new joiners
+[TABLE CELL]: SECTION F
+[TABLE CELL]: Validator Design Implications
+Shared checks plus sub-profile-specific checks, penalty triggers, and real-time suggestions
+[TABLE CELL]: PERSONA 2: Technical PM / Project Manager
+Scrum Delivery | Sprint Planning | Estimate Validation | Leadership Reporting | Resource & Finance
+[TABLE CELL]: SECTION A
+[TABLE CELL]: Role Summary
+What this persona does, what decisions they support, and their primary prompting mode
+[TABLE CELL]: SECTION B
+[TABLE CELL]: Prompt Usage Patterns
+Types of prompts, typical use cases, and how quality dimensions matter
+[TABLE CELL]: SECTION C
+[TABLE CELL]: Most Important Prompt Quality Dimensions
+Ranked 10–14 dimensions with objective scores (1 = minimum, 10 = maximum weight)
+[TABLE CELL]: Rank
+[TABLE CELL]: Quality Dimension
+[TABLE CELL]: Score (1–10)
+[TABLE CELL]: Rationale
+[TABLE CELL]: 1
+[TABLE CELL]: Output Format Clarity
+[TABLE CELL]: 10
+[TABLE CELL]: Leadership reports and sprint summaries must follow fixed, professional, reusable formats
+[TABLE CELL]: 2
+[TABLE CELL]: Context Completeness
+[TABLE CELL]: 9
+[TABLE CELL]: Sprint number, team, velocity, dates, and scope must all be embedded in every planning or report prompt
+[TABLE CELL]: 3
+[TABLE CELL]: Specificity
+[TABLE CELL]: 9
+[TABLE CELL]: Vague capacity inputs produce incorrect forecasts; specificity in prompts drives precision in outputs
+[TABLE CELL]: 4
+[TABLE CELL]: Reproducibility
+[TABLE CELL]: 9
+[TABLE CELL]: Weekly reports and sprint reviews must maintain consistent structure to build stakeholder trust
+[TABLE CELL]: 5
+[TABLE CELL]: Prioritization Clarity
+[TABLE CELL]: 8
+[TABLE CELL]: Work backlog ordering, risk ranking, and dependency sequencing must be explicit in every planning prompt
+[TABLE CELL]: 6
+[TABLE CELL]: Actionability
+[TABLE CELL]: 8
+[TABLE CELL]: PM outputs must drive stakeholder decisions or team actions; informational-only output has low value
+[TABLE CELL]: 7
+[TABLE CELL]: Clarity
+[TABLE CELL]: 8
+[TABLE CELL]: Reports must be interpretable by both technical delivery teams and non-technical executives
+[TABLE CELL]: 8
+[TABLE CELL]: Traceability
+[TABLE CELL]: 7
+[TABLE CELL]: Status claims, estimates, and risk assessments must trace to story-level or sprint-level data
+[TABLE CELL]: 9
+[TABLE CELL]: Business Relevance
+[TABLE CELL]: 7
+[TABLE CELL]: Reports must be calibrated to the engagement model: fixed bid, T&M, managed services, or staff aug
+[TABLE CELL]: 10
+[TABLE CELL]: Constraint Definition
+[TABLE CELL]: 7
+[TABLE CELL]: Sprint capacity, team size, SLA thresholds, and budget ceiling must be defined in every analytical prompt
+[TABLE CELL]: 11
+[TABLE CELL]: Accuracy Orientation
+[TABLE CELL]: 6
+[TABLE CELL]: Timeline and forecast outputs must be grounded in real data, not assumed by the AI
+[TABLE CELL]: 12
+[TABLE CELL]: Ambiguity Reduction
+[TABLE CELL]: 6
+[TABLE CELL]: Unclear scope in planning prompts yields incorrect sprint plans and misaligned forecasts
+[TABLE CELL]: 13
+[TABLE CELL]: Role/Task Alignment
+[TABLE CELL]: 5
+[TABLE CELL]: Prompt framing must declare deliverable type: status report vs. risk analysis vs. estimate validation
+[TABLE CELL]: 14
+[TABLE CELL]: Edge-Case Coverage
+[TABLE CELL]: 4
+[TABLE CELL]: Risk scenarios, dependency conflicts, and team availability exceptions must be requested explicitly
+[TABLE CELL]: SECTION D
+[TABLE CELL]: Role-Specific Guideline Emphasis
+Prompting best practices ordered from most to least critical for this persona
+[TABLE CELL]: SECTION E
+[TABLE CELL]: Weighting Recommendation Input
+Percentage importance distribution. Sum = 100%. Graph-ready data.
+[TABLE CELL]: Quality Dimension
+[TABLE CELL]: Weight (%)
+[TABLE CELL]: Rationale
+[TABLE CELL]: Output Format Clarity
+[TABLE CELL]: 16%
+[TABLE CELL]: Template adherence is the highest-priority quality dimension for PM deliverables
+[TABLE CELL]: Context Completeness
+[TABLE CELL]: 13%
+[TABLE CELL]: Sprint and team context drives all forecasting and reporting accuracy
+[TABLE CELL]: Specificity
+[TABLE CELL]: 12%
+[TABLE CELL]: Precise inputs yield precise outputs, especially for capacity and estimate analysis
+[TABLE CELL]: Reproducibility
+[TABLE CELL]: 11%
+[TABLE CELL]: Consistent weekly reports build stakeholder trust over the delivery lifecycle
+[TABLE CELL]: Prioritization Clarity
+[TABLE CELL]: 10%
+[TABLE CELL]: Drives planning decisions and escalation calls
+[TABLE CELL]: Actionability
+[TABLE CELL]: 10%
+[TABLE CELL]: Every PM output must generate a stakeholder decision or team action
+[TABLE CELL]: Clarity
+[TABLE CELL]: 8%
+[TABLE CELL]: Readable by both technical and non-technical audience simultaneously
+[TABLE CELL]: Traceability
+[TABLE CELL]: 7%
+[TABLE CELL]: Status claims must be data-grounded, not assumed
+[TABLE CELL]: Business Relevance
+[TABLE CELL]: 5%
+[TABLE CELL]: Engagement model alignment for client-facing reports
+[TABLE CELL]: Constraint Definition
+[TABLE CELL]: 4%
+[TABLE CELL]: Scope and capacity guardrails
+[TABLE CELL]: Accuracy Orientation
+[TABLE CELL]: 2%
+[TABLE CELL]: Data-driven reliability for forecast outputs
+[TABLE CELL]: Ambiguity Reduction
+[TABLE CELL]: 2%
+[TABLE CELL]: Planning prompt precision to prevent incorrect sprint plans
+[TABLE CELL]: SECTION F
+[TABLE CELL]: Validator Design Implications
+What to check, what triggers penalties, and what real-time suggestions help most
+[TABLE CELL]: PERSONA 3: Business Analyst + Product Owner
+Business Intelligence Cluster | Requirements · Process Analysis · Product Strategy · Backlog Management
+[TABLE CELL]: SECTION A
+[TABLE CELL]: Role Summary
+Cluster overview with sub-profile breakdown of responsibilities and decisions
+[TABLE CELL]: ▸ Business Analyst — Role Responsibilities
+[TABLE CELL]: ▸ Product Owner — Role Responsibilities
+[TABLE CELL]: SECTION B
+[TABLE CELL]: Prompt Usage Patterns
+Sub-profile prompt types, use cases, and dimension importance
+[TABLE CELL]: ▸ Business Analyst — Prompt Types & Use Cases
+[TABLE CELL]: ▸ Product Owner — Prompt Types & Use Cases
+[TABLE CELL]: SECTION C
+[TABLE CELL]: Most Important Prompt Quality Dimensions
+Dual-score view: Business Analyst vs. Product Owner scores (1 = minimum, 10 = maximum weight)
+[TABLE CELL]: Rank
+[TABLE CELL]: Quality Dimension
+[TABLE CELL]: BA
+[TABLE CELL]: PO
+[TABLE CELL]: Rationale
+[TABLE CELL]: 1
+[TABLE CELL]: Context Completeness
+[TABLE CELL]: 10
+[TABLE CELL]: 8
+[TABLE CELL]: Document scope and domain (BA); market, user, and engagement context (PO)
+[TABLE CELL]: 2
+[TABLE CELL]: Business Relevance
+[TABLE CELL]: 8
+[TABLE CELL]: 10
+[TABLE CELL]: Analysis must serve business decisions (BA); every PO output must connect to product value
+[TABLE CELL]: 3
+[TABLE CELL]: Specificity
+[TABLE CELL]: 9
+[TABLE CELL]: 8
+[TABLE CELL]: Vague requirements analysis is unusable (BA); vague feature descriptions create divergent builds (PO)
+[TABLE CELL]: 4
+[TABLE CELL]: Output Format Clarity
+[TABLE CELL]: 8
+[TABLE CELL]: 9
+[TABLE CELL]: BRDs, SOPs, and gap matrices (BA); user stories, PRDs, and roadmap tables (PO)
+[TABLE CELL]: 5
+[TABLE CELL]: Retrieval Grounding
+[TABLE CELL]: 10
+[TABLE CELL]: 5
+[TABLE CELL]: BA: all findings must trace to source docs. PO: competitive data should be grounded but is less critical
+[TABLE CELL]: 6
+[TABLE CELL]: Accuracy Orientation
+[TABLE CELL]: 9
+[TABLE CELL]: 6
+[TABLE CELL]: Requirements errors propagate expensively downstream (BA); competitive data must be accurate (PO)
+[TABLE CELL]: 7
+[TABLE CELL]: Clarity
+[TABLE CELL]: 7
+[TABLE CELL]: 9
+[TABLE CELL]: Requirements must be unambiguous for all readers (BA); product prompts must be unambiguous for teams (PO)
+[TABLE CELL]: 8
+[TABLE CELL]: Traceability
+[TABLE CELL]: 8
+[TABLE CELL]: 5
+[TABLE CELL]: Requirements must trace to source documents (BA); features should trace to business goals (PO)
+[TABLE CELL]: 9
+[TABLE CELL]: Prioritization Clarity
+[TABLE CELL]: 3
+[TABLE CELL]: 9
+[TABLE CELL]: Not relevant for BA analysis; core PO dimension for roadmap and backlog ordering
+[TABLE CELL]: 10
+[TABLE CELL]: Actionability
+[TABLE CELL]: 5
+[TABLE CELL]: 8
+[TABLE CELL]: Findings must suggest next steps (BA); PO prompts must yield executable decisions or artifacts (PO)
+[TABLE CELL]: 11
+[TABLE CELL]: Ambiguity Reduction
+[TABLE CELL]: 7
+[TABLE CELL]: 6
+[TABLE CELL]: Ambiguous requirements drive rework (BA); ambiguous feature descriptions misalign teams (PO)
+[TABLE CELL]: 12
+[TABLE CELL]: Constraint Definition
+[TABLE CELL]: 6
+[TABLE CELL]: 7
+[TABLE CELL]: Scope boundaries prevent analysis sprawl (BA); scope, timeline, and capacity constraints (PO)
+[TABLE CELL]: 13
+[TABLE CELL]: Role/Task Alignment
+[TABLE CELL]: 4
+[TABLE CELL]: 7
+[TABLE CELL]: Output must match BA deliverable format (BA); audience translation direction must be declared (PO)
+[TABLE CELL]: 14
+[TABLE CELL]: Reproducibility
+[TABLE CELL]: 6
+[TABLE CELL]: 4
+[TABLE CELL]: Reusable analysis templates across similar projects (BA); user story templates benefit from consistency (PO)
+[TABLE CELL]: SECTION D
+[TABLE CELL]: Role-Specific Guideline Emphasis
+Best practices ordered by criticality. Tags: [Business Analyst] / [Product Owner] / [Both]
+[TABLE CELL]: SECTION E
+[TABLE CELL]: Weighting Recommendation Input
+Sub-profile percentage distributions. Each sums to 100%. Graph-ready.
+[TABLE CELL]: ▸ Business Analyst Sub-Profile — Weight Distribution
+[TABLE CELL]: Quality Dimension
+[TABLE CELL]: Weight (%)
+[TABLE CELL]: Rationale
+[TABLE CELL]: Context Completeness
+[TABLE CELL]: 16%
+[TABLE CELL]: Document scope and business domain are the foundation of all BA analysis
+[TABLE CELL]: Retrieval Grounding
+[TABLE CELL]: 15%
+[TABLE CELL]: Prevents hallucination in requirements work; citation is non-negotiable
+[TABLE CELL]: Accuracy Orientation
+[TABLE CELL]: 13%
+[TABLE CELL]: Requirements errors propagate expensively into delivery
+[TABLE CELL]: Specificity
+[TABLE CELL]: 12%
+[TABLE CELL]: Drives actionable vs. generic requirements analysis
+[TABLE CELL]: Output Format Clarity
+[TABLE CELL]: 9%
+[TABLE CELL]: BRD and SOP format adherence is a professional standard
+[TABLE CELL]: Traceability
+[TABLE CELL]: 9%
+[TABLE CELL]: Requirements must trace to source documents for audit and validation
+[TABLE CELL]: Business Relevance
+[TABLE CELL]: 8%
+[TABLE CELL]: Analysis must serve concrete business decisions
+[TABLE CELL]: Clarity
+[TABLE CELL]: 6%
+[TABLE CELL]: Requirements must be readable by both technical and business audiences
+[TABLE CELL]: Ambiguity Reduction
+[TABLE CELL]: 5%
+[TABLE CELL]: Reduces downstream rework caused by ambiguous requirements
+[TABLE CELL]: Constraint Definition
+[TABLE CELL]: 4%
+[TABLE CELL]: Scope boundaries prevent analysis sprawl
+[TABLE CELL]: Reproducibility
+[TABLE CELL]: 2%
+[TABLE CELL]: Reusable analysis templates across similar project types
+[TABLE CELL]: Actionability
+[TABLE CELL]: 1%
+[TABLE CELL]: Findings must include recommended next steps
+[TABLE CELL]: ▸ Product Owner Sub-Profile — Weight Distribution
+[TABLE CELL]: Quality Dimension
+[TABLE CELL]: Weight (%)
+[TABLE CELL]: Rationale
+[TABLE CELL]: Business Relevance
+[TABLE CELL]: 16%
+[TABLE CELL]: Every PO output must connect to product value or stakeholder priorities
+[TABLE CELL]: Clarity
+[TABLE CELL]: 12%
+[TABLE CELL]: Prevents divergent interpretation across scrum teams
+[TABLE CELL]: Prioritization Clarity
+[TABLE CELL]: 12%
+[TABLE CELL]: Core PO dimension for roadmap and backlog ordering decisions
+[TABLE CELL]: Output Format Clarity
+[TABLE CELL]: 11%
+[TABLE CELL]: User story and PRD format drives team execution quality
+[TABLE CELL]: Specificity
+[TABLE CELL]: 10%
+[TABLE CELL]: Drives actionable vs. generic user stories
+[TABLE CELL]: Actionability
+[TABLE CELL]: 10%
+[TABLE CELL]: Teams must be able to execute on every PO output directly
+[TABLE CELL]: Context Completeness
+[TABLE CELL]: 8%
+[TABLE CELL]: Market, user, and engagement model context
+[TABLE CELL]: Role/Task Alignment
+[TABLE CELL]: 7%
+[TABLE CELL]: Audience translation accuracy (technical vs. business)
+[TABLE CELL]: Constraint Definition
+[TABLE CELL]: 5%
+[TABLE CELL]: Scope, timeline, and resource constraints
+[TABLE CELL]: Ambiguity Reduction
+[TABLE CELL]: 5%
+[TABLE CELL]: Reduces rework from misinterpreted requirements
+[TABLE CELL]: Accuracy Orientation
+[TABLE CELL]: 2%
+[TABLE CELL]: Data accuracy for competitive and market work
+[TABLE CELL]: Traceability
+[TABLE CELL]: 1%
+[TABLE CELL]: Feature-to-business-goal linkage
+[TABLE CELL]: Retrieval Grounding
+[TABLE CELL]: 1%
+[TABLE CELL]: Grounded competitive and market analysis
+[TABLE CELL]: SECTION F
+[TABLE CELL]: Validator Design Implications
+Shared checks plus sub-profile-specific checks, penalty triggers, and real-time suggestions
+[TABLE CELL]: PERSONA 4: Support Staff
+Call Center | Help Desk | Operations | Jira / ServiceNow Ticket Handlers | CX-Facing Roles
+[TABLE CELL]: SECTION A
+[TABLE CELL]: Role Summary
+What this persona does, what decisions they support, and their primary prompting mode
+[TABLE CELL]: SECTION B
+[TABLE CELL]: Prompt Usage Patterns
+Types of prompts, typical use cases, and how quality dimensions matter
+[TABLE CELL]: SECTION C
+[TABLE CELL]: Most Important Prompt Quality Dimensions
+Ranked 10–14 dimensions with objective scores (1 = minimum, 10 = maximum weight)
+[TABLE CELL]: Rank
+[TABLE CELL]: Quality Dimension
+[TABLE CELL]: Score (1–10)
+[TABLE CELL]: Rationale
+[TABLE CELL]: 1
+[TABLE CELL]: Tone / User Empathy Control
+[TABLE CELL]: 10
+[TABLE CELL]: Primary quality differentiator for customer-facing output; wrong tone is immediately visible and brand-damaging
+[TABLE CELL]: 2
+[TABLE CELL]: Compliance / Policy Sensitivity
+[TABLE CELL]: 9
+[TABLE CELL]: Responses must not violate refund, SLA, escalation, or regulatory policies; errors have legal and financial consequences
+[TABLE CELL]: 3
+[TABLE CELL]: Clarity
+[TABLE CELL]: 9
+[TABLE CELL]: Output must be directly usable without editing; unclear responses delay resolution and frustrate customers
+[TABLE CELL]: 4
+[TABLE CELL]: Actionability
+[TABLE CELL]: 8
+[TABLE CELL]: Every response must drive toward ticket resolution; output that opens new ambiguity extends resolution time
+[TABLE CELL]: 5
+[TABLE CELL]: Context Completeness
+[TABLE CELL]: 8
+[TABLE CELL]: Ticket channel, customer tier, issue type, and urgency level must be included for accurate tone and policy adherence
+[TABLE CELL]: 6
+[TABLE CELL]: Output Format Clarity
+[TABLE CELL]: 8
+[TABLE CELL]: Response type must be declared: customer email, internal note, chat reply, or phone script
+[TABLE CELL]: 7
+[TABLE CELL]: Ambiguity Reduction
+[TABLE CELL]: 7
+[TABLE CELL]: Vague prompts produce off-tone or off-policy responses that require full rework
+[TABLE CELL]: 8
+[TABLE CELL]: Specificity
+[TABLE CELL]: 7
+[TABLE CELL]: Channel, issue category, and customer segment must be explicitly specified in every support prompt
+[TABLE CELL]: 9
+[TABLE CELL]: Reproducibility
+[TABLE CELL]: 7
+[TABLE CELL]: Same issue category should produce consistent output quality and tone across all agents
+[TABLE CELL]: 10
+[TABLE CELL]: Constraint Definition
+[TABLE CELL]: 6
+[TABLE CELL]: Tone guardrails, length limits, and channel-specific constraints must be explicitly stated
+[TABLE CELL]: 11
+[TABLE CELL]: Business Relevance
+[TABLE CELL]: 5
+[TABLE CELL]: Responses must align with product or service context and client account specifics
+[TABLE CELL]: 12
+[TABLE CELL]: Retrieval Grounding
+[TABLE CELL]: 5
+[TABLE CELL]: KB articles and SOPs should be referenced to ground resolution accuracy for complex issues
+[TABLE CELL]: SECTION D
+[TABLE CELL]: Role-Specific Guideline Emphasis
+Prompting best practices ordered from most to least critical for this persona
+[TABLE CELL]: SECTION E
+[TABLE CELL]: Weighting Recommendation Input
+Percentage importance distribution. Sum = 100%. Graph-ready data.
+[TABLE CELL]: Quality Dimension
+[TABLE CELL]: Weight (%)
+[TABLE CELL]: Rationale
+[TABLE CELL]: Tone / User Empathy Control
+[TABLE CELL]: 20%
+[TABLE CELL]: Dominant factor; defines whether output is usable or brand-damaging
+[TABLE CELL]: Compliance / Policy Sensitivity
+[TABLE CELL]: 16%
+[TABLE CELL]: Non-negotiable correctness dimension; policy errors have legal consequences
+[TABLE CELL]: Clarity
+[TABLE CELL]: 13%
+[TABLE CELL]: Output usability without rework in a high-volume environment
+[TABLE CELL]: Actionability
+[TABLE CELL]: 11%
+[TABLE CELL]: Drives resolution efficiency and ticket closure rate
+[TABLE CELL]: Context Completeness
+[TABLE CELL]: 10%
+[TABLE CELL]: Channel and issue context determines response accuracy
+[TABLE CELL]: Output Format Clarity
+[TABLE CELL]: 9%
+[TABLE CELL]: Template adherence and response type consistency
+[TABLE CELL]: Ambiguity Reduction
+[TABLE CELL]: 7%
+[TABLE CELL]: Reduces rework rate and agent correction time
+[TABLE CELL]: Specificity
+[TABLE CELL]: 6%
+[TABLE CELL]: Channel and issue category specificity
+[TABLE CELL]: Reproducibility
+[TABLE CELL]: 4%
+[TABLE CELL]: Consistent output quality across agents and shifts
+[TABLE CELL]: Constraint Definition
+[TABLE CELL]: 2%
+[TABLE CELL]: Length and tone guardrails
+[TABLE CELL]: Business Relevance
+[TABLE CELL]: 1%
+[TABLE CELL]: Product and service context alignment
+[TABLE CELL]: Retrieval Grounding
+[TABLE CELL]: 1%
+[TABLE CELL]: KB and SOP grounding for complex issues
+[TABLE CELL]: SECTION F
+[TABLE CELL]: Validator Design Implications
+What to check, what triggers penalties, and what real-time suggestions help most

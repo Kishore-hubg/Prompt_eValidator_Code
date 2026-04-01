@@ -1,0 +1,82 @@
+{
+  "document": {
+    "title": "INFOVISION Prompt Validator Data Strategy + Business Rules",
+    "scope": "Data Quality & Governance",
+    "source_of_truth_document": "docs/source_of_truth/Infovision_Data_Strategy_Business_Rules.docx",
+    "version_year": 2026,
+    "classification": "Confidential"
+  },
+  "governance_rules": {
+    "pii_classes": {
+      "pii_high": [
+        "original_prompt",
+        "corrected_prompt"
+      ],
+      "pii_low": [
+        "user_id",
+        "display_name"
+      ],
+      "non_pii": [
+        "persona_id",
+        "validation_score",
+        "delivery_channel",
+        "team_id",
+        "score_delta",
+        "learning_velocity",
+        "suggestion_acceptance_rate",
+        "intervention_flag"
+      ]
+    },
+    "field_level_validation_rules": [
+      "All required fields must be non-null and non-empty in enriched_events.",
+      "persona_id must match persona_registry enum.",
+      "validation_score must be within required range.",
+      "delivery_channel must match API | MCP | CHAT | IDE.",
+      "event_timestamp drift must be <= 60 seconds.",
+      "suggestion_count must equal suggestions JSON length.",
+      "autofix_improvement_points must match expected array object schema."
+    ],
+    "retention_schedule": {
+      "pii_high_months": 24,
+      "pii_low_months": 60,
+      "non_pii_months": 60,
+      "dead_letter_events_days": 90
+    },
+    "serving_layer_masking": {
+      "leadership_endpoints_mask_prompt_fields": true,
+      "prompt_masked_value": "[REDACTED]",
+      "identity_pseudonymization_required": true
+    }
+  },
+  "alerting_rules": [
+    {
+      "alert_name": "INGESTION_DEAD_LETTER_HIGH",
+      "severity": "P2"
+    },
+    {
+      "alert_name": "SCORE_OUT_OF_RANGE",
+      "severity": "P1"
+    },
+    {
+      "alert_name": "PIPELINE_STAGE_LATENCY_BREACH",
+      "severity": "P2"
+    },
+    {
+      "alert_name": "WEEKLY_BATCH_FAILURE",
+      "severity": "P1"
+    },
+    {
+      "alert_name": "INTERVENTION_FLAG_SPIKE",
+      "severity": "P3"
+    },
+    {
+      "alert_name": "RETENTION_DELETE_FAILURE",
+      "severity": "P2"
+    }
+  ],
+  "implementation_constraints_for_current_repo": {
+    "preserve_existing_functionality": true,
+    "preserve_canonical_score_scale_current_repo": "0-100",
+    "migration_strategy": "additive_only"
+  }
+}

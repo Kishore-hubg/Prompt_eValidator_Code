@@ -1,0 +1,8 @@
+INFO:     Started server process [11072]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+2026-04-01 21:03:42,696  httpx  INFO  HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-01 21:03:46,078  httpx  INFO  HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-01 21:03:46,521  prompt_validator.requests  INFO  POST   /api/v1/validate \u2192 200  (6544.2 ms)
+INFO:     127.0.0.1:55252 - "POST /api/v1/validate HTTP/1.1" 200 OK

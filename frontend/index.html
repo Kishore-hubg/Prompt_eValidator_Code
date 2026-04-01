@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prompt Validator MVP</title>
+  <style>
+    :root {
+      --bg:#0b1220;--panel:#111a2b;--panel-2:#16223a;--border:#253552;--text:#e9eef8;--muted:#9db0d0;--accent:#69a3ff;
+      --diff-gutter:#121c2e;--prompt-bg:rgba(22,36,62,.92);--prompt-text:#f2f6ff;--diff-head-a:#070c16;--diff-head-b:#0a1222;
+      --scroll-track:rgba(8,14,25,.75);--tile-pass:rgba(27,191,117,.12);--tile-gap:rgba(255,92,122,.1);--tile-border-pass:rgba(74,222,128,.35);--tile-border-gap:rgba(251,113,133,.4);
+      --title-prev:#6ee7d8;--title-prev-border:rgba(45,212,191,.55);--title-prev-bg1:rgba(16,42,40,.88);--title-prev-bg2:rgba(8,22,26,.95);
+      --title-updated:#d8c4ff;--title-updated-border:rgba(167,139,250,.55);--title-updated-bg1:rgba(38,28,52,.88);--title-updated-bg2:rgba(20,16,34,.95);
+      --title-scoring:#d4b87a;--title-scoring-accent:#b8923f;--title-dim:#93c5ef;--btn-auto1:#4f46e5;--btn-auto2:#4338ca;--btn-auto-glow:rgba(99,102,241,.42);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#08101d 0%,#0d1628 100%);color:var(--text);font-family:Inter,system-ui,-apple-system,sans-serif}
+    .app{display:flex;flex-direction:column;height:100vh;min-height:0;padding:0 22px 14px}
+    .hero{flex-shrink:0;padding:14px 0 10px;border-bottom:1px solid rgba(37,53,82,.6);margin-bottom:12px}
+    .hero h1{margin:0 0 4px;font-size:22px;font-weight:800;letter-spacing:-0.02em}
+    .hero p{margin:0;color:var(--muted);font-size:13px;line-height:1.45;max-width:720px}
+    .main{flex:1;min-height:0;display:flex;flex-direction:column;gap:0}
+    .split-top{flex:1 1 auto;min-height:160px;min-width:0;display:flex;flex-direction:column;overflow:hidden;margin-bottom:4px}
+    .split-gutter{flex:0 0 auto;position:relative;min-height:10px;padding:2px 0;margin:2px 0 6px;cursor:row-resize;display:flex;align-items:center;justify-content:center;user-select:none;touch-action:none;background:transparent;border:none;border-radius:0;box-shadow:none}
+    .split-gutter::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(105,163,255,.2) 0%,rgba(142,197,255,.7) 50%,rgba(105,163,255,.2) 100%);pointer-events:none}
+    .split-gutter:hover{border-color:rgba(105,163,255,.38)}
+    .split-bottom{flex:0 0 280px;min-height:120px;max-height:min(72vh,900px);overflow:hidden;display:flex;flex-direction:column;min-width:0}
+    .card{background:rgba(17,26,43,.94);border:1px solid var(--border);border-radius:14px;padding:14px 16px;box-shadow:0 10px 28px rgba(0,0,0,.2);min-height:0;display:flex;flex-direction:column}
+    .top-pane{min-height:0}
+    .toolbar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:10px}
+    .toolbar .field{flex:1;min-width:150px}
+    .toolbar .field label{display:block;margin-bottom:6px;font-weight:600;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
+    .toolbar-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-bottom:2px}
+    label.inline-label{display:block;margin-bottom:6px;font-weight:600;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
+    select{width:100%;background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px}
+    .diff-wrap{flex:1;min-height:0;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--diff-gutter);box-shadow:inset 0 0 0 1px rgba(105,163,255,.08)}
+    .diff-head-row{display:grid;grid-template-columns:1fr 1fr;background:#050a12;font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid rgba(37,53,82,.9)}
+    .diff-head-row .dh-cell{padding:11px 14px;text-align:center;border-bottom:2px solid transparent}
+    .diff-head-row .dh-cell:first-child{
+      background:linear-gradient(180deg,var(--title-prev-bg1) 0%,var(--title-prev-bg2) 100%);
+      color:var(--title-prev);border-bottom-color:var(--title-prev-border);
+      text-shadow:0 0 20px rgba(45,212,191,.2);border-right:1px solid rgba(37,53,82,.5);
+    }
+    .diff-head-row .dh-cell:last-child{
+      background:linear-gradient(180deg,var(--title-updated-bg1) 0%,var(--title-updated-bg2) 100%);
+      color:var(--title-updated);border-bottom-color:var(--title-updated-border);
+      text-shadow:0 0 20px rgba(167,139,250,.18);
+    }
+    /* Auto-improve toggle in toolbar */
+    .auto-improve-toggle{display:flex;align-items:center;gap:8px;padding:0;background:none;border:none;cursor:pointer;color:var(--text);font:inherit;user-select:none}
+    .auto-improve-toggle .toggle-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap}
+    .toggle-track{width:38px;height:22px;border-radius:999px;background:#1e2d45;border:1px solid rgba(105,163,255,.3);position:relative;transition:background .2s,border-color .2s;flex-shrink:0}
+    .toggle-track.on{background:rgba(79,70,229,.75);border-color:rgba(99,102,241,.7)}
+    .toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#7a8faa;transition:transform .2s,background .2s;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+    .toggle-track.on .toggle-thumb{transform:translateX(16px);background:#fff}
+    .diff-grid{display:grid;grid-template-columns:1fr 1px 1fr;gap:0;background:#1a2740;flex:1;min-height:0}
+    .diff-vline{min-width:1px;background:linear-gradient(180deg,rgba(105,163,255,.55) 0%,rgba(142,197,255,.95) 50%,rgba(105,163,255,.55) 100%);box-shadow:0 0 8px rgba(105,163,255,.2);align-self:stretch}
+    /* Contain column + scroll the prompt so the action bar is never pushed below the fold */
+    .diff-col{min-height:0;overflow:hidden;display:flex;flex-direction:column;background:var(--prompt-bg)}
+    textarea.diff-input{width:100%;height:100%;min-height:120px;margin:0;resize:none;border:none;border-radius:0;background:var(--prompt-bg);color:var(--prompt-text);padding:14px 16px;font-family:ui-monospace,"Cascadia Code","Segoe UI Mono",Consolas,monospace;font-size:13px;line-height:1.55;min-height:0;flex:1;overflow-y:auto;box-shadow:inset 1px 0 0 rgba(142,197,255,.78)}
+    textarea.diff-input::placeholder{color:rgba(157,176,208,.65)}
+    textarea.diff-input:focus{outline:none;box-shadow:inset 1px 0 0 #8ec5ff,inset 0 0 0 1px rgba(142,197,255,.35)}
+    textarea.diff-input:disabled{opacity:.88;cursor:not-allowed;box-shadow:inset 1px 0 0 rgba(105,163,255,.45)}
+    textarea.diff-input[readonly]{cursor:default;box-shadow:inset 1px 0 0 #4ade80}
+    .diff-col textarea.diff-input{flex:1 1 auto;min-height:0}
+    /* Diff overlay — shown instead of the readonly textarea when a result exists */
+    .diff-overlay{flex:1 1 auto;min-height:0;overflow-y:auto;padding:14px 16px;font-family:ui-monospace,"Cascadia Code","Segoe UI Mono",Consolas,monospace;font-size:13px;line-height:1.55;color:var(--prompt-text);background:var(--prompt-bg);box-shadow:inset 1px 0 0 #4ade80;white-space:pre-wrap;word-break:break-word;scrollbar-width:thin;scrollbar-color:rgba(105,163,255,.4) rgba(8,14,25,.5)}
+    .diff-overlay::-webkit-scrollbar{width:6px}
+    .diff-overlay::-webkit-scrollbar-thumb{background:rgba(105,163,255,.35);border-radius:4px}
+    .diff-line{display:block;padding:1px 4px;border-radius:3px;margin:1px 0}
+    .diff-line--added{background:rgba(74,222,128,.14);color:#a7f3c0;border-left:2px solid rgba(74,222,128,.6)}
+    .diff-line--removed{background:rgba(251,113,133,.1);color:#fca5a5;text-decoration:line-through;opacity:.6;border-left:2px solid rgba(251,113,133,.4)}
+    .diff-line--unchanged{color:var(--prompt-text)}
+    .diff-line--empty{color:transparent;user-select:none}
+    /* Diff view toggle pill */
+    .diff-view-toggle{display:flex;align-items:center;gap:0;background:rgba(8,14,25,.6);border:1px solid rgba(37,53,82,.8);border-radius:8px;overflow:hidden;flex-shrink:0}
+    .diff-view-toggle button{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px;border:none;border-radius:0;background:transparent;color:var(--muted);cursor:pointer}
+    .diff-view-toggle button.active{background:rgba(105,163,255,.18);color:#93c5ef}
+    /* Right panel action bar */
+    .diff-col-actions{display:flex;gap:6px;padding:6px 10px;background:rgba(10,18,32,.7);border-top:1px solid rgba(37,53,82,.5);flex-shrink:0}
+    .diff-col-actions button{font-size:11px;font-weight:700;padding:5px 12px;border-radius:7px;letter-spacing:.03em;text-transform:uppercase}
+    .btn-use-improved{background:rgba(74,222,128,.18);color:#86efac;border:1px solid rgba(74,222,128,.4)}
+    .btn-use-improved:hover{background:rgba(74,222,128,.28)}
+    .btn-copy-improved{background:rgba(105,163,255,.15);color:#93c5ef;border:1px solid rgba(105,163,255,.35)}
+    .btn-copy-improved:hover{background:rgba(105,163,255,.25)}
+    .bottom-pane{min-height:0;overflow:hidden;background:rgba(13,20,35,.55)}
+    .bottom-pane .panel-title{
+      margin:0 0 10px;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;
+      color:var(--title-scoring);
+      padding:8px 14px 8px 12px;
+      background:linear-gradient(90deg,rgba(212,184,122,.14) 0%,rgba(212,184,122,.04) 55%,transparent 100%);
+      border-left:3px solid var(--title-scoring-accent);
+      border-radius:0 10px 10px 0;
+    }
+    .panel-section-heading{
+      margin:10px 0 10px;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;line-height:1.2;
+      color:#9aa8bf;
+      padding:8px 14px 8px 12px;
+      background:linear-gradient(90deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,.02) 55%,transparent 100%);
+      border:1px solid rgba(24,34,52,.95);
+      border-left:3px solid rgba(120,140,170,.5);
+      border-radius:0 10px 10px 0;
+      box-shadow:0 3px 14px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.035);
+    }
+    .panel-section-heading--top{margin-top:0}
+    .panel-section-heading--dimensions{
+      color:#7ec8f9;
+      border-left:3px solid rgba(56,189,248,.72);
+      background:linear-gradient(90deg,rgba(56,189,248,.2) 0%,rgba(56,189,248,.06) 55%,transparent 100%);
+      border-color:rgba(32,56,88,.92);
+      box-shadow:0 3px 14px rgba(0,0,0,.32),inset 0 1px 0 rgba(126,200,249,.06);
+    }
+    .panel-section-heading--scoring{
+      color:var(--title-scoring);
+      border-left:3px solid var(--title-scoring-accent);
+      background:linear-gradient(90deg,rgba(212,184,122,.2) 0%,rgba(212,184,122,.06) 55%,transparent 100%);
+      border-color:rgba(94,74,38,.9);
+      box-shadow:0 3px 14px rgba(0,0,0,.32),inset 0 1px 0 rgba(212,184,122,.06);
+    }
+    .panel-section-heading--history{
+      color:#d4bcff;
+      border-left:3px solid rgba(192,132,252,.65);
+      background:linear-gradient(90deg,rgba(192,132,252,.18) 0%,rgba(192,132,252,.05) 55%,transparent 100%);
+      border-color:rgba(52,38,78,.92);
+      box-shadow:0 3px 14px rgba(0,0,0,.32),inset 0 1px 0 rgba(212,188,255,.05);
+    }
+    .scoring-scroll{flex:1;min-height:0;overflow-y:auto;padding:12px 12px 12px 4px;margin-top:2px;background:var(--scroll-track);border-radius:10px;border:1px solid rgba(37,53,82,.7);scrollbar-color:rgba(105,163,255,.45) rgba(8,14,25,.6);scrollbar-width:thin}
+    .scoring-scroll::-webkit-scrollbar{width:8px}
+    .scoring-scroll::-webkit-scrollbar-track{background:rgba(8,14,25,.5);border-radius:8px}
+    .scoring-scroll::-webkit-scrollbar-thumb{background:rgba(105,163,255,.4);border-radius:8px}
+    .scoring-scroll h3{margin:14px 0 6px;font-size:13px;font-weight:700;color:var(--text)}
+    .scoring-scroll h3:first-of-type{margin-top:0}
+    .scoring-scroll h3:not(.panel-section-heading){color:#dce6f5}
+    .score-row{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;align-items:start;min-width:0}
+    @media (max-width:920px){.score-row{grid-template-columns:1fr}}
+    button{border:none;border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--accent);color:white;font-weight:700;font-size:13px}
+    button.secondary{background:#21314f;color:var(--text)}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    .badge{display:inline-flex;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700}
+    .excellent{background:rgba(27,191,117,.16);color:#8af0bf}
+    .good{background:rgba(105,163,255,.16);color:#9bc2ff}
+    .warn{background:rgba(255,176,32,.16);color:#ffd287}
+    .poor{background:rgba(255,92,122,.16);color:#ff9bb0}
+    .score{font-size:34px;font-weight:800;margin:2px 0;line-height:1.1}
+    ul{padding-left:18px;margin:6px 0}
+    ul li{margin-bottom:4px;line-height:1.45}
+    .dim-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+    @media (max-width:520px){.dim-grid{grid-template-columns:1fr}}
+    .dim-tile{border-radius:12px;padding:12px 14px;border:1px solid var(--border);background:rgba(255,255,255,.04);display:flex;flex-direction:column;gap:6px;min-height:88px;transition:border-color .15s,box-shadow .15s}
+    .dim-tile:hover{border-color:rgba(105,163,255,.4);box-shadow:0 4px 14px rgba(0,0,0,.2)}
+    .dim-tile--pass{background:var(--tile-pass);border-color:var(--tile-border-pass)}
+    .dim-tile--gap{background:var(--tile-gap);border-color:var(--tile-border-gap)}
+    .dim-tile-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+    .dim-tile-name{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#dbe7ff;line-height:1.25}
+    .dim-tile-badge{font-size:10px;font-weight:800;padding:4px 8px;border-radius:999px;flex-shrink:0}
+    .dim-tile--pass .dim-tile-badge{background:rgba(74,222,128,.2);color:#86efac}
+    .dim-tile--gap .dim-tile-badge{background:rgba(251,113,133,.22);color:#fda4af}
+    .dim-tile-ratio{font-size:20px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+    .dim-tile-note{font-size:11px;color:var(--muted);line-height:1.35;margin:0}
+    .history-item{padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:rgba(255,255,255,.03);cursor:pointer;transition:background .15s,border-color .15s}
+    .history-item:hover{background:rgba(105,163,255,.08);border-color:#3d5580}
+    .history-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    .muted{color:var(--muted)}
+    .suggestions-block{margin-top:4px}
+    .suggestion-group{margin-top:12px}
+    .suggestion-group:first-child{margin-top:0}
+    .suggestion-group-title{margin:0 0 6px;font-size:12px;font-weight:800;color:#9bc2ff;letter-spacing:.02em}
+    .suggestion-group ul,.suggestions-flat{margin:0;padding-left:18px}
+    .suggestion-group ul li,.suggestions-flat li{margin-bottom:4px;line-height:1.45}
+    .history-snippet{font-size:12px;margin-top:6px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    /* Loading spinner */
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+    @media (max-width:700px){
+      .diff-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+      .diff-grid,.diff-head-row{min-width:min(520px,100vw - 56px)}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="hero">
+    <h1>Prompt Validator MVP</h1>
+    <p>Persona-aware prompt scoring, feedback, and auto-improvement.</p>
+  </div>
+  <div class="main" id="mainSplit">
+    <div class="card top-pane split-top">
+      <div class="toolbar">
+        <div class="field"><label for="persona">Persona</label><select id="persona"></select></div>
+        <div class="field"><label for="channel">Channel</label><select id="channel"><option value="web">Web UI</option><option value="api">API</option><option value="teams">Teams</option></select></div>
+        <div class="toolbar-actions">
+          <button type="button" id="validateBtn">Validate Prompt</button>
+          <button type="button" class="secondary" id="sampleBtn">Load Sample</button>
+          <!-- Auto-improve toggle lives in the toolbar for discoverability -->
+          <button type="button" class="auto-improve-toggle" id="autoImproveBtnWrapper" aria-pressed="true" title="On: AI refines the prompt after validation. Off: validate only.">
+            <div class="toggle-track on" id="autoImproveTrack"><div class="toggle-thumb"></div></div>
+            <span class="toggle-label" id="autoImproveLabel">Auto Improve: ON</span>
+          </button>
+        </div>
+      </div>
+      <div class="diff-wrap" aria-label="Prompt comparison">
+        <div class="diff-head-row">
+          <span class="dh-cell">Current Prompt</span>
+          <span class="dh-cell">Improved Prompt</span>
+        </div>
+        <div class="diff-grid">
+          <div class="diff-col">
+            <textarea id="promptBaseline" class="diff-input" aria-label="Current prompt" placeholder="Type or paste your prompt here. Use Load Sample to insert an example for the selected persona."></textarea>
+          </div>
+          <div class="diff-vline" role="presentation" aria-hidden="true"></div>
+          <div class="diff-col" style="display:flex;flex-direction:column">
+            <!-- Hidden textarea holds the raw value; overlay shows diff-highlighted version -->
+            <textarea id="promptOutput" class="diff-input" readonly aria-label="Improved prompt" style="display:none" placeholder="Improved prompt"></textarea>
+            <div id="diffOverlay" class="diff-overlay" aria-label="Improved prompt (diff view)" style="display:none"></div>
+            <textarea id="promptOutputPlain" class="diff-input" readonly aria-label="Improved prompt (plain)" placeholder="The AI-refined prompt appears here after you click Validate (with Auto Improve ON). Click '← Use This' to re-validate the improved version."></textarea>
+            <div class="diff-col-actions" id="rightActions" style="display:none">
+              <button type="button" class="btn-use-improved" id="useImprovedBtn" title="Move improved prompt to left panel and re-validate">&#8592; Use This &amp; Re-validate</button>
+              <div class="diff-view-toggle">
+                <button type="button" id="viewPlainBtn" class="active">Plain</button>
+                <button type="button" id="viewDiffBtn">Diff</button>
+              </div>
+              <button type="button" class="btn-copy-improved" id="copyImprovedBtn">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="split-gutter" id="splitGutter" role="separator" aria-orientation="horizontal" aria-label="Drag to resize panels." tabindex="0"></div>
+    <div class="card bottom-pane split-bottom">
+      <div class="scoring-scroll">
+        <div class="score-row">
+          <div>
+            <h3 class="panel-section-heading panel-section-heading--top panel-section-heading--scoring">Scoring &amp; Analysis</h3>
+            <div class="muted" style="font-size:12px">Overall score</div>
+            <div id="score" class="score">--</div>
+            <div id="rating"></div>
+            <p id="summary" class="muted" style="margin:10px 0 0;font-size:14px;line-height:1.5">Run a validation to see results.</p>
+            <h3>Strengths</h3>
+            <ul id="strengths"></ul>
+            <h3>Issues</h3>
+            <ul id="issues"></ul>
+            <h3>Suggestions</h3>
+            <div id="suggestions" class="suggestions-block"></div>
+          </div>
+          <div>
+            <h3 class="panel-section-heading panel-section-heading--top panel-section-heading--dimensions">Dimension Breakdown</h3>
+            <div id="dimensions"></div>
+            <h3 class="panel-section-heading panel-section-heading--history">Recent History</h3>
+            <p class="muted" style="font-size:12px;margin:0 0 8px;line-height:1.4">Click an entry to load the original prompt on the left and the improved version on the right.</p>
+            <div id="history"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const personaEl=document.getElementById("persona"),channelEl=document.getElementById("channel");
+const baselineEl=document.getElementById("promptBaseline");
+// outputEl is the hidden textarea used for data storage (Copy / Use This read from it)
+const outputEl=document.getElementById("promptOutput");
+const plainEl=document.getElementById("promptOutputPlain");   // visible plain-text readonly area
+const diffOverlay=document.getElementById("diffOverlay");      // visible diff-highlighted div
+const autoImproveBtnWrapper=document.getElementById("autoImproveBtnWrapper");
+const autoImproveTrack=document.getElementById("autoImproveTrack");
+const autoImproveLabel=document.getElementById("autoImproveLabel");
+const rightActions=document.getElementById("rightActions");
+const validateBtn=document.getElementById("validateBtn");
+const viewPlainBtn=document.getElementById("viewPlainBtn");
+const viewDiffBtn=document.getElementById("viewDiffBtn");
+
+let autoImproveOn=true;
+let diffMode=false; // false=plain, true=diff
+
+function setAutoImprove(on){
+  autoImproveOn=on;
+  if(on){
+    autoImproveTrack.classList.add("on");
+    autoImproveLabel.textContent="Auto Improve: ON";
+    autoImproveBtnWrapper.setAttribute("aria-pressed","true");
+  } else {
+    autoImproveTrack.classList.remove("on");
+    autoImproveLabel.textContent="Auto Improve: OFF";
+    autoImproveBtnWrapper.setAttribute("aria-pressed","false");
+  }
+}
+
+autoImproveBtnWrapper.addEventListener("click",()=>setAutoImprove(!autoImproveOn));
+
+// ---- Diff engine (line-level) ----------------------------------------
+function computeLineDiff(original, improved){
+  const origLines = original.split('\n');
+  const impLines  = improved.split('\n');
+  // Build a Set of trimmed original lines for O(1) lookup
+  const origSet = new Set(origLines.map(l=>l.trim()));
+  const impSet  = new Set(impLines.map(l=>l.trim()));
+  const result  = [];
+  // Removed lines (in original but not in improved) — shown first as strikethrough
+  for(const line of origLines){
+    if(line.trim() && !impSet.has(line.trim())){
+      result.push({type:'removed', text:line});
+    }
+  }
+  // Improved lines
+  for(const line of impLines){
+    if(!line.trim()){result.push({type:'empty', text:line});continue;}
+    result.push({type: origSet.has(line.trim()) ? 'unchanged' : 'added', text: line});
+  }
+  return result;
+}
+
+function renderDiffOverlay(original, improved){
+  const lines = computeLineDiff(original, improved);
+  diffOverlay.innerHTML = lines.map(l=>{
+    const cls = `diff-line diff-line--${l.type}`;
+    return `<span class="${cls}">${esc(l.text)||' '}</span>`;
+  }).join('\n');
+}
+
+function setDiffView(on){
+  diffMode=on;
+  if(on){
+    plainEl.style.display='none';
+    diffOverlay.style.display='block';
+    viewPlainBtn.classList.remove('active');
+    viewDiffBtn.classList.add('active');
+  } else {
+    diffOverlay.style.display='none';
+    plainEl.style.display='block';
+    viewPlainBtn.classList.add('active');
+    viewDiffBtn.classList.remove('active');
+  }
+}
+
+viewPlainBtn.addEventListener('click',()=>setDiffView(false));
+viewDiffBtn.addEventListener('click',()=>setDiffView(true));
+
+let splitBottomPx=Math.round(window.innerHeight*0.36);
+try{const s=sessionStorage.getItem("pv_split_bottom");if(s){const n=parseInt(s,10);if(!isNaN(n))splitBottomPx=Math.max(120,n);}}catch(_){}
+function applySplitHeights(){
+  const b=document.querySelector(".split-bottom");if(!b)return;
+  const main=document.getElementById("mainSplit");if(!main)return;
+  const mh=main.getBoundingClientRect().height;
+  const maxB=Math.min(Math.floor(mh*0.78),900);
+  splitBottomPx=Math.min(Math.max(120,splitBottomPx),Math.max(120,maxB));
+  b.style.flex=`0 0 ${splitBottomPx}px`;
+}
+function initSplitDrag(){
+  const g=document.getElementById("splitGutter");if(!g)return;
+  const startDrag=e=>{
+    if(e.button!==0)return;
+    e.preventDefault();
+    const startY=e.clientY;const startB=splitBottomPx;
+    const move=ev=>{const dy=ev.clientY-startY;splitBottomPx=Math.max(120,startB-dy);applySplitHeights();};
+    const up=()=>{document.removeEventListener("mousemove",move);document.removeEventListener("mouseup",up);try{sessionStorage.setItem("pv_split_bottom",String(Math.round(splitBottomPx)));}catch(_){}};
+    document.addEventListener("mousemove",move);document.addEventListener("mouseup",up);
+  };
+  g.addEventListener("mousedown",startDrag);
+  g.addEventListener("keydown",e=>{
+    if(e.key==="ArrowUp"||e.key==="ArrowDown"){e.preventDefault();splitBottomPx+=(e.key==="ArrowUp"?12:-12);applySplitHeights();try{sessionStorage.setItem("pv_split_bottom",String(Math.round(splitBottomPx)));}catch(_){}}
+  });
+}
+
+const samplePrompts={persona_0:"Summarize the attached meeting notes for an executive audience in 5 bullet points and include the top 3 decisions, owners, and next steps. Keep it under 150 words.",persona_1:"Generate a FastAPI endpoint in Python 3.11 for POST /users using Pydantic validation and SQLAlchemy. Include error handling, unit tests, and edge cases for missing fields, duplicate email, and empty payload. Return the result as separate code blocks for model, route, and tests.",persona_2:"Create a sprint 14 status report for the client executive audience using the same structure as last week. Include sprint context, team velocity over the last 4 sprints, top 3 blockers, RAG status, risks ranked by impact, and recommended next actions.",persona_3:"From Section 3 (Functional requirements) of the BRD \"Customer Portal v2\" and the stakeholder workshop transcript dated 2026-03-15, extract only explicitly stated functional requirements—do not infer anything not written in those sources. For each item include: Requirement ID, requirement text, exact source section reference, and business rationale. Audience: delivery scrum team. Output as a markdown table. For backlog prioritization, apply MoSCoW only where priority is already stated in the documents; otherwise leave priority blank and note \"TBD in grooming.\"",persona_4:"Draft an empathetic and professional support response for a customer whose ticket has been delayed for 2 days. Mention the current status, next step, and SLA-compliant follow-up. Keep it concise and suitable for email."};
+
+function badgeClass(rating){const r=(rating||"").toLowerCase(); if(r.includes("excellent")) return "badge excellent"; if(r.includes("good")) return "badge good"; if(r.includes("needs")) return "badge warn"; return "badge poor";}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function formatDimTitle(raw){
+  return String(raw).split("_").map(w=>w?w.charAt(0).toUpperCase()+w.slice(1).toLowerCase():"").filter(Boolean).join(" ")+" score";
+}
+
+function setLoading(busy){
+  validateBtn.disabled=busy;
+  validateBtn.innerHTML=busy?'<span class="spinner"></span>Validating…':'Validate Prompt';
+}
+
+function showRightActions(hasContent){
+  rightActions.style.display=hasContent?"flex":"none";
+}
+
+/** Normalize for compare so CRLF vs LF does not hide the action bar */
+function normalizePromptText(s){
+  return String(s).replace(/\r\n/g,"\n").trim();
+}
+
+function setRightPanelContent(original, improved){
+  outputEl.value=improved;       // hidden — used by Copy and Use This
+  plainEl.value=improved;        // visible plain view
+  renderDiffOverlay(original, improved);
+  // Restore current view mode
+  if(diffMode){
+    plainEl.style.display='none';
+    diffOverlay.style.display='block';
+  } else {
+    diffOverlay.style.display='none';
+    plainEl.style.display='block';
+  }
+}
+
+function clearRightPanel(){
+  outputEl.value='';
+  plainEl.value='';
+  diffOverlay.innerHTML='';
+  // Always reset to Plain view so the next result starts fresh
+  diffMode=false;
+  diffOverlay.style.display='none';
+  plainEl.style.display='block';
+  viewPlainBtn.classList.add('active');
+  viewDiffBtn.classList.remove('active');
+}
+
+function applyResult(submitted, data){
+  baselineEl.value=submitted;
+  const improved=data.improved_prompt||submitted;
+  setRightPanelContent(submitted, improved);
+  /* Show actions when Auto Improve is on (so Copy / Plain / Diff stay available), or when
+     the server returned a different improved_prompt. Normalized compare avoids CRLF-only mismatches hiding the bar. */
+  const improvedNorm=normalizePromptText(improved);
+  const submittedNorm=normalizePromptText(submitted);
+  showRightActions(
+    improvedNorm.length > 0
+    && (autoImproveOn || improvedNorm !== submittedNorm)
+  );
+  document.getElementById("score").innerText=data.score;
+  document.getElementById("rating").innerHTML=`<span class="${badgeClass(data.rating)}">${esc(data.rating)}</span>`;
+  document.getElementById("summary").innerText=data.summary;
+  renderList("strengths",data.strengths);
+  renderList("issues",data.issues);
+  renderSuggestions(data.suggestions,data.persona_id);
+  renderDimensions(data.dimension_scores);
+}
+
+async function loadPersonas(){const res=await fetch("/api/v1/personas"); const data=await res.json(); personaEl.innerHTML=data.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");}
+let historyData=[];
+async function loadHistory(){
+  const res=await fetch("/api/v1/history?limit=12");
+  const data=await res.json();
+  historyData=Array.isArray(data)?data:[];
+  const box=document.getElementById("history");
+  if(!historyData.length){box.innerHTML='<div class="muted">No history yet.</div>';return;}
+  box.innerHTML=historyData.map((item,i)=>`<div class="history-item" data-idx="${i}" role="button" tabindex="0"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;"><strong>${esc(item.persona_id)}</strong><span class="${badgeClass(item.rating)}">${esc(item.rating)} · ${esc(String(item.score))}</span></div><div class="muted" style="margin-top:6px;font-size:11px">${esc(new Date(item.created_at).toLocaleString())}</div><div class="history-snippet">${esc(item.prompt_text)}</div></div>`).join("");
+  box.querySelectorAll(".history-item").forEach(el=>{
+    const go=()=>{
+      const idx=+el.getAttribute("data-idx");const it=historyData[idx];if(!it)return;
+      const imp=it.improved_prompt||it.prompt_text;
+      baselineEl.value=it.prompt_text;
+      setRightPanelContent(it.prompt_text,imp);
+      const impN=normalizePromptText(imp);
+      const origN=normalizePromptText(it.prompt_text);
+      showRightActions(impN.length > 0 && impN !== origN);
+    };
+    el.addEventListener("click",go);
+    el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}});
+  });
+}
+function renderList(id, items){document.getElementById(id).innerHTML=(items||[]).map(i=>`<li>${esc(i)}</li>`).join("") || "<li class='muted'>None</li>";}
+const SUGGESTION_GROUPERS={
+  persona_1:{order:["Developer","QA","Both"],tags:{developer:"Developer",qa:"QA",both:"Both"}},
+  persona_3:{order:["BA","PO","Both"],tags:{ba:"BA",po:"PO",both:"Both"}},
+};
+function renderSuggestions(items,personaId){
+  const el=document.getElementById("suggestions"); if(!el)return;
+  const list=items||[];
+  if(!list.length){el.innerHTML='<p class="muted" style="margin:0">None</p>';return;}
+  const plan=SUGGESTION_GROUPERS[personaId];
+  if(!plan){
+    el.innerHTML='<ul class="suggestions-flat">'+(list.map(i=>`<li>${esc(i)}</li>`).join("")||"")+"</ul>";
+    return;
+  }
+  const buckets=Object.fromEntries(plan.order.map(k=>[k,[]]));
+  buckets.Other=[];
+  const re=/^\s*\[([^\]]+)\]\s*(.*)$/;
+  for(const raw of list){
+    const m=String(raw).match(re);
+    if(!m){buckets.Other.push(raw);continue;}
+    const tagKey=m[1].trim().toLowerCase();
+    const rest=(m[2]||"").trim();
+    const line=rest||String(raw);
+    const bucket=plan.tags[tagKey];
+    if(bucket)buckets[bucket].push(line);
+    else buckets.Other.push(String(raw));
+  }
+  let html="";
+  for(const title of plan.order){
+    const arr=buckets[title];
+    if(!arr.length)continue;
+    html+=`<div class="suggestion-group"><h4 class="suggestion-group-title">${esc(title)}:</h4><ul>${arr.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>`;
+  }
+  if(buckets.Other.length){
+    html+=`<div class="suggestion-group"><h4 class="suggestion-group-title">Other:</h4><ul>${buckets.Other.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>`;
+  }
+  el.innerHTML=html||'<p class="muted" style="margin:0">None</p>';
+}
+function renderDimensions(items){
+  const list=items||[];
+  if(!list.length){document.getElementById("dimensions").innerHTML='<div class="muted">No dimensions</div>';return;}
+  document.getElementById("dimensions").innerHTML='<div class="dim-grid">'+list.map(item=>{
+    const pass=!!item.passed;
+    const cls=pass?"dim-tile dim-tile--pass":"dim-tile dim-tile--gap";
+    const note=item.notes?`<p class="dim-tile-note">${esc(item.notes)}</p>`:"";
+    return `<div class="${cls}"><div class="dim-tile-head"><span class="dim-tile-name">${esc(formatDimTitle(item.name))}</span><span class="dim-tile-badge">${pass?"Pass":"Gap"}</span></div><div class="dim-tile-ratio">${esc(String(item.score))} <span style="opacity:.65;font-weight:600">/</span> ${esc(String(item.weight))}</div>${note}</div>`;
+  }).join("")+"</div>";
+}
+
+async function validate(){
+  const submitted=baselineEl.value;
+  if(!submitted.trim()){document.getElementById("summary").innerText="Please enter a prompt first.";return;}
+  setLoading(true);
+  try{
+    const payload={prompt_text:submitted,persona_id:personaEl.value,channel:channelEl.value,auto_improve:autoImproveOn};
+    const res=await fetch("/api/v1/validate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(!res.ok){
+      const d=data.detail;
+      const msg=Array.isArray(d)?d.map(x=>x.msg||JSON.stringify(x)).join(" "):d!=null?String(d):"Validation failed.";
+      document.getElementById("summary").innerText=msg;
+      return;
+    }
+    applyResult(submitted,data);
+    await loadHistory();
+  } finally {
+    setLoading(false);
+  }
+}
+
+// "Use This & Re-validate": move improved prompt to left and run full validation
+document.getElementById("useImprovedBtn").addEventListener("click",async()=>{
+  const improved=outputEl.value.trim();
+  if(!improved)return;
+  const btn=document.getElementById("useImprovedBtn");
+  btn.disabled=true;
+  baselineEl.value=improved;
+  clearRightPanel();
+  showRightActions(false);
+  try{ await validate(); } finally { btn.disabled=false; }
+});
+
+// Copy with brief ✓ feedback
+document.getElementById("copyImprovedBtn").addEventListener("click",async()=>{
+  const t=outputEl.value.trim();
+  if(!t)return;
+  const btn=document.getElementById("copyImprovedBtn");
+  try{
+    await navigator.clipboard.writeText(t);
+    btn.textContent="✓ Copied!";
+    setTimeout(()=>{btn.textContent="Copy";},1800);
+  } catch(_){
+    btn.textContent="Failed";
+    setTimeout(()=>{btn.textContent="Copy";},1800);
+  }
+});
+
+document.getElementById("validateBtn").addEventListener("click",validate);
+document.getElementById("sampleBtn").addEventListener("click",()=>{const s=samplePrompts[personaEl.value]||samplePrompts.persona_0; baselineEl.value=s;});
+personaEl.addEventListener("change",()=>{const s=samplePrompts[personaEl.value]||samplePrompts.persona_0; baselineEl.value=s;});
+loadPersonas().then(()=>{baselineEl.value=samplePrompts[personaEl.value]||samplePrompts.persona_0; loadHistory(); initSplitDrag(); requestAnimationFrame(()=>{applySplitHeights();});});
+window.addEventListener("resize",()=>{applySplitHeights();});
+</script>
+</body>
+</html>

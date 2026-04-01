@@ -1,0 +1,339 @@
+{
+  "persona_0": {
+    "id": "persona_0",
+    "name": "All Employees",
+    "description": "Organization-wide baseline for all prompts before persona overlays.",
+    "weights": {
+      "clarity": 18,
+      "context": 14,
+      "specificity": 14,
+      "output_format": 14,
+      "ambiguity_reduction": 14,
+      "constraints": 10,
+      "actionability": 10,
+      "accuracy": 7
+    },
+    "suggestions": [
+      "Start with an action verb: Summarize / Draft / Extract / Explain / Analyze / Create",
+      "Add context: describe what the document is, who the audience is, and what the output is for",
+      "Declare output format: bullet list, table, paragraph, numbered steps, or named template",
+      "Add constraints: specify tone, word count, audience level (technical/non-technical), and scope",
+      "Define acceptance criteria: describe what a good output looks like before you submit your prompt"
+    ],
+    "keyword_checks": {
+      "output_format": [
+        "table",
+        "paragraph",
+        "template"
+      ],
+      "constraints": [
+        "tone",
+        "scope",
+        "audience"
+      ],
+      "accuracy": [
+        "source"
+      ],
+      "actionability": [
+        "next step",
+        "owner",
+        "action item",
+        "recommend"
+      ]
+    },
+    "validator_checks": [
+      "Does the prompt begin with an explicit action verb (Summarize / Draft / Analyze / Explain / Create)?",
+      "Is any context provided about the source material, situation, or purpose of the output?",
+      "Is the expected output type or format declared (list, paragraph, table, template)?",
+      "Is the prompt open-ended with no constraints on scope, tone, length, or audience?",
+      "Is the intended audience or downstream use of the output mentioned?"
+    ],
+    "penalty_triggers": [
+      "Zero context provided \u2014 HIGH penalty (AI has no grounding; output will be hallucinated or generic)",
+      "No output format declaration \u2014 MEDIUM penalty (output structure will be unpredictable and inconsistent)",
+      "Completely open-ended prompt with no constraints \u2014 HIGH penalty (violates the core baseline rule)",
+      "Missing action verb \u2014 MEDIUM penalty (AI may misinterpret intent and produce the wrong output type)",
+      "Single-word or single-phrase prompt with no context \u2014 HIGH penalty (insufficient for any professional output)"
+    ]
+  },
+  "persona_1": {
+    "id": "persona_1",
+    "name": "Developer + QA",
+    "description": "Technical engineering cluster focused on precision, testability, and edge cases.",
+    "weights": {
+      "technical_precision": 18,
+      "edge_cases": 18,
+      "testability": 18,
+      "specificity": 18,
+      "context": 14,
+      "reproducibility": 14,
+      "accuracy": 14
+    },
+    "suggestions": [
+      "[Developer] Specify language and framework: e.g., 'TypeScript 5.x, Node.js 20, Express 4'",
+      "[Developer] Provide codebase context: paste the relevant interface, class, or function signature",
+      "[QA] Add user story reference: 'For US-123, generate test cases for AC2: user cannot submit empty form'",
+      "[QA] Request edge cases explicitly: add 'Include boundary values, null inputs, timeout, and error states'",
+      "[QA] Specify test format: TC-ID | Preconditions | Test Steps | Expected Result | Priority",
+      "[Both] Define scope: state which features, modules, or scenarios are in scope and which are not"
+    ],
+    "keyword_checks": {
+      "technical_precision": [
+        "language",
+        "framework",
+        "version",
+        "codebase"
+      ],
+      "edge_cases": [
+        "edge case",
+        "null",
+        "error state",
+        "concurrency"
+      ],
+      "testability": [
+        "test",
+        "acceptance criteria"
+      ],
+      "role_alignment": [
+        "new code",
+        "bug fix",
+        "refactor",
+        "qa",
+        "sdet",
+        "automation"
+      ]
+    },
+    "validator_checks": [
+      "Feature context or user story reference is provided",
+      "Scope constraints are defined (what is in scope vs. out of scope)",
+      "Output format is declared (code structure or test case format)",
+      "Task type is declared: new code, bug fix, refactor (Developer); manual test, automation script, or regression (QA)",
+      "Developer-Specific Checks",
+      "Programming language and framework (with version) are specified",
+      "Existing code context, interface signatures, or class structure are provided when relevant",
+      "Disallowed libraries, performance requirements, and security standards are stated",
+      "Edge cases are explicitly requested",
+      "For security-critical code: OWASP standard or specific CVE reference is included",
+      "QA Engineer-Specific Checks",
+      "Acceptance criteria are referenced or embedded in the prompt",
+      "Edge cases are explicitly requested (boundaries, null inputs, error states, concurrency)",
+      "Test case format is declared with all required fields",
+      "For SDET prompts: automation framework, language, and pattern (e.g., Page Object Model) are specified",
+      "Traceability is requested (user story ID or AC reference per test case)"
+    ],
+    "penalty_triggers": [
+      "[Developer] Missing language/framework specification \u2014 HIGH (output may use wrong syntax or deprecated patterns)",
+      "[Developer] No codebase context for non-trivial generation \u2014 HIGH (hallucinated imports and undefined references)",
+      "[QA] No AC or user story context \u2014 HIGH (test cases will not align to acceptance criteria)",
+      "[QA] Edge cases not explicitly requested \u2014 HIGH (produces happy-path-only coverage; misses most defects)",
+      "[Both] Open-ended prompt with no constraints \u2014 HIGH (worst violation for this cluster)",
+      "[Both] No output format specified \u2014 MEDIUM",
+      "[Developer] Security-critical code with no security constraint \u2014 HIGH",
+      "[QA] No test format specification \u2014 MEDIUM (inconsistent, non-executable output)"
+    ]
+  },
+  "persona_2": {
+    "id": "persona_2",
+    "name": "Technical PM / PM",
+    "description": "Delivery and reporting persona for sprint intelligence and decision-ready outputs.",
+    "weights": {
+      "output_format": 18,
+      "reproducibility": 14,
+      "context": 14,
+      "specificity": 14,
+      "prioritization": 14,
+      "actionability": 14,
+      "engagement_model_awareness": 10,
+      "speed": 7
+    },
+    "suggestions": [
+      "Declare report format first: status report, risk log, sprint summary, estimate comparison, or escalation note",
+      "Embed sprint context: sprint number, team name, velocity baseline, reporting period, start and end dates",
+      "Specify audience: executive summary (3\u20135 bullets) vs. full operational report (detailed sections)",
+      "Add engagement model: fixed bid, T&M, managed services, or staff augmentation",
+      "For estimate validation: provide team velocity history (last 4 sprints) and 2\u20133 comparable story references"
+    ],
+    "keyword_checks": {
+      "output_format": [
+        "status report",
+        "risk log",
+        "sprint summary",
+        "estimate comparison",
+        "escalation note"
+      ],
+      "context": [
+        "sprint",
+        "team",
+        "velocity",
+        "dates",
+        "scope"
+      ],
+      "prioritization": [
+        "priority",
+        "rank",
+        "likelihood",
+        "impact",
+        "top 3",
+        "moscow",
+        "wsjf"
+      ],
+      "traceability": [
+        "history",
+        "comparable story",
+        "baseline"
+      ]
+    },
+    "validator_checks": [
+      "Output format or report type is explicitly declared at the start of the prompt",
+      "Sprint context is fully embedded: sprint number, team, dates, scope, and velocity baseline",
+      "Audience level is specified: executive, client, delivery team, or mixed",
+      "Engagement model context is present for client-facing or financial reports",
+      "Any estimate validation prompt includes reference velocity data or comparable story history",
+      "Prompt is structured (not open-ended); specific output sections are requested"
+    ],
+    "penalty_triggers": [
+      "No report format specified \u2014 HIGH penalty (output will lack professional structure and require full rework)",
+      "Missing sprint or team context in analysis prompts \u2014 HIGH penalty (produces generic, non-deliverable output)",
+      "Estimate validation without historical velocity data \u2014 MEDIUM penalty (AI will hallucinate estimates)",
+      "Open-ended project summary request \u2014 MEDIUM penalty",
+      "Leadership report prompt without audience specification \u2014 MEDIUM penalty",
+      "Missing engagement model context for client-facing content \u2014 MEDIUM penalty"
+    ]
+  },
+  "persona_3": {
+    "id": "persona_3",
+    "name": "Business Analyst + Product Owner",
+    "description": "Business intelligence and product delivery persona requiring grounded structured outputs.",
+    "weights": {
+      "context": 18,
+      "grounding": 18,
+      "business_relevance": 14,
+      "output_format": 14,
+      "specificity": 14,
+      "prioritization": 4,
+      "accuracy": 14
+    },
+    "suggestions": [
+      "[BA] Reference your source document: 'From [document name, section X], extract...'",
+      "[BA] Add citation instruction: 'Reference the source section for each requirement listed'",
+      "[BA] Define inference policy: 'List only explicitly stated requirements; do not infer unstated ones'",
+      "[PO] Specify your target audience: development team, business stakeholder, or executive",
+      "[PO] Add acceptance criteria request: 'Include 3\u20135 testable acceptance criteria per user story'",
+      "[PO] Add prioritization framework: MoSCoW, WSJF, or value vs. effort matrix",
+      "[Both] Define output format: BRD section, user story table, requirements matrix, or executive brief"
+    ],
+    "keyword_checks": {
+      "grounding": [
+        "source document",
+        "section",
+        "citation"
+      ],
+      "traceability": [
+        "reference"
+      ],
+      "output_format": [
+        "brd",
+        "user story",
+        "roadmap",
+        "matrix",
+        "process map"
+      ],
+      "prioritization": [
+        "moscow",
+        "wsjf",
+        "value vs effort",
+        "priority"
+      ]
+    },
+    "validator_checks": [
+      "Output format or deliverable type is declared (BRD, user story, process map, roadmap table, gap matrix)",
+      "Scope boundaries are defined (what domain, module, or process is in focus)",
+      "Target audience is specified (technical team, business stakeholder, or client executive)",
+      "Business Analyst-Specific Checks",
+      "Source document is explicitly referenced \u2014 unconstrained generation is never acceptable for BA prompts",
+      "Citation requirement is stated: source document and section must be referenced for every finding",
+      "Inference boundary is declared: explicitly state whether AI should list only explicit requirements or may infer",
+      "Analysis scope is bounded to a specific domain, process, or document section",
+      "Product Owner-Specific Checks",
+      "Translation direction is declared (business-to-technical or technical-to-business)",
+      "Target audience is named (scrum team, executive, client stakeholder)",
+      "Acceptance criteria are requested for every user story prompt (minimum 3 per story)",
+      "Prioritization framework is stated for backlog or roadmap prompts"
+    ],
+    "penalty_triggers": [
+      "[BA] No source document reference for requirements extraction \u2014 HIGH penalty (hallucination risk is severe and expensive)",
+      "[BA] Open-ended analysis prompt with no scope definition \u2014 HIGH penalty",
+      "[BA] No inference boundary stated \u2014 MEDIUM penalty (AI may add requirements not present in source)",
+      "[PO] Missing audience specification for translation prompts \u2014 HIGH penalty (output may be unusable for intended reader)",
+      "[PO] User story prompt without acceptance criteria request \u2014 HIGH penalty",
+      "[Both] Missing output format specification \u2014 MEDIUM penalty",
+      "[PO] Competitive analysis prompt without source data reference \u2014 MEDIUM penalty",
+      "[BA] No citation requirement stated \u2014 MEDIUM penalty"
+    ]
+  },
+  "persona_4": {
+    "id": "persona_4",
+    "name": "Support Staff",
+    "description": "Customer-facing support persona balancing empathy, compliance, and speed.",
+    "weights": {
+      "tone_empathy": 18,
+      "compliance": 14,
+      "speed": 14,
+      "clarity": 14,
+      "reproducibility": 10,
+      "context": 10,
+      "output_format": 7,
+      "precision": 7
+    },
+    "suggestions": [
+      "Add tone directive: specify empathetic, firm, apologetic, informative, or neutral",
+      "Specify output channel: email, live chat, internal note, or phone transfer script",
+      "Reference applicable policy: e.g., '30-day return policy' or 'SLA Tier 1 \u2014 4-hour response'",
+      "Narrow to a single output type to improve format consistency and reduce rework",
+      "Add customer tier or account context to personalize the response correctly"
+    ],
+    "keyword_checks": {
+      "tone_empathy": [
+        "empathetic",
+        "firm",
+        "apologetic",
+        "informative",
+        "neutral"
+      ],
+      "compliance": [
+        "policy",
+        "sla",
+        "refund"
+      ],
+      "output_format": [
+        "email",
+        "live chat",
+        "phone script",
+        "internal note",
+        "closure",
+        "escalation"
+      ],
+      "speed": [
+        "concise",
+        "short",
+        "quick",
+        "fast"
+      ]
+    },
+    "validator_checks": [
+      "Tone directive is present: empathetic, firm, apologetic, informative, or neutral",
+      "Communication channel is specified: email, live chat, phone script, or internal note",
+      "Output format/type is declared: reply, escalation note, ticket summary, closure message",
+      "Policy context is embedded or referenced directly in the prompt",
+      "Customer context is provided: tier, issue type, urgency, and SLA status",
+      "Prompt is not open-ended \u2014 every support prompt must be constrained by tone and output type"
+    ],
+    "penalty_triggers": [
+      "Missing tone specification \u2014 HIGH penalty (this is the single most impactful failure for Support output quality)",
+      "No channel context \u2014 MEDIUM penalty (email vs. chat vs. phone output differs significantly in structure and tone)",
+      "Open-ended prompt with no output type \u2014 MEDIUM penalty",
+      "Missing compliance or policy reference for sensitive issue types (refunds, SLA breach, legal) \u2014 HIGH penalty",
+      "Prompt requesting multiple output formats without declaring priority \u2014 LOW penalty"
+    ]
+  }
+}
