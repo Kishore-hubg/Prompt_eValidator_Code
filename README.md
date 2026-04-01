@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Infovision Prompt Validator - Complete Repo
 
 This package is the expanded repository layout for the Prompt Validator MVP and phased rollout.
@@ -131,3 +132,7 @@ The repository includes a Bot Framework bridge service under `teams_bot/` that r
   - `teams_app_manifest/`
 - Local container orchestration:
   - `deploy/docker-compose.yml`
+=======
+# Prompt_eValidator_Code
+Prompt Validator MVP: FastAPI backend for persona-based prompt scoring, auto-improvement, analytics, and Teams integration.
+>>>>>>> a0bd1cf3db60bd97441bd5e1ba657d8ab5e384b3
