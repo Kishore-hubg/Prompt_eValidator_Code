@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,17 +16,32 @@ logging.basicConfig(
     format="%(asctime)s  %(name)s  %(levelname)s  %(message)s",
 )
 
-if DATABASE_BACKEND == "mongodb":
-    from app.db.mongo_db import init_mongo_indexes
+_log = logging.getLogger("prompt_validator.main")
 
-    init_mongo_indexes()
-else:
-    initialize_schema()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialise DB connections on first request — NOT at import time.
+    This prevents Vercel build failures caused by MongoDB connection attempts
+    during the serverless cold-start import phase."""
+    try:
+        if DATABASE_BACKEND == "mongodb":
+            from app.db.mongo_db import init_mongo_indexes
+            init_mongo_indexes()
+            _log.info("MongoDB indexes initialised.")
+        else:
+            initialize_schema()
+            _log.info("SQLite schema initialised.")
+    except Exception as exc:
+        _log.warning("DB init skipped (non-fatal at startup): %s", exc)
+    yield
+
 
 app = FastAPI(
     title="Prompt Validator MVP",
     version="1.0.0",
-    description="Persona-aware prompt validation engine"
+    description="Persona-aware prompt validation engine",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
