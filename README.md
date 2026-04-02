@@ -3,7 +3,7 @@
 
 This package is the expanded repository layout for the Prompt Validator MVP and phased rollout.
 
-## What is inside
+## What is inside####
 - Current FastAPI MVP backend and web UI
 - Source-of-truth documents copied into the repo
 - Complete repo structure for Day 1 to Day 5 rollout
