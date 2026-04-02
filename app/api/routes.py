@@ -48,6 +48,7 @@ from app.services.data_strategy import (
 )
 from app.services.event_pipeline import capture_enriched_event, capture_raw_event
 from app.services.suggestion_engine import derive_issue_based_suggestions
+from app.services.demo_sample_prompts import demo_samples_payload, get_demo_sample, normalize_quality
 
 router = APIRouter(prefix="/api/v1", tags=["Prompt Validator"])
 
@@ -162,6 +163,25 @@ def health_db(db: DbDep):
     except Exception as exc:
         raise HTTPException(status_code=503, detail=f"SQLite unavailable: {exc!s}") from exc
     return {"backend": "sqlite", "status": "ok"}
+
+
+@router.get("/demo-samples")
+def demo_samples():
+    """Fifteen curated prompts: each of persona_0…persona_4 has poor, medium, and excellent."""
+    return demo_samples_payload()
+
+
+@router.get("/demo-sample")
+def demo_sample(
+    persona_id: str = Query(..., description="persona_0 … persona_4"),
+    quality: str = Query(..., description="poor | medium | excellent"),
+):
+    try:
+        qn = normalize_quality(quality)
+        text = get_demo_sample(persona_id, qn)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"persona_id": persona_id.strip(), "quality": qn, "prompt_text": text}
 
 
 @router.get("/personas", response_model=list[PersonaSummary])

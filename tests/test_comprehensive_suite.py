@@ -295,6 +295,42 @@ def test_tc_api_05_day2_compliance_checklist(client):
         assert "status" in chk
 
 
+def test_tc_api_06_demo_samples_returns_fifteen_prompts(client):
+    """TC-API-06: Demo samples bundle has 5 personas × 3 quality tiers."""
+    r = client.get("/api/v1/demo-samples")
+    assert r.status_code == 200
+    body = r.json()
+    assert body.get("count") == 15
+    assert body["qualities"] == ["poor", "medium", "excellent"]
+    samples = body["samples"]
+    assert set(samples.keys()) == {"persona_0", "persona_1", "persona_2", "persona_3", "persona_4"}
+    for pid, tiers in samples.items():
+        assert set(tiers.keys()) == {"poor", "medium", "excellent"}
+        for text in tiers.values():
+            assert isinstance(text, str) and len(text.strip()) >= 8
+    bands = body["tier_score_bands"]
+    assert bands["poor"]["score_max_exclusive"] == 50
+    assert bands["poor"]["rating"] == "Poor"
+    assert bands["medium"]["score_min_inclusive"] == 50
+    assert bands["medium"]["score_max_inclusive"] == 69
+    assert bands["medium"]["rating"] == "Needs Improvement"
+    assert bands["excellent"]["score_min_inclusive"] == 85
+    assert bands["excellent"]["rating"] == "Excellent"
+    assert "Good" in bands["uncovered_band_note"]
+
+
+def test_tc_api_07_demo_sample_query_matches_bundle(client):
+    r_all = client.get("/api/v1/demo-samples").json()
+    r_one = client.get("/api/v1/demo-sample", params={"persona_id": "persona_2", "quality": "medium"})
+    assert r_one.status_code == 200
+    assert r_one.json()["prompt_text"] == r_all["samples"]["persona_2"]["medium"]
+
+
+def test_tc_api_08_demo_sample_bad_quality_400(client):
+    r = client.get("/api/v1/demo-sample", params={"persona_id": "persona_0", "quality": "invalid"})
+    assert r.status_code == 400
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # TC-PER — Persona Routing & Validation
 # ─────────────────────────────────────────────────────────────────────────────
@@ -749,7 +785,11 @@ def test_tc_llm_03_issues_are_non_duplicate(client, monkeypatch):
 def test_tc_llm_04_max_six_issues(monkeypatch):
     """TC-LLM-04: run_llm_validation caps raw LLM issues at 6 before merging."""
     from app.services import llm_groq
+    from app.services import prompt_validation
     from app.services.prompt_validation import run_llm_validation
+
+    # Force Groq module so patches below apply regardless of local LLM_PROVIDER / keys.
+    monkeypatch.setattr(prompt_validation, "_selected_provider", lambda: "groq")
 
     # Provide guideline_checks so the code uses LLM path (not static fallback)
     # and the base dedupe_preserve(evaluation.issues)[:6] cap is the only limit.
@@ -779,7 +819,12 @@ def test_tc_llm_04_max_six_issues(monkeypatch):
 def test_tc_llm_05_max_five_strengths(monkeypatch):
     """TC-LLM-05: run_llm_validation caps strengths at 5 even if LLM returns more."""
     from app.services import llm_groq
+    from app.services import prompt_validation
     from app.services.prompt_validation import run_llm_validation
+
+    monkeypatch.setattr(prompt_validation, "_selected_provider", lambda: "groq")
+    # SP_01 otherwise hits static pre-screen (skips LLM eval); cap logic lives on LLM path.
+    monkeypatch.setattr(prompt_validation, "STATIC_PRESCREEN_THRESHOLD", 0)
 
     class FakeEval:
         semantic_score = 90.0

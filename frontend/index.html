@@ -9,8 +9,8 @@
       --bg:#0b1220;--panel:#111a2b;--panel-2:#16223a;--border:#253552;--text:#e9eef8;--muted:#9db0d0;--accent:#69a3ff;
       --diff-gutter:#121c2e;--prompt-bg:rgba(22,36,62,.92);--prompt-text:#f2f6ff;--diff-head-a:#070c16;--diff-head-b:#0a1222;
       --scroll-track:rgba(8,14,25,.75);--tile-pass:rgba(27,191,117,.12);--tile-gap:rgba(255,92,122,.1);--tile-border-pass:rgba(74,222,128,.35);--tile-border-gap:rgba(251,113,133,.4);
-      --title-prev:#6ee7d8;--title-prev-border:rgba(45,212,191,.55);--title-prev-bg1:rgba(16,42,40,.88);--title-prev-bg2:rgba(8,22,26,.95);
-      --title-updated:#d8c4ff;--title-updated-border:rgba(167,139,250,.55);--title-updated-bg1:rgba(38,28,52,.88);--title-updated-bg2:rgba(20,16,34,.95);
+      --title-prev:#9ffff0;--title-prev-border:rgba(94,234,212,.75);--title-prev-bg1:rgba(12,38,36,.92);--title-prev-bg2:rgba(6,18,22,.97);
+      --title-updated:#f3e8ff;--title-updated-border:rgba(196,181,253,.8);--title-updated-bg1:rgba(32,22,48,.92);--title-updated-bg2:rgba(14,10,28,.97);
       --title-scoring:#d4b87a;--title-scoring-accent:#b8923f;--title-dim:#93c5ef;--btn-auto1:#4f46e5;--btn-auto2:#4338ca;--btn-auto-glow:rgba(99,102,241,.42);
     }
     *{box-sizing:border-box}
@@ -21,38 +21,105 @@
     .hero p{margin:0;color:var(--muted);font-size:13px;line-height:1.45;max-width:720px}
     .main{flex:1;min-height:0;display:flex;flex-direction:column;gap:0}
     .split-top{flex:1 1 auto;min-height:160px;min-width:0;display:flex;flex-direction:column;overflow:hidden;margin-bottom:4px}
-    .split-gutter{flex:0 0 auto;position:relative;min-height:10px;padding:2px 0;margin:2px 0 6px;cursor:row-resize;display:flex;align-items:center;justify-content:center;user-select:none;touch-action:none;background:transparent;border:none;border-radius:0;box-shadow:none}
-    .split-gutter::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(105,163,255,.2) 0%,rgba(142,197,255,.7) 50%,rgba(105,163,255,.2) 100%);pointer-events:none}
-    .split-gutter:hover{border-color:rgba(105,163,255,.38)}
+    .split-gutter{flex:0 0 auto;position:relative;min-height:16px;padding:5px 0;margin:2px 0 6px;cursor:row-resize;display:flex;align-items:center;justify-content:center;user-select:none;touch-action:none;background:transparent;border:none;border-radius:0;box-shadow:none}
+    .split-gutter-track{display:flex;align-items:center;justify-content:center;width:100%;max-width:min(520px,92vw);gap:14px;padding:0 12px;pointer-events:none}
+    .split-gutter-line{flex:1 1 0;min-width:36px;max-width:200px;height:2px;border-radius:2px;opacity:.92;transition:opacity .2s,filter .2s}
+    .split-gutter-line--l{background:linear-gradient(90deg,rgba(8,16,29,.2) 0%,rgba(105,163,255,.35) 45%,rgba(142,197,255,.75) 100%);box-shadow:0 0 12px rgba(105,163,255,.12)}
+    .split-gutter-line--r{background:linear-gradient(90deg,rgba(142,197,255,.75) 0%,rgba(105,163,255,.35) 55%,rgba(8,16,29,.2) 100%);box-shadow:0 0 12px rgba(105,163,255,.12)}
+    .split-gutter:hover .split-gutter-line{opacity:1;filter:brightness(1.08)}
+    .split-gutter:hover .split-gutter-grip{border-color:rgba(167,139,250,.65);box-shadow:0 0 16px rgba(105,163,255,.22)}
+    .split-gutter-grip{position:relative;z-index:1;display:flex;flex-direction:column;gap:3px;flex-shrink:0;padding:7px 12px;border-radius:10px;background:rgba(17,26,43,.92);border:1px solid rgba(105,163,255,.4);pointer-events:none}
+    .split-gutter-bar{display:block;width:24px;height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(142,197,255,.5),rgba(142,197,255,.95),rgba(142,197,255,.5))}
     .split-bottom{flex:0 0 280px;min-height:120px;max-height:min(72vh,900px);overflow:hidden;display:flex;flex-direction:column;min-width:0}
     .card{background:rgba(17,26,43,.94);border:1px solid var(--border);border-radius:14px;padding:14px 16px;box-shadow:0 10px 28px rgba(0,0,0,.2);min-height:0;display:flex;flex-direction:column}
     .top-pane{min-height:0}
+    /* Toolbar matches prompt columns: left = Persona (to center line), right = actions */
     .toolbar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:10px}
+    .toolbar--split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;row-gap:10px;align-items:end;margin-bottom:10px}
+    .toolbar-split-left{min-width:0}
+    .toolbar-split-left .field{margin:0;width:100%}
+    .toolbar-split-left .field label{margin-bottom:6px}
+    .toolbar-split-right{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px;min-width:0;padding-left:0}
+    .toolbar-vsep{
+      align-self:stretch;width:1px;min-height:40px;margin:0 4px;flex-shrink:0;
+      background:linear-gradient(180deg,rgba(99,102,241,.2),rgba(167,139,250,.82),rgba(99,102,241,.2));
+      border-radius:1px;
+    }
     .toolbar .field{flex:1;min-width:150px}
-    .toolbar .field label{display:block;margin-bottom:6px;font-weight:600;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
+    .toolbar--split .toolbar-split-left .field{flex:unset;min-width:0}
+    .toolbar .field--quality{flex:0 1 200px;max-width:240px;min-width:160px}
+    .toolbar-split-right .field--quality{flex:1 1 160px;min-width:140px;max-width:220px}
+    .toolbar-divider{align-self:stretch;width:1px;min-height:40px;margin:0 4px 2px;background:linear-gradient(180deg,rgba(99,102,241,.15),rgba(167,139,250,.85),rgba(99,102,241,.15));border-radius:1px;flex-shrink:0}
+    /* Form field captions — Persona / Quality: bright accents, readable on dark toolbar */
+    .toolbar .field label{display:block;margin-bottom:6px;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;line-height:1.2}
+    .toolbar .field:not(.field--quality) label{
+      color:#a8fff4;
+      text-shadow:0 0 22px rgba(45,212,191,.65),0 0 8px rgba(94,234,212,.35),0 1px 2px rgba(0,0,0,.6);
+    }
+    .toolbar .field--quality label{
+      color:#f5ebff;
+      text-shadow:0 0 22px rgba(167,139,250,.6),0 0 10px rgba(192,132,252,.35),0 1px 2px rgba(0,0,0,.6);
+    }
     .toolbar-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-bottom:2px}
     label.inline-label{display:block;margin-bottom:6px;font-weight:600;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
-    select{width:100%;background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px}
+    select{width:100%;background:var(--panel-2);color:var(--text);border:1px solid rgba(100,140,200,.45);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;box-shadow:0 0 0 1px rgba(15,23,42,.5);transition:border-color .15s,box-shadow .15s}
+    select:hover{border-color:rgba(129,180,255,.55)}
+    select:focus{outline:none;border-color:rgba(105,163,255,.75);box-shadow:0 0 0 2px rgba(105,163,255,.2)}
     .diff-wrap{flex:1;min-height:0;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--diff-gutter);box-shadow:inset 0 0 0 1px rgba(105,163,255,.08)}
-    .diff-head-row{display:grid;grid-template-columns:1fr 1fr;background:#050a12;font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid rgba(37,53,82,.9)}
+    .diff-head-row{display:grid;grid-template-columns:1fr 1fr;background:#050a12;font-size:11px;font-weight:800;letter-spacing:0.09em;text-transform:uppercase;border-bottom:1px solid rgba(37,53,82,.9)}
     .diff-head-row .dh-cell{padding:11px 14px;text-align:center;border-bottom:2px solid transparent}
     .diff-head-row .dh-cell:first-child{
       background:linear-gradient(180deg,var(--title-prev-bg1) 0%,var(--title-prev-bg2) 100%);
       color:var(--title-prev);border-bottom-color:var(--title-prev-border);
-      text-shadow:0 0 20px rgba(45,212,191,.2);border-right:1px solid rgba(37,53,82,.5);
+      text-shadow:0 0 24px rgba(45,212,191,.55),0 0 10px rgba(94,234,212,.3),0 1px 2px rgba(0,0,0,.75);
+      border-right:1px solid rgba(37,53,82,.5);
     }
     .diff-head-row .dh-cell:last-child{
       background:linear-gradient(180deg,var(--title-updated-bg1) 0%,var(--title-updated-bg2) 100%);
       color:var(--title-updated);border-bottom-color:var(--title-updated-border);
-      text-shadow:0 0 20px rgba(167,139,250,.18);
+      text-shadow:0 0 24px rgba(167,139,250,.45),0 0 12px rgba(192,132,252,.28),0 1px 2px rgba(0,0,0,.75);
     }
-    /* Auto-improve toggle in toolbar */
-    .auto-improve-toggle{display:flex;align-items:center;gap:8px;padding:0;background:none;border:none;cursor:pointer;color:var(--text);font:inherit;user-select:none}
-    .auto-improve-toggle .toggle-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap}
-    .toggle-track{width:38px;height:22px;border-radius:999px;background:#1e2d45;border:1px solid rgba(105,163,255,.3);position:relative;transition:background .2s,border-color .2s;flex-shrink:0}
-    .toggle-track.on{background:rgba(79,70,229,.75);border-color:rgba(99,102,241,.7)}
-    .toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#7a8faa;transition:transform .2s,background .2s;box-shadow:0 1px 3px rgba(0,0,0,.4)}
-    .toggle-track.on .toggle-thumb{transform:translateX(16px);background:#fff}
+    /* Auto-improve toggle — dull when OFF, bright when ON (see aria-pressed on #autoImproveBtnWrapper) */
+    .auto-improve-toggle{display:flex;align-items:center;gap:10px;padding:4px 2px;background:none;border:none;cursor:pointer;font:inherit;user-select:none;border-radius:10px;transition:opacity .15s,filter .15s}
+    .auto-improve-toggle .toggle-label{font-size:12px;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;transition:color .2s,font-weight .2s,text-shadow .2s}
+    /* OFF — muted */
+    .auto-improve-toggle[aria-pressed="false"]{opacity:.92}
+    .auto-improve-toggle[aria-pressed="false"]:hover{filter:brightness(1.04)}
+    .auto-improve-toggle[aria-pressed="false"] .toggle-label{
+      color:#64748b;font-weight:600;text-shadow:none;
+    }
+    .auto-improve-toggle[aria-pressed="false"]:hover .toggle-label{color:#7c8aa0}
+    /* ON — vivid */
+    .auto-improve-toggle[aria-pressed="true"]:hover{filter:brightness(1.06)}
+    .auto-improve-toggle[aria-pressed="true"] .toggle-label{
+      color:#faf5ff;font-weight:800;letter-spacing:0.06em;
+      text-shadow:0 0 20px rgba(167,139,250,.65),0 0 10px rgba(139,92,246,.35),0 1px 2px rgba(0,0,0,.5);
+    }
+    .toggle-track{width:40px;height:24px;border-radius:999px;position:relative;transition:background .2s,border-color .2s,box-shadow .2s,opacity .2s;flex-shrink:0}
+    /* Track OFF */
+    .toggle-track:not(.on){
+      background:#151d2c;
+      border:1px solid rgba(51,65,85,.65);
+      box-shadow:inset 0 2px 5px rgba(0,0,0,.5);
+      opacity:.85;
+    }
+    /* Track ON */
+    .toggle-track.on{
+      opacity:1;
+      background:linear-gradient(145deg,#818cf8 0%,#6366f1 55%,#4f46e5 100%);
+      border:1px solid rgba(199,210,254,.85);
+      box-shadow:0 0 14px rgba(99,102,241,.55),inset 0 1px 0 rgba(255,255,255,.2);
+    }
+    .toggle-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;transition:transform .2s,background .2s,box-shadow .2s}
+    .toggle-track:not(.on) .toggle-thumb{
+      background:linear-gradient(180deg,#4b5563,#334155);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 1px 3px rgba(0,0,0,.45);
+    }
+    .toggle-track.on .toggle-thumb{
+      transform:translateX(18px);
+      background:linear-gradient(180deg,#ffffff,#f1f5f9);
+      box-shadow:0 1px 4px rgba(0,0,0,.25);
+    }
     .diff-grid{display:grid;grid-template-columns:1fr 1px 1fr;gap:0;background:#1a2740;flex:1;min-height:0}
     .diff-vline{min-width:1px;background:linear-gradient(180deg,rgba(105,163,255,.55) 0%,rgba(142,197,255,.95) 50%,rgba(105,163,255,.55) 100%);box-shadow:0 0 8px rgba(105,163,255,.2);align-self:stretch}
     /* Contain column + scroll the prompt so the action bar is never pushed below the fold */
@@ -134,6 +201,7 @@
     .score-row{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;align-items:start;min-width:0}
     @media (max-width:920px){.score-row{grid-template-columns:1fr}}
     button{border:none;border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--accent);color:white;font-weight:700;font-size:13px}
+    #validateBtn{font-size:15px;font-weight:800;padding:10px 16px;letter-spacing:0.02em}
     button.secondary{background:#21314f;color:var(--text)}
     button:disabled{opacity:.5;cursor:not-allowed}
     .badge{display:inline-flex;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700}
@@ -171,6 +239,9 @@
     /* Loading spinner */
     @keyframes spin{to{transform:rotate(360deg)}}
     .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+    @media (max-width:900px){
+      .toolbar--split{grid-template-columns:1fr;row-gap:12px}
+    }
     @media (max-width:700px){
       .diff-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
       .diff-grid,.diff-head-row{min-width:min(520px,100vw - 56px)}
@@ -185,17 +256,25 @@
   </div>
   <div class="main" id="mainSplit">
     <div class="card top-pane split-top">
-      <div class="toolbar">
-        <div class="field"><label for="persona">Persona</label><select id="persona"></select></div>
-        <div class="field"><label for="channel">Channel</label><select id="channel"><option value="web">Web UI</option><option value="api">API</option><option value="teams">Teams</option></select></div>
-        <div class="toolbar-actions">
+      <div class="toolbar toolbar--split">
+        <div class="toolbar-split-left">
+          <div class="field"><label for="persona">Persona</label><select id="persona"></select></div>
+        </div>
+        <div class="toolbar-split-right">
           <button type="button" id="validateBtn">Validate Prompt</button>
-          <button type="button" class="secondary" id="sampleBtn">Load Sample</button>
-          <!-- Auto-improve toggle lives in the toolbar for discoverability -->
+          <span class="toolbar-vsep" role="presentation" aria-hidden="true"></span>
           <button type="button" class="auto-improve-toggle" id="autoImproveBtnWrapper" aria-pressed="true" title="On: AI refines the prompt after validation. Off: validate only.">
             <div class="toggle-track on" id="autoImproveTrack"><div class="toggle-thumb"></div></div>
             <span class="toggle-label" id="autoImproveLabel">Auto Improve: ON</span>
           </button>
+          <span class="toolbar-vsep" role="presentation" aria-hidden="true"></span>
+          <div class="field field--quality"><label for="quality">Quality</label><select id="quality" title="Demo sample tier for Load Sample">
+            <option value="poor">Poor</option>
+            <option value="medium" selected>Medium</option>
+            <option value="excellent">Excellent</option>
+          </select></div>
+          <span class="toolbar-vsep" role="presentation" aria-hidden="true"></span>
+          <button type="button" class="secondary" id="sampleBtn">Load Sample</button>
         </div>
       </div>
       <div class="diff-wrap" aria-label="Prompt comparison">
@@ -205,7 +284,7 @@
         </div>
         <div class="diff-grid">
           <div class="diff-col">
-            <textarea id="promptBaseline" class="diff-input" aria-label="Current prompt" placeholder="Type or paste your prompt here. Use Load Sample to insert an example for the selected persona."></textarea>
+            <textarea id="promptBaseline" class="diff-input" aria-label="Current prompt" placeholder="Type or paste your prompt here. Choose Persona and Quality, then Load Sample for a curated demo prompt."></textarea>
           </div>
           <div class="diff-vline" role="presentation" aria-hidden="true"></div>
           <div class="diff-col" style="display:flex;flex-direction:column">
@@ -225,7 +304,13 @@
         </div>
       </div>
     </div>
-    <div class="split-gutter" id="splitGutter" role="separator" aria-orientation="horizontal" aria-label="Drag to resize panels." tabindex="0"></div>
+    <div class="split-gutter" id="splitGutter" role="separator" aria-orientation="horizontal" aria-label="Drag to resize upper and lower panels." tabindex="0">
+      <div class="split-gutter-track">
+        <span class="split-gutter-line split-gutter-line--l" aria-hidden="true"></span>
+        <span class="split-gutter-grip" title="Drag to resize" aria-hidden="true"><span class="split-gutter-bar"></span><span class="split-gutter-bar"></span><span class="split-gutter-bar"></span></span>
+        <span class="split-gutter-line split-gutter-line--r" aria-hidden="true"></span>
+      </div>
+    </div>
     <div class="card bottom-pane split-bottom">
       <div class="scoring-scroll">
         <div class="score-row">
@@ -255,7 +340,8 @@
   </div>
 </div>
 <script>
-const personaEl=document.getElementById("persona"),channelEl=document.getElementById("channel");
+const personaEl=document.getElementById("persona");
+const qualityEl=document.getElementById("quality");
 const baselineEl=document.getElementById("promptBaseline");
 // outputEl is the hidden textarea used for data storage (Copy / Use This read from it)
 const outputEl=document.getElementById("promptOutput");
@@ -361,7 +447,33 @@ function initSplitDrag(){
   });
 }
 
-const samplePrompts={persona_0:"Summarize the attached meeting notes for an executive audience in 5 bullet points and include the top 3 decisions, owners, and next steps. Keep it under 150 words.",persona_1:"Generate a FastAPI endpoint in Python 3.11 for POST /users using Pydantic validation and SQLAlchemy. Include error handling, unit tests, and edge cases for missing fields, duplicate email, and empty payload. Return the result as separate code blocks for model, route, and tests.",persona_2:"Create a sprint 14 status report for the client executive audience using the same structure as last week. Include sprint context, team velocity over the last 4 sprints, top 3 blockers, RAG status, risks ranked by impact, and recommended next actions.",persona_3:"From Section 3 (Functional requirements) of the BRD \"Customer Portal v2\" and the stakeholder workshop transcript dated 2026-03-15, extract only explicitly stated functional requirements—do not infer anything not written in those sources. For each item include: Requirement ID, requirement text, exact source section reference, and business rationale. Audience: delivery scrum team. Output as a markdown table. For backlog prioritization, apply MoSCoW only where priority is already stated in the documents; otherwise leave priority blank and note \"TBD in grooming.\"",persona_4:"Draft an empathetic and professional support response for a customer whose ticket has been delayed for 2 days. Mention the current status, next step, and SLA-compliant follow-up. Keep it concise and suitable for email."};
+let demoSamplesBundle=null;
+async function loadDemoSamples(){
+  try{
+    const res=await fetch("/api/v1/demo-samples");
+    if(!res.ok) throw new Error(String(res.status));
+    demoSamplesBundle=await res.json();
+    const b=demoSamplesBundle.tier_score_bands;
+    if(b&&qualityEl){
+      const lines=[
+        b.poor&&`${b.poor.summary} (${b.poor.rating})`,
+        b.medium&&`${b.medium.summary} (${b.medium.rating})`,
+        b.excellent&&`${b.excellent.summary} (${b.excellent.rating})`,
+        b.uncovered_band_note
+      ].filter(Boolean);
+      qualityEl.title=lines.join(". ")+" — Actual scores depend on validation.";
+    }
+  }catch(_){
+    demoSamplesBundle=null;
+  }
+}
+function applyDemoSampleToBaseline(){
+  if(!demoSamplesBundle||!demoSamplesBundle.samples)return;
+  const pid=personaEl.value;
+  const q=qualityEl.value;
+  const text=demoSamplesBundle.samples[pid]?.[q];
+  if(text) baselineEl.value=text;
+}
 
 function badgeClass(rating){const r=(rating||"").toLowerCase(); if(r.includes("excellent")) return "badge excellent"; if(r.includes("good")) return "badge good"; if(r.includes("needs")) return "badge warn"; return "badge poor";}
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
@@ -507,7 +619,7 @@ async function validate(){
   if(!submitted.trim()){document.getElementById("summary").innerText="Please enter a prompt first.";return;}
   setLoading(true);
   try{
-    const payload={prompt_text:submitted,persona_id:personaEl.value,channel:channelEl.value,auto_improve:autoImproveOn};
+    const payload={prompt_text:submitted,persona_id:personaEl.value,channel:"web",auto_improve:autoImproveOn};
     const res=await fetch("/api/v1/validate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
     const data=await res.json();
     if(!res.ok){
@@ -551,9 +663,16 @@ document.getElementById("copyImprovedBtn").addEventListener("click",async()=>{
 });
 
 document.getElementById("validateBtn").addEventListener("click",validate);
-document.getElementById("sampleBtn").addEventListener("click",()=>{const s=samplePrompts[personaEl.value]||samplePrompts.persona_0; baselineEl.value=s;});
-personaEl.addEventListener("change",()=>{const s=samplePrompts[personaEl.value]||samplePrompts.persona_0; baselineEl.value=s;});
-loadPersonas().then(()=>{baselineEl.value=samplePrompts[personaEl.value]||samplePrompts.persona_0; loadHistory(); initSplitDrag(); requestAnimationFrame(()=>{applySplitHeights();});});
+document.getElementById("sampleBtn").addEventListener("click",()=>{applyDemoSampleToBaseline();});
+personaEl.addEventListener("change",()=>{applyDemoSampleToBaseline();});
+qualityEl.addEventListener("change",()=>{applyDemoSampleToBaseline();});
+loadPersonas().then(async()=>{
+  await loadDemoSamples();
+  applyDemoSampleToBaseline();
+  loadHistory();
+  initSplitDrag();
+  requestAnimationFrame(()=>{applySplitHeights();});
+});
 window.addEventListener("resize",()=>{applySplitHeights();});
 </script>
 </body>
