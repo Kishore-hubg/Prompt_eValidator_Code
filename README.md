@@ -1,5 +1,5 @@
 <<<<<<< HEAD
-# Infovision Prompt Validator - Complete Repo
+# Infovision Prompt Validator - Complete Repo###
 
 This package is the expanded repository layout for the Prompt Validator MVP and phased rollout.
 
