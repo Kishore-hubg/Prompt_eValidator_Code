@@ -29,7 +29,7 @@ See `docs/source_of_truth/`.
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+![1775110824975](image/README/1775110824975.png)
 ```
 
 ## MongoDB Atlas (default backend)

@@ -341,10 +341,16 @@ def llm_rewrite_prompt(
         ),
         "persona_4": (
             [
-                "## Role", "## Tone Directive", "## Customer Context",
-                "## Policy / SLA Constraints", "## Output Format", "## Next Action",
+                "## Role", "## Task", "## Customer Context",
+                "## Policy / SLA Constraints", "## Output Format",
             ],
-            "Empathetic, compliant, concise. Always include a clear next action.",
+            "Empathetic, compliant, concise. "
+            "Tone and empathy guidance goes INSIDE ## Role (one sentence) or ## Customer Context (as a bullet). "
+            "NEVER create a separate ## Tone Directive section. "
+            "NEVER create a ## Next Action section — the task directive is already in ## Task. "
+            "## Task is ONE imperative sentence starting with an action verb (Draft / Write / Create). "
+            "## Customer Context captures: issue type, delay/urgency details, audience, and tone expectation as a bullet. "
+            "## Policy / SLA Constraints captures: what must be included, what to avoid, and SLA rules.",
         ),
     }
     sections, style_note = persona_section_maps.get(
@@ -369,6 +375,22 @@ def llm_rewrite_prompt(
         "You are a strict enterprise prompt architect. "
         "Your ONLY job is to rewrite the given prompt into a structured prompt "
         "using the mandatory section format. Follow ALL steps below in order.\n\n"
+
+        "━━━ STEP 0 — NORMALISE INPUT (silent, no output) ━━━\n"
+        "Before anything else, silently correct ALL spelling errors and grammar issues.\n"
+        "Infer the correct technical term from context — common corrections:\n"
+        "  mongoDB/mongo db → MongoDB | expres/expresjs → Express.js\n"
+        "  pythno/pythn/pyton → Python | javascrpt/javasript → JavaScript\n"
+        "  nodjs/node js → Node.js | recat/raect → React | fasapi → FastAPI\n"
+        "  springboot/spring boot → Spring Boot | postgress/postges → PostgreSQL\n"
+        "  tets/tset → tests | connetor/conecter → connector | bckend → backend\n"
+        "  summrise/sumarise → summarise | documnt/documet → document\n"
+        "  endponit/endpoit → endpoint | implment/implemet → implement\n"
+        "  authetication/aunthentication → authentication | databse → database\n"
+        "If a sentence is grammatically broken (e.g. 'Devlop bckend login cod'), "
+        "infer the intended meaning and proceed as if correctly written.\n"
+        "NEVER flag spelling as an issue. NEVER show corrections explicitly.\n"
+        "This step is SILENT — use the normalised understanding for all steps below.\n\n"
 
         "━━━ STEP 1 — EXTRACT IMMUTABLE FACTS (silent, before writing) ━━━\n"
         "Scan the original prompt and identify every EXPLICIT fact. These are IMMUTABLE — "
@@ -461,8 +483,21 @@ def llm_rewrite_prompt(
         "          '- Password hashing: bcrypt (cost factor 12 recommended)'\n"
         "          '- Endpoint: POST /api/auth/login'\n"
         "          '- Request body: { email: string, password: string }'\n"
-        "      RULE: Module/file paths are user-specific → use [Not specified in original — add before using]\n"
-        "      RULE: Existing class/interface signatures are user-specific → [Not specified]\n"
+        "      RULE: Module/file paths, class/interface signatures, in-scope/out-of-scope module\n"
+        "            lists are user-specific → NEVER generate individual [Not specified] lines\n"
+        "            for each. ALWAYS consolidate ALL missing user-specific fields into ONE line:\n"
+        "            '- Project specifics: [Specify: relevant file paths, class/interface signatures,\n"
+        "               and in-scope modules for this ticket/task]'\n"
+        "      CONSOLIDATION RULE — CRITICAL:\n"
+        "        When the original prompt provides NO language/framework/domain context at all\n"
+        "        (e.g., only a ticket number like '12344', or 'develop code on ticket X'),\n"
+        "        do NOT generate individual [Not specified] for Language, Framework, Version, DB.\n"
+        "        Instead produce ONLY:\n"
+        "          '- Ticket: <ticket number>'\n"
+        "          '- Stack: [Specify: Language, Framework, Version — no technical context in original]'\n"
+        "          '- Project specifics: [Specify: in-scope file paths, module names, DB details]'\n"
+        "        When domain context EXISTS (e.g., 'backend login', 'data pipeline', 'REST API')\n"
+        "        → apply the domain inference rules above and list all derivable fields explicitly.\n"
         "      EXCLUDE all prose about developer skill, knowledge gaps, or recommendations.\n"
         "  F5. ## Acceptance Criteria — MUST be a bullet list of measurable outcomes.\n"
         "      RULE: If the original states criteria → list them exactly.\n"
@@ -497,7 +532,8 @@ def llm_rewrite_prompt(
         "SECTION RULES:\n"
         "  • Stated facts from Step 1 → carry EXACTLY unchanged.\n"
         "  • Missing technical fields → fill with domain-expert best-practice defaults.\n"
-        "  • User-specific unknowables (file paths, ticket IDs, team names) → [Not specified].\n"
+        "  • User-specific unknowables (file paths, module names, signatures, scope) → ONE consolidated\n"
+        "    '- Project specifics: [Specify: ...]' line — NEVER one [Not specified] per field.\n"
         "  • Do NOT write placeholder versions when best-practice defaults are known.\n"
         "  • Do NOT use [Not specified] for Edge Cases, Acceptance Criteria, or Output Format\n"
         "    when the task domain makes appropriate defaults obvious.\n"
@@ -539,9 +575,11 @@ def llm_rewrite_prompt(
         "  ✓ ZERO prose paragraphs — every section is bullet lists or a single sentence.\n"
         "  ✓ ## Role starts with 'You are a …' — derived from tech/domain context.\n"
         "  ✓ ## Task is ONE imperative sentence starting with an action verb.\n"
-        "  ✓ ## Codebase Context has NO [Not specified] for Language, Framework, Version,\n"
-        "    Auth mechanism, DB, Endpoint, or Request fields — all have best-practice defaults.\n"
-        "    [Not specified] is ONLY allowed for module/file paths and existing code signatures.\n"
+        "  ✓ ## Codebase Context has ZERO individual [Not specified] lines.\n"
+        "    If domain context exists → fill Language, Framework, Version, DB with best-practice defaults.\n"
+        "    If ONLY a ticket number or no domain context → use exactly 3 lines:\n"
+        "      '- Ticket: X', '- Stack: [Specify: ...]', '- Project specifics: [Specify: ...]'\n"
+        "    User-specific fields (file paths, class signatures, module names, scope) → ONE consolidated line.\n"
         "  ✓ ## Edge Cases has REAL scenarios — not [Not specified] or vague sentences.\n"
         "  ✓ ## Acceptance Criteria has REAL testable conditions — not [Not specified].\n"
         "  ✓ ## Output Format has REAL directives — not [Not specified].\n"

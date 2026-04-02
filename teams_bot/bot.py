@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import sys
 import json
 from typing import Any
 
@@ -7,6 +9,13 @@ import httpx
 from botbuilder.core import BotFrameworkAdapter, TurnContext
 from botbuilder.core.teams import TeamsActivityHandler
 from botbuilder.schema import Activity, ActivityTypes
+
+# Allow `python path/to/teams_bot/bot.py` execution by ensuring the repo root
+# (the parent of the `teams_bot/` package) is on `sys.path`.
+_THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.dirname(_THIS_DIR)
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 from teams_bot.config import TeamsBotSettings
 
