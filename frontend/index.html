@@ -15,12 +15,12 @@
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:linear-gradient(180deg,#08101d 0%,#0d1628 100%);color:var(--text);font-family:Inter,system-ui,-apple-system,sans-serif}
-    .app{display:flex;flex-direction:column;height:100vh;min-height:0;padding:0 22px 14px}
-    .hero{flex-shrink:0;padding:14px 0 10px;border-bottom:1px solid rgba(37,53,82,.6);margin-bottom:12px}
-    .hero h1{margin:0 0 4px;font-size:22px;font-weight:800;letter-spacing:-0.02em}
-    .hero p{margin:0;color:var(--muted);font-size:13px;line-height:1.45;max-width:720px}
+    .app{display:flex;flex-direction:column;height:100vh;min-height:0;padding:0 18px 10px}
+    .hero{flex-shrink:0;padding:10px 0 8px;border-bottom:1px solid rgba(37,53,82,.6);margin-bottom:8px}
+    .hero h1{margin:0 0 2px;font-size:18px;font-weight:800;letter-spacing:-0.02em}
+    .hero p{margin:0;color:var(--muted);font-size:12px;line-height:1.4;max-width:720px}
     .main{flex:1;min-height:0;display:flex;flex-direction:column;gap:0}
-    .split-top{flex:1 1 auto;min-height:160px;min-width:0;display:flex;flex-direction:column;overflow:hidden;margin-bottom:4px}
+    .split-top{flex:1 1 auto;min-height:120px;min-width:0;display:flex;flex-direction:column;overflow:hidden;margin-bottom:4px}
     .split-gutter{flex:0 0 auto;position:relative;min-height:16px;padding:5px 0;margin:2px 0 6px;cursor:row-resize;display:flex;align-items:center;justify-content:center;user-select:none;touch-action:none;background:transparent;border:none;border-radius:0;box-shadow:none}
     .split-gutter-track{display:flex;align-items:center;justify-content:center;width:100%;max-width:min(520px,92vw);gap:14px;padding:0 12px;pointer-events:none}
     .split-gutter-line{flex:1 1 0;min-width:36px;max-width:200px;height:2px;border-radius:2px;opacity:.92;transition:opacity .2s,filter .2s}
@@ -30,22 +30,23 @@
     .split-gutter:hover .split-gutter-grip{border-color:rgba(167,139,250,.65);box-shadow:0 0 16px rgba(105,163,255,.22)}
     .split-gutter-grip{position:relative;z-index:1;display:flex;flex-direction:column;gap:3px;flex-shrink:0;padding:7px 12px;border-radius:10px;background:rgba(17,26,43,.92);border:1px solid rgba(105,163,255,.4);pointer-events:none}
     .split-gutter-bar{display:block;width:24px;height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(142,197,255,.5),rgba(142,197,255,.95),rgba(142,197,255,.5))}
-    .split-bottom{flex:0 0 280px;min-height:120px;max-height:min(72vh,900px);overflow:hidden;display:flex;flex-direction:column;min-width:0}
+    .split-bottom{flex:0 0 280px;min-height:140px;max-height:min(78vh,920px);overflow:hidden;display:flex;flex-direction:column;min-width:0}
     .card{background:rgba(17,26,43,.94);border:1px solid var(--border);border-radius:14px;padding:14px 16px;box-shadow:0 10px 28px rgba(0,0,0,.2);min-height:0;display:flex;flex-direction:column}
+    .card.top-pane{padding:10px 12px 12px}
     .top-pane{min-height:0}
     /* Toolbar matches prompt columns: left = Persona (to center line), right = actions */
     .toolbar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:10px}
-    .toolbar--split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;row-gap:10px;align-items:end;margin-bottom:10px}
+    .toolbar--split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:12px;row-gap:8px;align-items:end;margin-bottom:8px}
     .toolbar-split-left{min-width:0}
     .toolbar-split-left .field{margin:0;width:100%}
-    .toolbar-split-left .field label{margin-bottom:6px}
+    .toolbar-split-left .field label{margin-bottom:4px}
     /* Single horizontal row — tight gaps (no flex-grow between Quality and Load Sample) */
     .toolbar-split-right{
       display:flex;flex-wrap:nowrap;align-items:flex-end;justify-content:flex-start;gap:6px;
       min-width:0;width:100%;
     }
     .toolbar-split-right .toolbar-vsep{
-      align-self:stretch;width:1px;min-height:40px;margin:0 2px;flex-shrink:0;
+      align-self:stretch;width:1px;min-height:32px;margin:0 2px;flex-shrink:0;
       background:linear-gradient(180deg,rgba(99,102,241,.2),rgba(167,139,250,.82),rgba(99,102,241,.2));
       border-radius:1px;
     }
@@ -54,8 +55,8 @@
     .toolbar .field--quality{flex:0 1 200px;max-width:240px;min-width:160px}
     .toolbar-split-right .field--quality{flex:0 1 200px;min-width:132px;max-width:200px;width:100%}
     .toolbar-divider{align-self:stretch;width:1px;min-height:40px;margin:0 4px 2px;background:linear-gradient(180deg,rgba(99,102,241,.15),rgba(167,139,250,.85),rgba(99,102,241,.15));border-radius:1px;flex-shrink:0}
-    /* Form field captions — Persona / Quality: bright accents, readable on dark toolbar */
-    .toolbar .field label{display:block;margin-bottom:6px;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;line-height:1.2}
+    /* Form field captions — compact so prompts + scoring get more viewport */
+    .toolbar .field label{display:block;margin-bottom:4px;font-weight:800;font-size:9px;text-transform:uppercase;letter-spacing:0.07em;line-height:1.2}
     .toolbar .field:not(.field--quality) label{
       color:#a8fff4;
       text-shadow:0 0 22px rgba(45,212,191,.65),0 0 8px rgba(94,234,212,.35),0 1px 2px rgba(0,0,0,.6);
@@ -67,11 +68,12 @@
     .toolbar-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-bottom:2px}
     label.inline-label{display:block;margin-bottom:6px;font-weight:600;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
     select{width:100%;background:var(--panel-2);color:var(--text);border:1px solid rgba(100,140,200,.45);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;box-shadow:0 0 0 1px rgba(15,23,42,.5);transition:border-color .15s,box-shadow .15s}
+    .toolbar select,.toolbar-split-right .field--quality select{font-size:12px;padding:6px 10px;border-radius:8px;line-height:1.35}
     select:hover{border-color:rgba(129,180,255,.55)}
     select:focus{outline:none;border-color:rgba(105,163,255,.75);box-shadow:0 0 0 2px rgba(105,163,255,.2)}
     .diff-wrap{flex:1;min-height:0;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--diff-gutter);box-shadow:inset 0 0 0 1px rgba(105,163,255,.08)}
-    .diff-head-row{display:grid;grid-template-columns:1fr 1fr;background:#050a12;font-size:11px;font-weight:800;letter-spacing:0.09em;text-transform:uppercase;border-bottom:1px solid rgba(37,53,82,.9)}
-    .diff-head-row .dh-cell{padding:11px 14px;text-align:center;border-bottom:2px solid transparent}
+    .diff-head-row{display:grid;grid-template-columns:1fr 1fr;background:#050a12;font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid rgba(37,53,82,.9)}
+    .diff-head-row .dh-cell{padding:8px 12px;text-align:center;border-bottom:2px solid transparent}
     .diff-head-row .dh-cell:first-child{
       background:linear-gradient(180deg,var(--title-prev-bg1) 0%,var(--title-prev-bg2) 100%);
       color:var(--title-prev);border-bottom-color:var(--title-prev-border);
@@ -84,8 +86,8 @@
       text-shadow:0 0 24px rgba(167,139,250,.45),0 0 12px rgba(192,132,252,.28),0 1px 2px rgba(0,0,0,.75);
     }
     /* Auto-improve toggle — dull when OFF, bright when ON (see aria-pressed on #autoImproveBtnWrapper) */
-    .auto-improve-toggle{display:flex;align-items:center;gap:10px;padding:4px 2px;background:none;border:none;cursor:pointer;font:inherit;user-select:none;border-radius:10px;transition:opacity .15s,filter .15s}
-    .auto-improve-toggle .toggle-label{font-size:12px;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;transition:color .2s,font-weight .2s,text-shadow .2s}
+    .auto-improve-toggle{display:flex;align-items:center;gap:6px;padding:2px 0;background:none;border:none;cursor:pointer;font:inherit;user-select:none;border-radius:10px;transition:opacity .15s,filter .15s}
+    .auto-improve-toggle .toggle-label{font-size:10px;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;transition:color .2s,font-weight .2s,text-shadow .2s}
     /* OFF — muted */
     .auto-improve-toggle[aria-pressed="false"]{opacity:.92}
     .auto-improve-toggle[aria-pressed="false"]:hover{filter:brightness(1.04)}
@@ -99,7 +101,7 @@
       color:#faf5ff;font-weight:800;letter-spacing:0.06em;
       text-shadow:0 0 20px rgba(167,139,250,.65),0 0 10px rgba(139,92,246,.35),0 1px 2px rgba(0,0,0,.5);
     }
-    .toggle-track{width:40px;height:24px;border-radius:999px;position:relative;transition:background .2s,border-color .2s,box-shadow .2s,opacity .2s;flex-shrink:0}
+    .toggle-track{width:34px;height:20px;border-radius:999px;position:relative;transition:background .2s,border-color .2s,box-shadow .2s,opacity .2s;flex-shrink:0}
     /* Track OFF */
     .toggle-track:not(.on){
       background:#151d2c;
@@ -114,13 +116,13 @@
       border:1px solid rgba(199,210,254,.85);
       box-shadow:0 0 14px rgba(99,102,241,.55),inset 0 1px 0 rgba(255,255,255,.2);
     }
-    .toggle-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;transition:transform .2s,background .2s,box-shadow .2s}
+    .toggle-thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;transition:transform .2s,background .2s,box-shadow .2s}
     .toggle-track:not(.on) .toggle-thumb{
       background:linear-gradient(180deg,#4b5563,#334155);
       box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 1px 3px rgba(0,0,0,.45);
     }
     .toggle-track.on .toggle-thumb{
-      transform:translateX(18px);
+      transform:translateX(16px);
       background:linear-gradient(180deg,#ffffff,#f1f5f9);
       box-shadow:0 1px 4px rgba(0,0,0,.25);
     }
@@ -128,14 +130,14 @@
     .diff-vline{min-width:1px;background:linear-gradient(180deg,rgba(105,163,255,.55) 0%,rgba(142,197,255,.95) 50%,rgba(105,163,255,.55) 100%);box-shadow:0 0 8px rgba(105,163,255,.2);align-self:stretch}
     /* Contain column + scroll the prompt so the action bar is never pushed below the fold */
     .diff-col{min-height:0;overflow:hidden;display:flex;flex-direction:column;background:var(--prompt-bg)}
-    textarea.diff-input{width:100%;height:100%;min-height:120px;margin:0;resize:none;border:none;border-radius:0;background:var(--prompt-bg);color:var(--prompt-text);padding:14px 16px;font-family:ui-monospace,"Cascadia Code","Segoe UI Mono",Consolas,monospace;font-size:13px;line-height:1.55;min-height:0;flex:1;overflow-y:auto;box-shadow:inset 1px 0 0 rgba(142,197,255,.78)}
+    textarea.diff-input{width:100%;height:100%;min-height:100px;margin:0;resize:none;border:none;border-radius:0;background:var(--prompt-bg);color:var(--prompt-text);padding:10px 12px;font-family:ui-monospace,"Cascadia Code","Segoe UI Mono",Consolas,monospace;font-size:12px;line-height:1.5;min-height:0;flex:1;overflow-y:auto;box-shadow:inset 1px 0 0 rgba(142,197,255,.78)}
     textarea.diff-input::placeholder{color:rgba(157,176,208,.65)}
     textarea.diff-input:focus{outline:none;box-shadow:inset 1px 0 0 #8ec5ff,inset 0 0 0 1px rgba(142,197,255,.35)}
     textarea.diff-input:disabled{opacity:.88;cursor:not-allowed;box-shadow:inset 1px 0 0 rgba(105,163,255,.45)}
     textarea.diff-input[readonly]{cursor:default;box-shadow:inset 1px 0 0 #4ade80}
     .diff-col textarea.diff-input{flex:1 1 auto;min-height:0}
     /* Diff overlay — shown instead of the readonly textarea when a result exists */
-    .diff-overlay{flex:1 1 auto;min-height:0;overflow-y:auto;padding:14px 16px;font-family:ui-monospace,"Cascadia Code","Segoe UI Mono",Consolas,monospace;font-size:13px;line-height:1.55;color:var(--prompt-text);background:var(--prompt-bg);box-shadow:inset 1px 0 0 #4ade80;white-space:pre-wrap;word-break:break-word;scrollbar-width:thin;scrollbar-color:rgba(105,163,255,.4) rgba(8,14,25,.5)}
+    .diff-overlay{flex:1 1 auto;min-height:0;overflow-y:auto;padding:10px 12px;font-family:ui-monospace,"Cascadia Code","Segoe UI Mono",Consolas,monospace;font-size:12px;line-height:1.5;color:var(--prompt-text);background:var(--prompt-bg);box-shadow:inset 1px 0 0 #4ade80;white-space:pre-wrap;word-break:break-word;scrollbar-width:thin;scrollbar-color:rgba(105,163,255,.4) rgba(8,14,25,.5)}
     .diff-overlay::-webkit-scrollbar{width:6px}
     .diff-overlay::-webkit-scrollbar-thumb{background:rgba(105,163,255,.35);border-radius:4px}
     .diff-line{display:block;padding:1px 4px;border-radius:3px;margin:1px 0}
@@ -205,9 +207,9 @@
     .score-row{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;align-items:start;min-width:0}
     @media (max-width:920px){.score-row{grid-template-columns:1fr}}
     button{border:none;border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--accent);color:white;font-weight:700;font-size:13px}
-    /* Toolbar buttons: one size scale — Validate uses weight only for emphasis */
-    .toolbar-split-right button{font-size:13px;font-weight:700;padding:10px 14px;line-height:1.2}
-    #validateBtn{font-weight:800;letter-spacing:0.03em}
+    /* Toolbar: compact buttons — Validate slightly bolder, same size as peers */
+    .toolbar-split-right button{font-size:11px;font-weight:700;padding:7px 11px;line-height:1.25;border-radius:8px}
+    #validateBtn{font-weight:800;letter-spacing:0.04em}
     button.secondary{background:#21314f;color:var(--text)}
     button:disabled{opacity:.5;cursor:not-allowed}
     .badge{display:inline-flex;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700}
@@ -428,7 +430,7 @@ function setDiffView(on){
 viewPlainBtn.addEventListener('click',()=>setDiffView(false));
 viewDiffBtn.addEventListener('click',()=>setDiffView(true));
 
-let splitBottomPx=Math.round(window.innerHeight*0.36);
+let splitBottomPx=Math.round(window.innerHeight*0.42);
 try{const s=sessionStorage.getItem("pv_split_bottom");if(s){const n=parseInt(s,10);if(!isNaN(n))splitBottomPx=Math.max(120,n);}}catch(_){}
 function applySplitHeights(){
   const b=document.querySelector(".split-bottom");if(!b)return;
