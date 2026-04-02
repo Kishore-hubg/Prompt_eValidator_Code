@@ -3,7 +3,6 @@
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
   "functions": {
     "api/index.py": {
-      "runtime": "vercel-python@3.0.7",
       "maxDuration": 60,
       "excludeFiles": "{.venv/**,**/__pycache__/**,docs/**,scripts/**,*.db,.git/**,teams_bot/**}"
     }
