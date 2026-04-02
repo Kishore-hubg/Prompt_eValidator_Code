@@ -39,16 +39,20 @@
     .toolbar-split-left{min-width:0}
     .toolbar-split-left .field{margin:0;width:100%}
     .toolbar-split-left .field label{margin-bottom:6px}
-    .toolbar-split-right{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px;min-width:0;padding-left:0}
-    .toolbar-vsep{
-      align-self:stretch;width:1px;min-height:40px;margin:0 4px;flex-shrink:0;
+    /* Single horizontal row — tight gaps (no flex-grow between Quality and Load Sample) */
+    .toolbar-split-right{
+      display:flex;flex-wrap:nowrap;align-items:flex-end;justify-content:flex-start;gap:6px;
+      min-width:0;width:100%;
+    }
+    .toolbar-split-right .toolbar-vsep{
+      align-self:stretch;width:1px;min-height:40px;margin:0 2px;flex-shrink:0;
       background:linear-gradient(180deg,rgba(99,102,241,.2),rgba(167,139,250,.82),rgba(99,102,241,.2));
       border-radius:1px;
     }
     .toolbar .field{flex:1;min-width:150px}
     .toolbar--split .toolbar-split-left .field{flex:unset;min-width:0}
     .toolbar .field--quality{flex:0 1 200px;max-width:240px;min-width:160px}
-    .toolbar-split-right .field--quality{flex:1 1 160px;min-width:140px;max-width:220px}
+    .toolbar-split-right .field--quality{flex:0 1 200px;min-width:132px;max-width:200px;width:100%}
     .toolbar-divider{align-self:stretch;width:1px;min-height:40px;margin:0 4px 2px;background:linear-gradient(180deg,rgba(99,102,241,.15),rgba(167,139,250,.85),rgba(99,102,241,.15));border-radius:1px;flex-shrink:0}
     /* Form field captions — Persona / Quality: bright accents, readable on dark toolbar */
     .toolbar .field label{display:block;margin-bottom:6px;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;line-height:1.2}
@@ -201,7 +205,9 @@
     .score-row{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;align-items:start;min-width:0}
     @media (max-width:920px){.score-row{grid-template-columns:1fr}}
     button{border:none;border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--accent);color:white;font-weight:700;font-size:13px}
-    #validateBtn{font-size:15px;font-weight:800;padding:10px 16px;letter-spacing:0.02em}
+    /* Toolbar buttons: one size scale — Validate uses weight only for emphasis */
+    .toolbar-split-right button{font-size:13px;font-weight:700;padding:10px 14px;line-height:1.2}
+    #validateBtn{font-weight:800;letter-spacing:0.03em}
     button.secondary{background:#21314f;color:var(--text)}
     button:disabled{opacity:.5;cursor:not-allowed}
     .badge{display:inline-flex;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700}
@@ -241,6 +247,7 @@
     .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
     @media (max-width:900px){
       .toolbar--split{grid-template-columns:1fr;row-gap:12px}
+      .toolbar-split-right{flex-wrap:wrap;justify-content:flex-start}
     }
     @media (max-width:700px){
       .diff-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
