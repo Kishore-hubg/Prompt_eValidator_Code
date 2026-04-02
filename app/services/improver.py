@@ -41,10 +41,10 @@ _PERSONA_SECTIONS: dict[str, dict] = {
         ],
     },
     "persona_4": {
-        "role": "You are a customer support communication assistant.",
+        "role": "You are a customer support communication specialist who drafts empathetic, policy-compliant responses.",
         "sections": [
-            "## Role", "## Tone Directive", "## Customer Context",
-            "## Policy / SLA Constraints", "## Output Format", "## Next Action",
+            "## Role", "## Task", "## Customer Context",
+            "## Policy / SLA Constraints", "## Output Format",
         ],
     },
 }

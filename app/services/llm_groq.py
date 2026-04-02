@@ -581,10 +581,14 @@ def llm_rewrite_prompt(
         ),
         "persona_4": (
             [
-                "## Role", "## Tone Directive", "## Customer Context",
-                "## Policy / SLA Constraints", "## Output Format", "## Next Action",
+                "## Role", "## Task", "## Customer Context",
+                "## Policy / SLA Constraints", "## Output Format",
             ],
-            "Empathetic, compliant, concise. Always include a clear next action.",
+            "Empathetic, compliant, concise. "
+            "Tone and empathy guidance goes INSIDE ## Role (one sentence) or ## Customer Context (as a bullet). "
+            "NEVER create a separate ## Tone Directive section. "
+            "NEVER create a ## Next Action section — the task directive is already in ## Task. "
+            "## Task is ONE imperative sentence starting with an action verb (Draft / Write / Create).",
         ),
     }
     sections, style_note = persona_section_maps.get(
