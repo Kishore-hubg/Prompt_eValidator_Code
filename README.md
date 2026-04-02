@@ -69,7 +69,7 @@ $env:MONGODB_APP_NAME = "Cluster0"
 uvicorn app.main:app --reload
 ```
 
-## SQLite (optional)---No need to use this
+## SQLite (optional)---No need to use this#####
 
 Set `DATABASE_BACKEND=sqlite` to use the local file `prompt_validator.db` next to the project root. No Mongo variables are required in that mode.
 
