@@ -5,7 +5,7 @@ from urllib.parse import quote_plus
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR / ".env", override=True)
 DB_PATH = BASE_DIR / "prompt_validator.db"
 FRONTEND_DIR = BASE_DIR / "frontend"
 API_KEY = os.getenv("PROMPT_VALIDATOR_API_KEY", "infovision-dev-key")
