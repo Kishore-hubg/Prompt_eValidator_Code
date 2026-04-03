@@ -237,8 +237,9 @@ def run_llm_validation(
                 if not fallback_module:
                     raise
                 llm_module = fallback_module
-                llm_evaluation["provider"] = "groq"
-                llm_evaluation["model"] = GROQ_MODEL
+                _fb_is_groq = fallback_module is llm_groq
+                llm_evaluation["provider"] = "groq" if _fb_is_groq else "anthropic"
+                llm_evaluation["model"] = GROQ_MODEL if _fb_is_groq else ANTHROPIC_MODEL
                 llm_evaluation["scoring_mode"] = "llm_fallback_provider"
                 evaluation = llm_module.llm_evaluate_prompt(
                     prompt_text,
@@ -346,8 +347,9 @@ def run_llm_validation(
                     if not fallback_module:
                         raise
                     llm_module = fallback_module
-                    llm_evaluation["provider"] = "groq"
-                    llm_evaluation["model"] = GROQ_MODEL
+                    _fb_is_groq = fallback_module is llm_groq
+                    llm_evaluation["provider"] = "groq" if _fb_is_groq else "anthropic"
+                    llm_evaluation["model"] = GROQ_MODEL if _fb_is_groq else ANTHROPIC_MODEL
                     llm_evaluation["scoring_mode"] = "llm_fallback_provider"
                     rewrite = llm_module.llm_rewrite_prompt(
                         prompt_text,
@@ -421,22 +423,18 @@ def _provider_module(provider: str | None):
 def _fallback_module_on_primary_failure(provider: str | None):
     """Return the secondary provider module when the primary fails.
 
-    With auto order Anthropic→Groq:
-    - primary=anthropic fails → try Groq
-    - primary=groq fails (rate limit) → try Anthropic
-    Pinned providers (groq/anthropic) have no cross-provider fallback.
+    Only active when LLM_PROVIDER=auto (cross-provider fallback).
+    Pinned providers (LLM_PROVIDER=groq/anthropic) have no fallback.
+
+    auto + primary=anthropic fails → try Groq
+    auto + primary=groq fails     → try Anthropic
     """
-    if provider != "auto":
+    pref = LLM_PROVIDER if LLM_PROVIDER in {"auto", "groq", "anthropic"} else "auto"
+    if pref != "auto":
         return None
-    # Primary was Anthropic → fall back to Groq
-    if llm_groq.llm_configured():
+    if provider == "anthropic" and llm_groq.llm_configured():
         return llm_groq
-    return None
-
-
-def _fallback_module_on_groq_rate_limit(provider: str | None):
-    """Return Anthropic module when Groq is rate-limited (kept for groq-pinned path)."""
-    if provider == "auto" and llm_anthropic.llm_configured():
+    if provider == "groq" and llm_anthropic.llm_configured():
         return llm_anthropic
     return None
 
