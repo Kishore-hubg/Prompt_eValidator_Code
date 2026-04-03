@@ -599,12 +599,95 @@ def admin_records(
     date_to: str = Query(default=""),
 ):
     _require_admin(authorization)
-    from sqlalchemy import and_, func, or_
+    import json as _json
+    from datetime import datetime as _dt
     from sqlalchemy.orm import Session
-    from app.models.db_models import PromptValidationRecord
 
+    def _fmt_row(r_id, created_at, p_id, chan, del_chan, email, score, rat, sc10, iss_cnt, llm_ev_raw, prompt, improved):
+        llm_ev = {}
+        try:
+            llm_ev = _json.loads(llm_ev_raw or "{}")
+        except Exception:
+            pass
+        ts = created_at.strftime("%d %b %Y %H:%M") if isinstance(created_at, _dt) else str(created_at or "")
+        return {
+            "id": r_id,
+            "created_at": ts,
+            "persona_id": p_id or "",
+            "channel": chan or "",
+            "delivery_channel": del_chan or "",
+            "user_email": email or "",
+            "score": round(float(score or 0), 1),
+            "rating": rat or "",
+            "validation_score_10": round(float(sc10 or 0), 1),
+            "issue_count": int(iss_cnt or 0),
+            "llm_provider": llm_ev.get("provider", ""),
+            "llm_model": llm_ev.get("model", ""),
+            "prompt_text": prompt or "",
+            "improved_prompt": improved or "",
+        }
+
+    # ── MongoDB path ─────────────────────────────────────────────────────────
     if not isinstance(db, Session):
-        raise HTTPException(status_code=501, detail="Admin dashboard requires SQLite backend.")
+        from pymongo.database import Database as _MDB
+        if not isinstance(db, _MDB):
+            raise HTTPException(status_code=501, detail="Unsupported database backend.")
+
+        mongo_filter: dict = {}
+        if search:
+            mongo_filter["$or"] = [
+                {"prompt_text":  {"$regex": search, "$options": "i"}},
+                {"user_email":   {"$regex": search, "$options": "i"}},
+            ]
+        if persona_id:
+            mongo_filter["persona_id"] = persona_id
+        if rating:
+            mongo_filter["rating"] = rating
+        if channel:
+            mongo_filter["delivery_channel"] = channel
+        date_filter: dict = {}
+        if date_from:
+            try:
+                date_filter["$gte"] = _dt.strptime(date_from, "%Y-%m-%d")
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                date_filter["$lt"] = _dt.strptime(date_to, "%Y-%m-%d") + timedelta(days=1)
+            except ValueError:
+                pass
+        if date_filter:
+            mongo_filter["created_at"] = date_filter
+
+        total = db.prompt_validations.count_documents(mongo_filter)
+        cursor = (
+            db.prompt_validations.find(mongo_filter)
+            .sort("created_at", -1)
+            .skip((page - 1) * per_page)
+            .limit(per_page)
+        )
+        records = [
+            _fmt_row(
+                doc.get("id", str(doc.get("_id", ""))),
+                doc.get("created_at"),
+                doc.get("persona_id"), doc.get("channel"), doc.get("delivery_channel"),
+                doc.get("user_email"), doc.get("score"), doc.get("rating"),
+                doc.get("validation_score_10"), doc.get("issue_count"),
+                doc.get("llm_evaluation_json"), doc.get("prompt_text"), doc.get("improved_prompt"),
+            )
+            for doc in cursor
+        ]
+        return {
+            "records": records,
+            "total": total,
+            "page": page,
+            "per_page": per_page,
+            "total_pages": max(1, (total + per_page - 1) // per_page),
+        }
+
+    # ── SQLite path ──────────────────────────────────────────────────────────
+    from sqlalchemy import and_, func, or_
+    from app.models.db_models import PromptValidationRecord
 
     filters = []
     if search:
@@ -620,55 +703,34 @@ def admin_records(
         filters.append(PromptValidationRecord.delivery_channel == channel)
     if date_from:
         try:
-            from datetime import datetime as _dt
             filters.append(PromptValidationRecord.created_at >= _dt.strptime(date_from, "%Y-%m-%d"))
         except ValueError:
             pass
     if date_to:
         try:
-            from datetime import datetime as _dt
             filters.append(PromptValidationRecord.created_at < _dt.strptime(date_to, "%Y-%m-%d") + timedelta(days=1))
         except ValueError:
             pass
 
     where_clause = and_(*filters) if filters else True
-
-    total: int = db.execute(
-        __import__("sqlalchemy", fromlist=["select"]).select(func.count()).select_from(PromptValidationRecord).where(where_clause)
-    ).scalar() or 0
-
+    import sqlalchemy as _sa
+    total = db.execute(_sa.select(func.count()).select_from(PromptValidationRecord).where(where_clause)).scalar() or 0
     rows = list(db.execute(
-        __import__("sqlalchemy", fromlist=["select"]).select(PromptValidationRecord)
+        _sa.select(PromptValidationRecord)
         .where(where_clause)
         .order_by(PromptValidationRecord.created_at.desc())
         .offset((page - 1) * per_page)
         .limit(per_page)
     ).scalars().all())
 
-    import json as _json
-    records = []
-    for r in rows:
-        llm_ev = {}
-        try:
-            llm_ev = _json.loads(r.llm_evaluation_json or "{}")
-        except Exception:
-            pass
-        records.append({
-            "id": r.id,
-            "created_at": r.created_at.strftime("%d %b %Y %H:%M") if r.created_at else "",
-            "persona_id": r.persona_id,
-            "channel": r.channel,
-            "delivery_channel": r.delivery_channel,
-            "user_email": r.user_email or "",
-            "score": round(r.score, 1),
-            "rating": r.rating,
-            "validation_score_10": round(r.validation_score_10, 1),
-            "issue_count": r.issue_count,
-            "llm_provider": llm_ev.get("provider", ""),
-            "llm_model": llm_ev.get("model", ""),
-            "prompt_text": r.prompt_text or "",
-            "improved_prompt": r.improved_prompt or "",
-        })
+    records = [
+        _fmt_row(
+            r.id, r.created_at, r.persona_id, r.channel, r.delivery_channel,
+            r.user_email, r.score, r.rating, r.validation_score_10, r.issue_count,
+            r.llm_evaluation_json, r.prompt_text, r.improved_prompt,
+        )
+        for r in rows
+    ]
 
     return {
         "records": records,
