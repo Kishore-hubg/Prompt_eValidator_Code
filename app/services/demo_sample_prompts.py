@@ -60,9 +60,8 @@ _DEMO_SAMPLES: dict[str, dict[str, str]] = {
             "Maximum 350 words. Do not include internal Slack references or pricing details."
         ),
         QUALITY_MEDIUM: (
-            "Summarize the Q4-2025 revenue highlights from the earnings report in bullet points "
-            "for leadership. Use a professional tone. "
-            "Include at least one figure or trend if mentioned in the source."
+            "Summarize the Q4 revenue highlights from the earnings report. "
+            "Mention any key figures or trends."
         ),
         QUALITY_POOR: "Help me write something for a client.",
     },
@@ -75,7 +74,9 @@ _DEMO_SAMPLES: dict[str, dict[str, str]] = {
             "Apply OWASP Top 10 input sanitisation — specifically prevent prompt injection and XSS. "
             "Include edge cases: empty prompt string, prompt exceeding 2000 chars, invalid persona_id. "
             "Write pytest unit tests for each edge case using FastAPI TestClient. "
-            "Expected test format: TC-ID | Preconditions | Steps | Expected Result."
+            "Expected test format: TC-ID | Preconditions | Steps | Expected Result. "
+            "All tests must achieve 100% coverage on the validation logic. "
+            "Document each test with the specific OWASP rule it validates."
         ),
         QUALITY_MEDIUM: (
             "Using FastAPI and Pydantic v2, add a POST /api/v1/validate route that accepts "
@@ -90,15 +91,17 @@ _DEMO_SAMPLES: dict[str, dict[str, str]] = {
             "engagement (T&M model, 8-week sprint). Reporting period: 17–28 March 2026. "
             "Audience: Delivery Manager and Client Project Sponsor. "
             "Structure: (1) Executive Summary (3 sentences max), (2) Completed vs Planned work "
-            "table with RAG status, (3) Top 3 risks ranked by impact with owner and mitigation, "
-            "(4) Next sprint commitments with due dates. "
+            "table with RAG status (Green/Amber/Red), (3) Top 3 risks ranked by impact with "
+            "owner and mitigation action, (4) Next sprint commitments with due dates and owners. "
             "Output as a structured Markdown report. Prioritise risks over achievements. "
-            "Reference velocity data: 42 story points delivered vs 45 planned."
+            "Reference velocity data: 42 story points delivered vs 45 planned (93% completion). "
+            "Flag any Red RAG items prominently in the Executive Summary. "
+            "Report must be deliverable within 2 hours of sprint close."
         ),
         QUALITY_MEDIUM: (
-            "Write a Sprint 14 status update for the Ziply Finance project for the client "
-            "sponsor. Cover what the team finished, the main risks, and what happens next. "
-            "Use Markdown headings."
+            "Write a Sprint 14 status update for the Ziply Finance Modernisation project. "
+            "Include what the team completed and the main risks identified. "
+            "Summarize the next sprint priorities."
         ),
         QUALITY_POOR: "Give me an update on the project.",
     },
@@ -113,22 +116,23 @@ _DEMO_SAMPLES: dict[str, dict[str, str]] = {
             "Prioritise using MoSCoW: Must Have vs Should Have. Audience: Delivery team leads."
         ),
         QUALITY_MEDIUM: (
-            "Review the Ziply Finance Modernisation BRD and produce a bullet list of "
-            "functional requirements related to GL Trial Balance migration. "
-            "Add requirement IDs where you can. Audience: delivery team."
+            "Extract the functional requirements for GL Trial Balance migration from the "
+            "project BRD. List them as bullet points."
         ),
         QUALITY_POOR: "List the requirements for the project.",
     },
     "persona_4": {
         QUALITY_EXCELLENT: (
-            "Write an empathetic customer-facing email response for a Ziply Telecom retail "
-            "customer who has been double-charged on their invoice for February 2026. "
-            "The customer is frustrated and has submitted ticket #TKT-20260315-0042. "
-            "Tone: apologetic and empathetic. Comply with Ziply SLA policy (resolution within "
-            "24 hours). Reference the refund policy under Section 3.1 of the Customer Billing "
-            "Policy document. Output: formal email format with subject line, greeting, 3-paragraph "
-            "body, and closing. Maximum 200 words. Next action: confirm refund initiation "
-            "within 4 business hours."
+            "Write a concise, empathetic customer-facing email response for a Ziply Telecom "
+            "Retail tier customer who has been double-charged on their February 2026 invoice. "
+            "The customer is frustrated and submitted ticket #TKT-20260315-0042 via the "
+            "customer portal. Tone: apologetic and empathetic. Comply with Ziply SLA policy "
+            "(resolution within 24 hours for Retail tier). Reference the refund policy under "
+            "Section 3.1 of the Customer Billing Policy document. "
+            "Output: formal email with subject line, greeting, 3-paragraph body "
+            "(acknowledgment, resolution, next steps), and closing. Maximum 200 words. "
+            "Next action: confirm refund initiation within 4 business hours and send "
+            "confirmation SMS to the customer."
         ),
         QUALITY_MEDIUM: (
             "Draft an email to a Ziply customer who was double-charged on their February invoice. "
