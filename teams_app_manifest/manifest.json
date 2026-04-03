@@ -2,13 +2,13 @@
   "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
   "manifestVersion": "1.17",
   "version": "1.0.0",
-  "id": "00000000-0000-0000-0000-000000000000",
+  "id": "30a56efa-d58c-4e4b-a52d-f34018e4d8b9",
   "packageName": "com.infovision.promptvalidator",
   "developer": {
     "name": "Infovision",
-    "websiteUrl": "https://example.com",
-    "privacyUrl": "https://example.com/privacy",
-    "termsOfUseUrl": "https://example.com/terms"
+    "websiteUrl": "https://promptvalidatorcompleterepo.vercel.app",
+    "privacyUrl": "https://promptvalidatorcompleterepo.vercel.app/privacy",
+    "termsOfUseUrl": "https://promptvalidatorcompleterepo.vercel.app/terms"
   },
   "icons": {
     "color": "color.png",
@@ -19,8 +19,8 @@
     "full": "Infovision Prompt Validator"
   },
   "description": {
-    "short": "Validate prompts in Teams",
-    "full": "Persona-aware prompt validation, issue feedback, and improved prompts directly in Microsoft Teams."
+    "short": "Validate & improve prompts in Teams",
+    "full": "Persona-aware prompt validation, issue feedback, and auto-improved prompts directly in Microsoft Teams. Supports Developer, PM, BA, Support Staff, and All Employee personas."
   },
   "accentColor": "#6264A7",
   "bots": [
@@ -28,9 +28,28 @@
       "botId": "89f80bcf-efa3-4a07-a4a4-e766f3557e98",
       "scopes": ["personal", "team", "groupchat"],
       "supportsFiles": false,
-      "isNotificationOnly": false
+      "isNotificationOnly": false,
+      "commandLists": [
+        {
+          "scopes": ["personal", "team", "groupchat"],
+          "commands": [
+            { "title": "help", "description": "Show available commands" },
+            { "title": "persona", "description": "List available personas" },
+            { "title": "set-persona", "description": "Set active persona (e.g. /set-persona persona_1)" },
+            { "title": "my-persona", "description": "Show your current persona" },
+            { "title": "last-score", "description": "Show your last validation score" }
+          ]
+        }
+      ]
     }
   ],
   "permissions": ["identity", "messageTeamMembers"],
-  "validDomains": []
+  "validDomains": [
+    "promptvalidatorcompleterepo.vercel.app",
+    "margy-nonevolutionary-korey.ngrok-free.dev"
+  ],
+  "webApplicationInfo": {
+    "id": "7b6ec3f4-3759-48d6-a558-6a1bcd1824c6",
+    "resource": "api://7b6ec3f4-3759-48d6-a558-6a1bcd1824c6"
+  }
 }

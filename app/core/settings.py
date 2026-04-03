@@ -96,6 +96,10 @@ def llm_blend_weights() -> tuple[float, float]:
     return static_w / total, llm_w / total
 
 
+# Slack Slash Command integration
+SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET", "").strip()
+SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN", "").strip()  # optional: for proactive messages
+
 # ── Token-optimisation settings (model-agnostic: apply to Groq and Anthropic) ──
 # Static pre-screen: if the rules-engine static score is >= this threshold the
 # LLM evaluation call is skipped entirely and the static result is returned

@@ -1,6 +1,7 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 from pymongo.database import Database
 from sqlalchemy import text
 
@@ -30,6 +31,9 @@ from app.auth.persona_mapping import map_persona, resolve_persona_for_user
 from app.integrations.oauth.provider import resolve_user_from_token
 from app.integrations.mcp.server import run_mcp_validation
 from app.integrations.teams.bot import handle_teams_message
+from app.integrations.slack.handler import handle_slack_slash_command
+from app.integrations.slack.verification import verify_slack_request
+from app.core.settings import SLACK_SIGNING_SECRET
 from app.repositories.validation_repository import analytics_summary
 from app.repositories.intelligence_repository import (
     leaderboard_weekly,
@@ -438,6 +442,42 @@ def teams_message(request: TeamsMessageRequest, db: DbDep):
         email_hint=request.email_hint,
         teams_user_id=request.teams_user_id,
     )
+
+
+@router.post("/slack/validate")
+async def slack_validate(request: Request, background_tasks: BackgroundTasks, db: DbDep):
+    """Slack Slash Command endpoint — ``/validate <prompt>``.
+
+    Slack sends ``application/x-www-form-urlencoded`` with fields:
+    ``text``, ``user_id``, ``response_url``, ``channel_id``, etc.
+
+    Authentication is via Slack request signature (HMAC-SHA256) using
+    ``SLACK_SIGNING_SECRET`` — no ``X-API-Key`` header required.
+
+    Returns an immediate ephemeral ACK (≤3 s) while the full LLM
+    validation runs in a background task and POSTs the Block Kit result
+    to ``response_url``.
+    """
+    raw_body = await request.body()
+    timestamp = request.headers.get("X-Slack-Request-Timestamp", "")
+    signature = request.headers.get("X-Slack-Signature", "")
+
+    if not verify_slack_request(SLACK_SIGNING_SECRET, raw_body, timestamp, signature):
+        raise HTTPException(status_code=401, detail="Invalid Slack signature.")
+
+    form = await request.form()
+    text = str(form.get("text", "")).strip()
+    user_id = str(form.get("user_id", "unknown"))
+    response_url = str(form.get("response_url", ""))
+
+    ack = handle_slack_slash_command(
+        db,
+        text=text,
+        user_id=user_id,
+        response_url=response_url,
+        background_tasks=background_tasks,
+    )
+    return JSONResponse(content=ack)
 
 
 @router.get("/analytics/summary", dependencies=[Depends(require_api_key)])
