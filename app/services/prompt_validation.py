@@ -430,14 +430,14 @@ async def run_llm_validation_async(
     *,
     auto_improve: bool = False,
 ) -> dict[str, Any]:
-    """Native-async validation pipeline.
+    """Anthropic-only async validation pipeline.
 
-    LLM I/O (eval + rewrite) is awaited directly via each provider module's
-    async interface.  All pure-Python computation (score formulas, guideline
-    parsing, cache ops) runs inline — no thread-pool wrapping of the full
-    function, which previously caused deadlocks with Groq's threading.Lock.
+    Uses native httpx.AsyncClient (non-blocking) for the eval call and an
+    asyncio.to_thread wrapper for the rewrite call.  No Groq code paths,
+    no threading.Lock exposure — zero deadlock risk.
+    Always returns a result: falls back to static scoring if Anthropic fails.
     """
-    # ── Cache lookup ────────────────────────────────────────────────────────
+    # ── Cache lookup ─────────────────────────────────────────────────────────
     if PROMPT_CACHE_TTL_SECONDS > 0:
         key = _cache_key(prompt_text, persona_id, auto_improve)
         cached = _validation_cache.get(key)
@@ -446,6 +446,9 @@ async def run_llm_validation_async(
             if time.monotonic() < expire_ts:
                 return cached_result
             del _validation_cache[key]
+
+    if not llm_anthropic.llm_configured():
+        raise RuntimeError("Anthropic API key is not configured.")
 
     persona = get_persona(persona_id)
     guidelines = load_prompt_guidelines()
@@ -464,8 +467,8 @@ async def run_llm_validation_async(
 
     llm_evaluation: dict[str, Any] = {
         "used": False,
-        "provider": None,
-        "model": None,
+        "provider": "anthropic",
+        "model": ANTHROPIC_MODEL,
         "semantic_score": None,
         "static_score": None,
         "scoring_mode": "llm_only",
@@ -477,12 +480,7 @@ async def run_llm_validation_async(
     }
     final_score = 0.0
 
-    provider = _selected_provider()
-    llm_module = _provider_module(provider)
-    if not llm_module:
-        raise RuntimeError("A configured LLM provider is required but none is available.")
-
-    # ── Static pre-screen ───────────────────────────────────────────────────
+    # ── Static pre-screen ────────────────────────────────────────────────────
     _skip_llm_eval = False
     if STATIC_PRESCREEN_THRESHOLD > 0:
         ps_score, ps_dims, ps_strengths, ps_issues, ps_ge = static_evaluate_prompt(
@@ -501,37 +499,17 @@ async def run_llm_validation_async(
             llm_evaluation["scoring_mode"] = "static_prescreen"
             _skip_llm_eval = True
 
+    # ── Anthropic LLM evaluation (async, non-blocking) ───────────────────────
     if not _skip_llm_eval:
         llm_evaluation["used"] = True
-        llm_evaluation["provider"] = provider
-        llm_evaluation["model"] = GROQ_MODEL if provider == "groq" else ANTHROPIC_MODEL
-
-    if not _skip_llm_eval:
         try:
-            try:
-                evaluation = await llm_module.llm_evaluate_prompt_async(
-                    prompt_text,
-                    persona=persona,
-                    guidelines=guidelines,
-                    source_of_truth_doc=SOURCE_OF_TRUTH_DOC,
-                    source_of_truth_scope=SOURCE_OF_TRUTH_SCOPE,
-                )
-            except GroqRateLimitError:
-                fallback_module = _fallback_module_on_groq_rate_limit(provider)
-                if not fallback_module:
-                    raise
-                llm_module = fallback_module
-                llm_evaluation["provider"] = "anthropic"
-                llm_evaluation["model"] = ANTHROPIC_MODEL
-                llm_evaluation["scoring_mode"] = "llm_fallback_provider"
-                evaluation = await llm_module.llm_evaluate_prompt_async(
-                    prompt_text,
-                    persona=persona,
-                    guidelines=guidelines,
-                    source_of_truth_doc=SOURCE_OF_TRUTH_DOC,
-                    source_of_truth_scope=SOURCE_OF_TRUTH_SCOPE,
-                )
-
+            evaluation = await llm_anthropic.llm_evaluate_prompt_async(
+                prompt_text,
+                persona=persona,
+                guidelines=guidelines,
+                source_of_truth_doc=SOURCE_OF_TRUTH_DOC,
+                source_of_truth_scope=SOURCE_OF_TRUTH_SCOPE,
+            )
             llm_evaluation["semantic_score"] = evaluation.semantic_score
             dimension_scores = getattr(evaluation, "dimension_scores", [])
             merged_issues = dedupe_preserve(evaluation.issues)[:6]
@@ -559,38 +537,30 @@ async def run_llm_validation_async(
                 final_score = evaluation.semantic_score
 
         except Exception as exc:  # noqa: BLE001
-            if isinstance(exc, GroqRateLimitError) and (
-                LLM_VALIDATE_REQUIRED or not LLM_FALLBACK_ON_VALIDATE_FAILURE
-            ):
-                raise
-
             llm_evaluation["error"] = str(exc)
-
+            _log.warning("Anthropic eval failed (%s: %s) — falling back to static scoring",
+                         type(exc).__name__, exc)
             if LLM_VALIDATE_REQUIRED or not LLM_FALLBACK_ON_VALIDATE_FAILURE:
                 raise RuntimeError(f"LLM validation failed: {exc}") from exc
-
-            llm_evaluation["scoring_mode"] = (
-                "rate_limit_fallback" if isinstance(exc, GroqRateLimitError) else "static_fallback"
-            )
-            fallback_score, fallback_dims, fallback_strengths, fallback_issues, fallback_ge = static_evaluate_prompt(
+            llm_evaluation["scoring_mode"] = "static_fallback"
+            fb_score, fb_dims, fb_strengths, fb_issues, fb_ge = static_evaluate_prompt(
                 prompt_text, persona_id
             )
-            final_score = fallback_score
-            dimension_scores = fallback_dims
+            final_score = fb_score
+            dimension_scores = fb_dims
             guideline_evaluation.update({
-                "penalty_applied": fallback_ge.get("penalty_applied", 0),
-                "checks": fallback_ge.get("checks", []),
-                "issues": fallback_ge.get("issues", []),
+                "penalty_applied": fb_ge.get("penalty_applied", 0),
+                "checks": fb_ge.get("checks", []),
+                "issues": fb_ge.get("issues", []),
             })
-            merged_issues = dedupe_preserve(fallback_issues)
-            merged_strengths = dedupe_preserve(fallback_strengths)
+            merged_issues = dedupe_preserve(fb_issues)
+            merged_strengths = dedupe_preserve(fb_strengths)
 
     rewrite_issues = derive_issue_based_suggestions(
-        persona_id,
-        merged_issues,
-        fallback=merged_issues,
+        persona_id, merged_issues, fallback=merged_issues,
     )
 
+    # ── Anthropic LLM rewrite (thread-wrapped — rewrite prompt is large to build)
     rewrite_strategy = "template"
     improved_prompt = prompt_text
     if auto_improve:
@@ -601,33 +571,18 @@ async def run_llm_validation_async(
             rewrite_strategy = "template_thin"
         else:
             try:
-                try:
-                    rewrite = await llm_module.llm_rewrite_prompt_async(
-                        prompt_text,
-                        persona=persona,
-                        guidelines=guidelines,
-                        issues=rewrite_issues,
-                    )
-                except GroqRateLimitError:
-                    fallback_module = _fallback_module_on_groq_rate_limit(provider)
-                    if not fallback_module:
-                        raise
-                    llm_module = fallback_module
-                    llm_evaluation["provider"] = "anthropic"
-                    llm_evaluation["model"] = ANTHROPIC_MODEL
-                    llm_evaluation["scoring_mode"] = "llm_fallback_provider"
-                    rewrite = await llm_module.llm_rewrite_prompt_async(
-                        prompt_text,
-                        persona=persona,
-                        guidelines=guidelines,
-                        issues=rewrite_issues,
-                    )
+                rewrite = await llm_anthropic.llm_rewrite_prompt_async(
+                    prompt_text,
+                    persona=persona,
+                    guidelines=guidelines,
+                    issues=rewrite_issues,
+                )
                 improved_prompt = rewrite.improved_prompt
                 llm_evaluation["rewrite_applied_guidelines"] = rewrite.applied_guidelines
                 llm_evaluation["rewrite_unresolved_gaps"] = rewrite.unresolved_gaps
                 rewrite_strategy = "llm"
             except Exception as _rw_exc:  # noqa: BLE001
-                _log.warning("LLM rewrite failed (%s: %s) — using template fallback",
+                _log.warning("Anthropic rewrite failed (%s: %s) — using template fallback",
                              type(_rw_exc).__name__, _rw_exc)
                 thin_fb = is_prompt_too_thin_for_rewrite(prompt_text)
                 improved_prompt = improve_prompt(
