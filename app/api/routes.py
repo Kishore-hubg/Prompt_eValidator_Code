@@ -1,6 +1,11 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Request
+import hashlib as _hashlib
+import hmac as _hmac
+import time as _time
+from datetime import timedelta
+
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pymongo.database import Database
 from sqlalchemy import text
@@ -528,3 +533,147 @@ def history(db: DbDep, limit: int = Query(default=20, ge=1, le=200)):
         )
         for item in records
     ]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Admin dashboard — hardcoded credentials, HMAC-signed stateless token
+# ─────────────────────────────────────────────────────────────────────────────
+_ADMIN_EMAIL    = "pratyoosh.patel@infovision.com"
+_ADMIN_PASSWORD = "$Infovision2026$"
+_ADMIN_SECRET   = "pv-admin-2026-infovision-coe"
+_ADMIN_TTL      = 28_800  # 8 hours
+
+
+def _admin_make_token() -> str:
+    exp = int(_time.time()) + _ADMIN_TTL
+    sig = _hmac.new(
+        _ADMIN_SECRET.encode(),
+        f"{_ADMIN_EMAIL}:{exp}".encode(),
+        _hashlib.sha256,
+    ).hexdigest()
+    return f"{exp}:{sig}"
+
+
+def _admin_verify_token(token: str) -> bool:
+    try:
+        exp_str, sig = token.split(":", 1)
+        exp = int(exp_str)
+        if _time.time() > exp:
+            return False
+        expected = _hmac.new(
+            _ADMIN_SECRET.encode(),
+            f"{_ADMIN_EMAIL}:{exp}".encode(),
+            _hashlib.sha256,
+        ).hexdigest()
+        return _hmac.compare_digest(sig, expected)
+    except Exception:
+        return False
+
+
+def _require_admin(authorization: str = Header(default="")) -> None:
+    token = authorization.removeprefix("Bearer ").strip()
+    if not _admin_verify_token(token):
+        raise HTTPException(status_code=401, detail="Admin session expired. Please log in again.")
+
+
+@router.post("/admin/login", include_in_schema=False)
+def admin_login(payload: dict = Body(...)):
+    email    = str(payload.get("email", "")).strip()
+    password = str(payload.get("password", "")).strip()
+    if email != _ADMIN_EMAIL or password != _ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid admin credentials.")
+    return {"token": _admin_make_token(), "expires_in": _ADMIN_TTL}
+
+
+@router.get("/admin/records", include_in_schema=False)
+def admin_records(
+    db: DbDep,
+    authorization: str = Header(default=""),
+    page: int = Query(default=1, ge=1),
+    per_page: int = Query(default=50, ge=1, le=200),
+    search: str = Query(default=""),
+    persona_id: str = Query(default=""),
+    rating: str = Query(default=""),
+    channel: str = Query(default=""),
+    date_from: str = Query(default=""),
+    date_to: str = Query(default=""),
+):
+    _require_admin(authorization)
+    from sqlalchemy import and_, func, or_
+    from sqlalchemy.orm import Session
+    from app.models.db_models import PromptValidationRecord
+
+    if not isinstance(db, Session):
+        raise HTTPException(status_code=501, detail="Admin dashboard requires SQLite backend.")
+
+    filters = []
+    if search:
+        filters.append(or_(
+            PromptValidationRecord.prompt_text.ilike(f"%{search}%"),
+            PromptValidationRecord.user_email.ilike(f"%{search}%"),
+        ))
+    if persona_id:
+        filters.append(PromptValidationRecord.persona_id == persona_id)
+    if rating:
+        filters.append(PromptValidationRecord.rating == rating)
+    if channel:
+        filters.append(PromptValidationRecord.delivery_channel == channel)
+    if date_from:
+        try:
+            from datetime import datetime as _dt
+            filters.append(PromptValidationRecord.created_at >= _dt.strptime(date_from, "%Y-%m-%d"))
+        except ValueError:
+            pass
+    if date_to:
+        try:
+            from datetime import datetime as _dt
+            filters.append(PromptValidationRecord.created_at < _dt.strptime(date_to, "%Y-%m-%d") + timedelta(days=1))
+        except ValueError:
+            pass
+
+    where_clause = and_(*filters) if filters else True
+
+    total: int = db.execute(
+        __import__("sqlalchemy", fromlist=["select"]).select(func.count()).select_from(PromptValidationRecord).where(where_clause)
+    ).scalar() or 0
+
+    rows = list(db.execute(
+        __import__("sqlalchemy", fromlist=["select"]).select(PromptValidationRecord)
+        .where(where_clause)
+        .order_by(PromptValidationRecord.created_at.desc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+    ).scalars().all())
+
+    import json as _json
+    records = []
+    for r in rows:
+        llm_ev = {}
+        try:
+            llm_ev = _json.loads(r.llm_evaluation_json or "{}")
+        except Exception:
+            pass
+        records.append({
+            "id": r.id,
+            "created_at": r.created_at.strftime("%d %b %Y %H:%M") if r.created_at else "",
+            "persona_id": r.persona_id,
+            "channel": r.channel,
+            "delivery_channel": r.delivery_channel,
+            "user_email": r.user_email or "",
+            "score": round(r.score, 1),
+            "rating": r.rating,
+            "validation_score_10": round(r.validation_score_10, 1),
+            "issue_count": r.issue_count,
+            "llm_provider": llm_ev.get("provider", ""),
+            "llm_model": llm_ev.get("model", ""),
+            "prompt_text": r.prompt_text or "",
+            "improved_prompt": r.improved_prompt or "",
+        })
+
+    return {
+        "records": records,
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": max(1, (total + per_page - 1) // per_page),
+    }

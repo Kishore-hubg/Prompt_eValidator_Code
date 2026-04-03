@@ -16,7 +16,7 @@
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:linear-gradient(180deg,#08101d 0%,#0d1628 100%);color:var(--text);font-family:Inter,system-ui,-apple-system,sans-serif}
     .app{display:flex;flex-direction:column;height:100vh;min-height:0;padding:0 18px 10px}
-    .hero{flex-shrink:0;padding:10px 0 8px;border-bottom:1px solid rgba(37,53,82,.6);margin-bottom:8px}
+    .hero{flex-shrink:0;padding:10px 0 8px;border-bottom:1px solid rgba(37,53,82,.6);margin-bottom:8px;position:relative}
     .hero h1{margin:0 0 2px;font-size:18px;font-weight:800;letter-spacing:-0.02em}
     .hero p{margin:0;color:var(--muted);font-size:12px;line-height:1.4;max-width:720px}
     .main{flex:1;min-height:0;display:flex;flex-direction:column;gap:0}
@@ -262,6 +262,10 @@
   <div class="hero">
     <h1>Prompt Validator MVP</h1>
     <p>Persona-aware prompt scoring, feedback, and auto-improvement.</p>
+    <button id="adminOpenBtn" onclick="adminOpen()" title="Admin Dashboard" style="position:absolute;top:50%;right:0;transform:translateY(-50%);background:rgba(105,163,255,.12);border:1px solid rgba(105,163,255,.3);color:var(--muted);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Admin
+    </button>
   </div>
   <div class="main" id="mainSplit">
     <div class="card top-pane split-top">
@@ -683,6 +687,381 @@ loadPersonas().then(async()=>{
   requestAnimationFrame(()=>{applySplitHeights();});
 });
 window.addEventListener("resize",()=>{applySplitHeights();});
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ADMIN DASHBOARD
+═══════════════════════════════════════════════════════════════════════ */
+(function(){
+  const PERSONA_NAMES={persona_0:"All Employees",persona_1:"Developer+QA",persona_2:"Tech PM",persona_3:"BA+PO",persona_4:"Support"};
+  const RATING_COLORS={Excellent:"#4ade80",Good:"#60a5fa","Needs Improvement":"#facc15",Poor:"#f87171"};
+  let _adminToken=sessionStorage.getItem("adminToken")||"";
+  let _adminPage=1;
+  let _adminFilters={search:"",persona_id:"",rating:"",channel:"",date_from:"",date_to:""};
+
+  /* ── Tooltip ──────────────────────────────────────────────────── */
+  const tip=document.createElement("div");
+  tip.id="adminTip";
+  Object.assign(tip.style,{
+    position:"fixed",zIndex:"99999",maxWidth:"420px",padding:"10px 14px",
+    background:"#1a2740",border:"1px solid #2d4470",borderRadius:"10px",
+    color:"#e9eef8",fontSize:"12px",lineHeight:"1.6",boxShadow:"0 8px 32px rgba(0,0,0,.5)",
+    pointerEvents:"none",display:"none",whiteSpace:"pre-wrap",wordBreak:"break-word",
+    maxHeight:"260px",overflow:"auto"
+  });
+  document.body.appendChild(tip);
+
+  function showTip(e,text){
+    if(!text)return;
+    tip.textContent=text;
+    tip.style.display="block";
+    moveTip(e);
+  }
+  function moveTip(e){
+    let x=e.clientX+14,y=e.clientY+14;
+    if(x+440>window.innerWidth)x=e.clientX-440;
+    if(y+280>window.innerHeight)y=e.clientY-290;
+    tip.style.left=x+"px"; tip.style.top=y+"px";
+  }
+  function hideTip(){tip.style.display="none";}
+
+  /* ── Inject overlay HTML ─────────────────────────────────────── */
+  const overlay=document.createElement("div");
+  overlay.id="adminOverlay";
+  overlay.innerHTML=`
+<style>
+#adminOverlay{position:fixed;inset:0;z-index:9990;background:#08101d;display:none;flex-direction:column;font-family:Inter,system-ui,sans-serif}
+#adminOverlay.open{display:flex}
+.adm-hdr{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #1e2e48;background:#0d1628}
+.adm-hdr-left{display:flex;align-items:center;gap:10px}
+.adm-hdr h2{margin:0;font-size:16px;font-weight:700;color:#e9eef8}
+.adm-hdr-badge{background:rgba(105,163,255,.15);border:1px solid rgba(105,163,255,.3);color:#69a3ff;border-radius:6px;padding:2px 8px;font-size:11px}
+.adm-back{background:rgba(105,163,255,.1);border:1px solid rgba(105,163,255,.25);color:#9db0d0;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px}
+.adm-back:hover{background:rgba(105,163,255,.2);color:#e9eef8}
+.adm-logout{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:#f87171;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer}
+.adm-logout:hover{background:rgba(248,113,113,.2)}
+
+/* Login */
+#admLogin{flex:1;display:flex;align-items:center;justify-content:center}
+.adm-login-card{background:#111a2b;border:1px solid #253552;border-radius:16px;padding:36px 40px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.adm-login-card h3{margin:0 0 6px;font-size:18px;font-weight:700;color:#e9eef8;text-align:center}
+.adm-login-card p{margin:0 0 24px;font-size:12px;color:#9db0d0;text-align:center}
+.adm-field{margin-bottom:14px}
+.adm-field label{display:block;font-size:11px;color:#9db0d0;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.adm-field input{width:100%;background:#0d1628;border:1px solid #253552;border-radius:8px;padding:9px 12px;color:#e9eef8;font-size:13px;outline:none;transition:border-color .2s}
+.adm-field input:focus{border-color:#69a3ff}
+.adm-login-btn{width:100%;background:linear-gradient(135deg,#4f46e5,#4338ca);border:none;border-radius:8px;padding:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;margin-top:6px;transition:opacity .2s}
+.adm-login-btn:hover{opacity:.9}
+#admLoginErr{color:#f87171;font-size:12px;margin-top:10px;text-align:center;min-height:18px}
+
+/* Filters */
+.adm-filters{flex-shrink:0;display:flex;flex-wrap:wrap;gap:8px;padding:10px 20px;background:#0b1220;border-bottom:1px solid #1e2e48;align-items:flex-end}
+.adm-filters input,.adm-filters select{background:#111a2b;border:1px solid #253552;border-radius:7px;padding:6px 10px;color:#e9eef8;font-size:12px;outline:none}
+.adm-filters input:focus,.adm-filters select:focus{border-color:#69a3ff}
+#admSearch{width:220px}
+.adm-filters select{min-width:110px}
+.adm-filter-btn{background:#69a3ff;border:none;border-radius:7px;padding:6px 14px;color:#08101d;font-size:12px;font-weight:700;cursor:pointer}
+.adm-filter-btn:hover{background:#8bb8ff}
+.adm-clear-btn{background:rgba(255,255,255,.06);border:1px solid #253552;border-radius:7px;padding:6px 12px;color:#9db0d0;font-size:12px;cursor:pointer}
+.adm-clear-btn:hover{background:rgba(255,255,255,.1);color:#e9eef8}
+.adm-count{margin-left:auto;font-size:12px;color:#9db0d0;align-self:center;white-space:nowrap}
+
+/* Table */
+.adm-table-wrap{flex:1;overflow:auto;padding:0 0 0 0}
+table.adm-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:1100px}
+table.adm-tbl thead th{position:sticky;top:0;background:#0d1628;color:#9db0d0;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:0 10px;height:32px;border-bottom:1px solid #1e2e48;white-space:nowrap;z-index:10}
+table.adm-tbl tbody tr{border-bottom:1px solid #111a2b;transition:background .15s}
+table.adm-tbl tbody tr:hover{background:#111a2b}
+table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidden;white-space:nowrap;color:#e9eef8;vertical-align:middle}
+.adm-cell-truncate{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;display:block}
+.adm-cell-truncate.wide{max-width:300px}
+.adm-badge{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:600;letter-spacing:.02em}
+.adm-score{font-weight:700;font-size:13px}
+.adm-id{color:#4a6280;font-size:11px}
+.adm-chip{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10px;background:rgba(105,163,255,.12);color:#69a3ff;border:1px solid rgba(105,163,255,.2)}
+
+/* Pagination */
+.adm-pagination{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:10px 20px;border-top:1px solid #1e2e48;background:#0d1628}
+.adm-pg-btn{background:#111a2b;border:1px solid #253552;border-radius:7px;padding:5px 14px;color:#9db0d0;font-size:12px;cursor:pointer;transition:all .2s}
+.adm-pg-btn:hover:not(:disabled){background:#1a2740;color:#e9eef8;border-color:#69a3ff}
+.adm-pg-btn:disabled{opacity:.35;cursor:default}
+.adm-pg-nums{display:flex;gap:4px}
+.adm-pg-num{background:transparent;border:1px solid transparent;border-radius:6px;padding:4px 9px;color:#9db0d0;font-size:12px;cursor:pointer;min-width:30px;text-align:center}
+.adm-pg-num:hover{background:#1a2740;color:#e9eef8}
+.adm-pg-num.active{background:rgba(105,163,255,.2);border-color:rgba(105,163,255,.4);color:#69a3ff;font-weight:700}
+.adm-pg-info{margin-left:auto;font-size:12px;color:#9db0d0}
+</style>
+
+<div class="adm-hdr" id="admHdr">
+  <div class="adm-hdr-left">
+    <button class="adm-back" onclick="adminClose()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Back
+    </button>
+    <h2>Admin Dashboard</h2>
+    <span class="adm-hdr-badge">Internal</span>
+  </div>
+  <button class="adm-logout" id="admLogoutBtn" onclick="adminLogout()" style="display:none">Sign Out</button>
+</div>
+
+<div id="admLogin">
+  <div class="adm-login-card">
+    <h3>🔒 Admin Access</h3>
+    <p>Restricted to authorized personnel only</p>
+    <div class="adm-field"><label>Email</label><input type="email" id="admEmail" placeholder="admin@infovision.com" autocomplete="email"/></div>
+    <div class="adm-field"><label>Password</label><input type="password" id="admPass" placeholder="••••••••" autocomplete="current-password"/></div>
+    <button class="adm-login-btn" onclick="adminDoLogin()">Sign In</button>
+    <div id="admLoginErr"></div>
+  </div>
+</div>
+
+<div id="admDash" style="display:none;flex:1;min-height:0;flex-direction:column;display:none">
+  <div class="adm-filters">
+    <input type="text" id="admSearch" placeholder="🔍 Search prompt or user email…" oninput="adminDebouncedFetch()"/>
+    <select id="admPersona" onchange="adminFetchPage(1)">
+      <option value="">All Personas</option>
+      <option value="persona_0">All Employees</option>
+      <option value="persona_1">Developer+QA</option>
+      <option value="persona_2">Tech PM</option>
+      <option value="persona_3">BA+PO</option>
+      <option value="persona_4">Support</option>
+    </select>
+    <select id="admRating" onchange="adminFetchPage(1)">
+      <option value="">All Ratings</option>
+      <option value="Excellent">Excellent</option>
+      <option value="Good">Good</option>
+      <option value="Needs Improvement">Needs Improvement</option>
+      <option value="Poor">Poor</option>
+    </select>
+    <select id="admChannel" onchange="adminFetchPage(1)">
+      <option value="">All Channels</option>
+      <option value="WEB">Web</option>
+      <option value="API">API</option>
+      <option value="SLACK">Slack</option>
+      <option value="TEAMS">Teams</option>
+    </select>
+    <input type="date" id="admDateFrom" onchange="adminFetchPage(1)" title="From date"/>
+    <input type="date" id="admDateTo" onchange="adminFetchPage(1)" title="To date"/>
+    <button class="adm-clear-btn" onclick="adminClearFilters()">Clear</button>
+    <span class="adm-count" id="admCount">—</span>
+  </div>
+
+  <div class="adm-table-wrap">
+    <table class="adm-tbl">
+      <thead>
+        <tr>
+          <th style="width:46px">#</th>
+          <th style="width:120px">Date &amp; Time</th>
+          <th style="width:100px">Persona</th>
+          <th style="width:70px">Channel</th>
+          <th style="width:140px">User Email</th>
+          <th style="width:58px">Score</th>
+          <th style="width:100px">Rating</th>
+          <th style="width:52px">Sc/10</th>
+          <th style="width:52px">Issues</th>
+          <th style="width:80px">LLM</th>
+          <th>Prompt</th>
+          <th>Improved Prompt</th>
+        </tr>
+      </thead>
+      <tbody id="admTbody"><tr><td colspan="12" style="text-align:center;padding:40px;color:#4a6280">Sign in to view records</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="adm-pagination">
+    <button class="adm-pg-btn" id="admPrev" onclick="adminFetchPage(_adminPage-1)" disabled>← Prev</button>
+    <div class="adm-pg-nums" id="admPgNums"></div>
+    <button class="adm-pg-btn" id="admNext" onclick="adminFetchPage(_adminPage+1)" disabled>Next →</button>
+    <span class="adm-pg-info" id="admPgInfo"></span>
+  </div>
+</div>
+`;
+  document.body.appendChild(overlay);
+
+  /* ── Public functions ────────────────────────────────────────── */
+  window.adminOpen = function(){
+    overlay.classList.add("open");
+    if(_adminToken){showDash();}else{showLogin();}
+  };
+  window.adminClose = function(){
+    overlay.classList.remove("open");
+    hideTip();
+  };
+  window.adminLogout = function(){
+    _adminToken="";
+    sessionStorage.removeItem("adminToken");
+    showLogin();
+  };
+  window.adminDoLogin = async function(){
+    const email=document.getElementById("admEmail").value.trim();
+    const pass=document.getElementById("admPass").value;
+    const errEl=document.getElementById("admLoginErr");
+    errEl.textContent="Signing in…";
+    try{
+      const r=await fetch("/api/v1/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password:pass})});
+      const d=await r.json();
+      if(!r.ok)throw new Error(d.detail||"Login failed");
+      _adminToken=d.token;
+      sessionStorage.setItem("adminToken",_adminToken);
+      errEl.textContent="";
+      showDash();
+      adminFetchPage(1);
+    }catch(e){errEl.textContent=e.message||"Login failed";}
+  };
+  window.adminFetchPage = async function(page){
+    if(page<1)return;
+    _adminPage=page;
+    const s=document.getElementById("admSearch").value.trim();
+    const p=document.getElementById("admPersona").value;
+    const ra=document.getElementById("admRating").value;
+    const ch=document.getElementById("admChannel").value;
+    const df=document.getElementById("admDateFrom").value;
+    const dt=document.getElementById("admDateTo").value;
+    const params=new URLSearchParams({page,per_page:50,search:s,persona_id:p,rating:ra,channel:ch,date_from:df,date_to:dt});
+    try{
+      const r=await fetch(`/api/v1/admin/records?${params}`,{headers:{Authorization:`Bearer ${_adminToken}`}});
+      if(r.status===401){adminLogout();return;}
+      const d=await r.json();
+      renderTable(d.records);
+      renderPagination(d.page,d.total_pages,d.total);
+    }catch(e){console.error("Admin fetch error",e);}
+  };
+  window.adminClearFilters = function(){
+    document.getElementById("admSearch").value="";
+    document.getElementById("admPersona").value="";
+    document.getElementById("admRating").value="";
+    document.getElementById("admChannel").value="";
+    document.getElementById("admDateFrom").value="";
+    document.getElementById("admDateTo").value="";
+    adminFetchPage(1);
+  };
+  window.adminDebouncedFetch=(()=>{let t;return()=>{clearTimeout(t);t=setTimeout(()=>adminFetchPage(1),400);};})();
+
+  /* ── Render helpers ──────────────────────────────────────────── */
+  function showLogin(){
+    document.getElementById("admLogin").style.display="flex";
+    const dash=document.getElementById("admDash");
+    dash.style.display="none";
+    document.getElementById("admLogoutBtn").style.display="none";
+  }
+  function showDash(){
+    document.getElementById("admLogin").style.display="none";
+    const dash=document.getElementById("admDash");
+    dash.style.display="flex";
+    dash.style.flexDirection="column";
+    dash.style.flex="1";
+    dash.style.minHeight="0";
+    document.getElementById("admLogoutBtn").style.display="block";
+  }
+
+  function ratingBadge(rating){
+    const col=RATING_COLORS[rating]||"#9db0d0";
+    return `<span class="adm-badge" style="background:${col}22;color:${col};border:1px solid ${col}44">${rating||"—"}</span>`;
+  }
+  function scoreColor(s){
+    if(s>=85)return"#4ade80";if(s>=70)return"#60a5fa";if(s>=50)return"#facc15";return"#f87171";
+  }
+  function personaBadge(pid){
+    const colors={persona_0:"#69a3ff",persona_1:"#a78bfa",persona_2:"#34d399",persona_3:"#fb923c",persona_4:"#f472b6"};
+    const c=colors[pid]||"#9db0d0";
+    const n=PERSONA_NAMES[pid]||pid;
+    return `<span class="adm-badge" style="background:${c}18;color:${c};border:1px solid ${c}30">${n}</span>`;
+  }
+  function esc(s){return(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+  function makeTruncCell(text,cls=""){
+    const td=document.createElement("td");
+    const span=document.createElement("span");
+    span.className="adm-cell-truncate"+(cls?" "+cls:"");
+    span.textContent=text||"—";
+    span.addEventListener("mouseenter",e=>showTip(e,text));
+    span.addEventListener("mousemove",moveTip);
+    span.addEventListener("mouseleave",hideTip);
+    td.appendChild(span);
+    return td;
+  }
+
+  function renderTable(records){
+    const tbody=document.getElementById("admTbody");
+    if(!records||!records.length){
+      tbody.innerHTML=`<tr><td colspan="12" style="text-align:center;padding:40px;color:#4a6280">No records found</td></tr>`;
+      return;
+    }
+    tbody.innerHTML="";
+    records.forEach(r=>{
+      const tr=document.createElement("tr");
+      // ID
+      let td=document.createElement("td");
+      td.innerHTML=`<span class="adm-id">${r.id}</span>`;tr.appendChild(td);
+      // Date
+      td=document.createElement("td");td.textContent=r.created_at;td.style.color="#9db0d0";td.style.fontSize="11px";tr.appendChild(td);
+      // Persona
+      td=document.createElement("td");td.innerHTML=personaBadge(r.persona_id);tr.appendChild(td);
+      // Channel
+      td=document.createElement("td");
+      td.innerHTML=`<span class="adm-chip">${r.delivery_channel||r.channel||"—"}</span>`;
+      tr.appendChild(td);
+      // Email
+      const emailTd=makeTruncCell(r.user_email||"anonymous");
+      emailTd.firstChild.style.maxWidth="130px";
+      tr.appendChild(emailTd);
+      // Score
+      td=document.createElement("td");
+      td.innerHTML=`<span class="adm-score" style="color:${scoreColor(r.score)}">${r.score}</span>`;
+      tr.appendChild(td);
+      // Rating
+      td=document.createElement("td");td.innerHTML=ratingBadge(r.rating);tr.appendChild(td);
+      // Score/10
+      td=document.createElement("td");td.textContent=r.validation_score_10;td.style.color="#9db0d0";tr.appendChild(td);
+      // Issues
+      td=document.createElement("td");
+      td.innerHTML=`<span style="color:${r.issue_count>3?"#f87171":r.issue_count>0?"#facc15":"#4ade80"}">${r.issue_count}</span>`;
+      tr.appendChild(td);
+      // LLM
+      td=document.createElement("td");
+      td.innerHTML=`<span class="adm-chip" style="${r.llm_provider==="anthropic"?"color:#c084fc;background:rgba(192,132,252,.12);border-color:rgba(192,132,252,.25)":""}">${r.llm_provider||"—"}</span>`;
+      tr.appendChild(td);
+      // Prompt
+      tr.appendChild(makeTruncCell(r.prompt_text,"wide"));
+      // Improved
+      tr.appendChild(makeTruncCell(r.improved_prompt,"wide"));
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderPagination(page,totalPages,total){
+    document.getElementById("admCount").textContent=`${total.toLocaleString()} record${total!==1?"s":""}`;
+    document.getElementById("admPrev").disabled=page<=1;
+    document.getElementById("admNext").disabled=page>=totalPages;
+    const from=((page-1)*50)+1,to=Math.min(page*50,total);
+    document.getElementById("admPgInfo").textContent=`Showing ${from}–${to} of ${total.toLocaleString()}`;
+
+    const nums=document.getElementById("admPgNums");
+    nums.innerHTML="";
+    const pages=[];
+    if(totalPages<=7){for(let i=1;i<=totalPages;i++)pages.push(i);}
+    else{
+      pages.push(1);
+      if(page>3)pages.push("…");
+      for(let i=Math.max(2,page-1);i<=Math.min(totalPages-1,page+1);i++)pages.push(i);
+      if(page<totalPages-2)pages.push("…");
+      pages.push(totalPages);
+    }
+    pages.forEach(p=>{
+      if(p==="…"){const s=document.createElement("span");s.textContent="…";s.style.cssText="color:#4a6280;align-self:center;padding:0 2px";nums.appendChild(s);return;}
+      const btn=document.createElement("button");
+      btn.className="adm-pg-num"+(p===page?" active":"");
+      btn.textContent=p;
+      btn.onclick=()=>adminFetchPage(p);
+      nums.appendChild(btn);
+    });
+  }
+
+  /* ── Keyboard: ESC closes overlay ───────────────────────────── */
+  document.addEventListener("keydown",e=>{
+    if(e.key==="Escape"&&overlay.classList.contains("open"))adminClose();
+    if(e.key==="Enter"&&overlay.classList.contains("open")&&document.getElementById("admLogin").style.display!=="none")adminDoLogin();
+  });
+})();
 </script>
 </body>
 </html>
