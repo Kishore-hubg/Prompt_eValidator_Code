@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import time
@@ -421,3 +422,21 @@ def _fallback_module_on_groq_rate_limit(provider: str | None):
     if provider == "auto" and llm_anthropic.llm_configured():
         return llm_anthropic
     return None
+
+
+async def run_llm_validation_async(
+    prompt_text: str,
+    persona_id: str,
+    *,
+    auto_improve: bool = False,
+) -> dict[str, Any]:
+    """Async wrapper around run_llm_validation.
+
+    Offloads the synchronous LLM calls to a thread-pool worker so the FastAPI
+    event loop is never blocked.  This allows the server to handle other
+    in-flight requests while waiting for Anthropic / Groq responses, reducing
+    perceived latency for concurrent users without changing scoring logic.
+    """
+    return await asyncio.to_thread(
+        run_llm_validation, prompt_text, persona_id, auto_improve=auto_improve
+    )

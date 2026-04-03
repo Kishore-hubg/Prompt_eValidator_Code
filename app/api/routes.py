@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
 from pymongo.database import Database
 from sqlalchemy import text
 
@@ -22,7 +22,7 @@ from app.models.schemas import (
     TeamsMessageRequest,
 )
 from app.services.persona_loader import load_personas, get_persona
-from app.services.prompt_validation import run_llm_validation
+from app.services.prompt_validation import run_llm_validation, run_llm_validation_async
 from app.services.llm_groq import GroqRateLimitError
 from app.services.history_service import save_validation, fetch_history
 from app.services.prompt_guidelines_loader import load_prompt_guidelines
@@ -207,8 +207,100 @@ def guidelines():
         global_checks=cfg.get("global_checks", []),
     )
 
+def _run_db_writes(
+    db: Any,
+    *,
+    user_email: str,
+    persona_id: str,
+    channel: str,
+    prompt_text: str,
+    score: float,
+    rating: str,
+    issues: list,
+    suggestions: list,
+    improved: str,
+    dimension_scores_raw: list,
+    validation: dict,
+    governance_payload: dict,
+    source_of_truth: dict,
+    delivery_channel: str,
+    validation_score_10: float,
+) -> None:
+    """Run all three DB writes sequentially in a background task.
+
+    Keeping them in a single helper preserves the dependency chain:
+    capture_raw_event → raw_capture.raw_event_id → capture_enriched_event.
+    Running this after the response is returned shaves the DB round-trip
+    (~50–200 ms) off the user-facing latency.
+    """
+    raw_capture = None
+    try:
+        raw_capture = capture_raw_event(
+            db,
+            user_id=user_email,
+            persona_id=persona_id,
+            delivery_channel=delivery_channel,
+            original_prompt=prompt_text,
+            source_of_truth=source_of_truth,
+        )
+    except Exception:
+        raw_capture = None
+
+    try:
+        save_validation(
+            db,
+            persona_id=persona_id,
+            channel=channel,
+            prompt_text=prompt_text,
+            score=score,
+            rating=rating,
+            issues=issues,
+            suggestions=suggestions,
+            improved_prompt=improved,
+            dimension_scores=dimension_scores_raw,
+            user_email=user_email,
+            llm_evaluation=validation["llm_evaluation"],
+            data_governance=governance_payload,
+            source_of_truth=source_of_truth,
+            delivery_channel=delivery_channel,
+            validation_score_10=validation_score_10,
+            rewrite_strategy=validation.get("rewrite_strategy", "template"),
+            rewrite_metadata={
+                "rewrite_applied_guidelines": validation["llm_evaluation"].get("rewrite_applied_guidelines")
+                if validation.get("llm_evaluation")
+                else None,
+                "rewrite_unresolved_gaps": validation["llm_evaluation"].get("rewrite_unresolved_gaps")
+                if validation.get("llm_evaluation")
+                else None,
+            },
+        )
+    except Exception:
+        pass
+
+    try:
+        capture_enriched_event(
+            db,
+            raw_event_id=(raw_capture.raw_event_id if raw_capture else None),
+            event_id=(raw_capture.event_id if raw_capture else ""),
+            user_id=user_email,
+            persona_id=persona_id,
+            team_id="",
+            delivery_channel=delivery_channel,
+            original_prompt=prompt_text,
+            validation_score=score,
+            suggestions=suggestions,
+            corrected_prompt=improved,
+            autofix_improvement_points=[],
+            llm_evaluation=validation["llm_evaluation"],
+            data_governance=governance_payload,
+            source_of_truth=source_of_truth,
+        )
+    except Exception:
+        pass
+
+
 @router.post("/validate", response_model=ValidateResponse)
-def validate_prompt(request: ValidateRequest, db: DbDep):
+async def validate_prompt(request: ValidateRequest, db: DbDep, background_tasks: BackgroundTasks):
     resolved_persona_id = request.persona_id
     if request.user_email and request.persona_id == "persona_0":
         resolved_persona_id = resolve_persona_for_user(db, email=request.user_email)
@@ -217,7 +309,7 @@ def validate_prompt(request: ValidateRequest, db: DbDep):
         raise HTTPException(status_code=400, detail="prompt_text cannot be empty.")
 
     try:
-        validation = run_llm_validation(
+        validation = await run_llm_validation_async(
             request.prompt_text,
             resolved_persona_id,
             auto_improve=request.auto_improve,
@@ -226,6 +318,7 @@ def validate_prompt(request: ValidateRequest, db: DbDep):
         raise HTTPException(status_code=429, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+
     score = validation["score"]
     dimension_scores_raw = validation["dimension_scores"]
     strengths = validation["strengths"]
@@ -242,18 +335,6 @@ def validate_prompt(request: ValidateRequest, db: DbDep):
     delivery_channel = normalize_delivery_channel(request.channel)
     validation_score_10 = to_validation_score_10(score)
     source_of_truth = build_source_of_truth_payload()
-    raw_capture = None
-    try:
-        raw_capture = capture_raw_event(
-            db,
-            user_id=request.user_email or "",
-            persona_id=resolved_persona_id,
-            delivery_channel=delivery_channel,
-            original_prompt=request.prompt_text,
-            source_of_truth=source_of_truth,
-        )
-    except Exception:
-        raw_capture = None
     governance_payload = build_data_governance_payload(
         user_email=request.user_email or "",
         channel=request.channel,
@@ -262,8 +343,12 @@ def validate_prompt(request: ValidateRequest, db: DbDep):
         llm_evaluation=validation["llm_evaluation"],
     )
 
-    save_validation(
+    # Schedule DB persistence after response is sent — removes DB latency from
+    # the user-facing critical path entirely (~50–200 ms saved per request).
+    background_tasks.add_task(
+        _run_db_writes,
         db,
+        user_email=request.user_email or "",
         persona_id=resolved_persona_id,
         channel=request.channel,
         prompt_text=request.prompt_text,
@@ -271,44 +356,14 @@ def validate_prompt(request: ValidateRequest, db: DbDep):
         rating=rating,
         issues=issues,
         suggestions=suggestions,
-        improved_prompt=improved,
-        dimension_scores=dimension_scores_raw,
-        user_email=request.user_email or "",
-        llm_evaluation=validation["llm_evaluation"],
-        data_governance=governance_payload,
+        improved=improved,
+        dimension_scores_raw=dimension_scores_raw,
+        validation=validation,
+        governance_payload=governance_payload,
         source_of_truth=source_of_truth,
         delivery_channel=delivery_channel,
         validation_score_10=validation_score_10,
-        rewrite_strategy=validation.get("rewrite_strategy", "template"),
-        rewrite_metadata={
-            "rewrite_applied_guidelines": validation["llm_evaluation"].get("rewrite_applied_guidelines")
-            if validation.get("llm_evaluation")
-            else None,
-            "rewrite_unresolved_gaps": validation["llm_evaluation"].get("rewrite_unresolved_gaps")
-            if validation.get("llm_evaluation")
-            else None,
-        },
     )
-    try:
-        capture_enriched_event(
-            db,
-            raw_event_id=(raw_capture.raw_event_id if raw_capture else None),
-            event_id=(raw_capture.event_id if raw_capture else ""),
-            user_id=request.user_email or "",
-            persona_id=resolved_persona_id,
-            team_id="",
-            delivery_channel=delivery_channel,
-            original_prompt=request.prompt_text,
-            validation_score=score,
-            suggestions=suggestions,
-            corrected_prompt=improved,
-            autofix_improvement_points=[],
-            llm_evaluation=validation["llm_evaluation"],
-            data_governance=governance_payload,
-            source_of_truth=source_of_truth,
-        )
-    except Exception:
-        pass
 
     return ValidateResponse(
         persona_id=resolved_persona_id,
@@ -326,9 +381,9 @@ def validate_prompt(request: ValidateRequest, db: DbDep):
     )
 
 @router.post("/improve", response_model=ValidateResponse)
-def improve_only(request: ValidateRequest, db: DbDep):
+async def improve_only(request: ValidateRequest, db: DbDep, background_tasks: BackgroundTasks):
     request.auto_improve = True
-    return validate_prompt(request=request, db=db)
+    return await validate_prompt(request=request, db=db, background_tasks=background_tasks)
 
 
 @router.post("/auth/resolve", response_model=OAuthResolveResponse, dependencies=[Depends(require_api_key)])
