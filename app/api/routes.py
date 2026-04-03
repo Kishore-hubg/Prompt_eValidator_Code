@@ -22,7 +22,7 @@ from app.models.schemas import (
     TeamsMessageRequest,
 )
 from app.services.persona_loader import load_personas, get_persona
-from app.services.prompt_validation import run_llm_validation, run_llm_validation_async
+from app.services.prompt_validation import run_llm_validation
 from app.services.llm_groq import GroqRateLimitError
 from app.services.history_service import save_validation, fetch_history
 from app.services.prompt_guidelines_loader import load_prompt_guidelines
@@ -300,7 +300,7 @@ def _run_db_writes(
 
 
 @router.post("/validate", response_model=ValidateResponse)
-async def validate_prompt(request: ValidateRequest, db: DbDep, background_tasks: BackgroundTasks):
+def validate_prompt(request: ValidateRequest, db: DbDep, background_tasks: BackgroundTasks):
     resolved_persona_id = request.persona_id
     if request.user_email and request.persona_id == "persona_0":
         resolved_persona_id = resolve_persona_for_user(db, email=request.user_email)
@@ -309,7 +309,7 @@ async def validate_prompt(request: ValidateRequest, db: DbDep, background_tasks:
         raise HTTPException(status_code=400, detail="prompt_text cannot be empty.")
 
     try:
-        validation = await run_llm_validation_async(
+        validation = run_llm_validation(
             request.prompt_text,
             resolved_persona_id,
             auto_improve=request.auto_improve,
@@ -381,9 +381,9 @@ async def validate_prompt(request: ValidateRequest, db: DbDep, background_tasks:
     )
 
 @router.post("/improve", response_model=ValidateResponse)
-async def improve_only(request: ValidateRequest, db: DbDep, background_tasks: BackgroundTasks):
+def improve_only(request: ValidateRequest, db: DbDep, background_tasks: BackgroundTasks):
     request.auto_improve = True
-    return await validate_prompt(request=request, db=db, background_tasks=background_tasks)
+    return validate_prompt(request=request, db=db, background_tasks=background_tasks)
 
 
 @router.post("/auth/resolve", response_model=OAuthResolveResponse, dependencies=[Depends(require_api_key)])
