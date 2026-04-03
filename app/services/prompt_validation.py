@@ -430,13 +430,226 @@ async def run_llm_validation_async(
     *,
     auto_improve: bool = False,
 ) -> dict[str, Any]:
-    """Async wrapper around run_llm_validation.
+    """Native-async validation pipeline.
 
-    Offloads the synchronous LLM calls to a thread-pool worker so the FastAPI
-    event loop is never blocked.  This allows the server to handle other
-    in-flight requests while waiting for Anthropic / Groq responses, reducing
-    perceived latency for concurrent users without changing scoring logic.
+    LLM I/O (eval + rewrite) is awaited directly via each provider module's
+    async interface.  All pure-Python computation (score formulas, guideline
+    parsing, cache ops) runs inline — no thread-pool wrapping of the full
+    function, which previously caused deadlocks with Groq's threading.Lock.
     """
-    return await asyncio.to_thread(
-        run_llm_validation, prompt_text, persona_id, auto_improve=auto_improve
+    # ── Cache lookup ────────────────────────────────────────────────────────
+    if PROMPT_CACHE_TTL_SECONDS > 0:
+        key = _cache_key(prompt_text, persona_id, auto_improve)
+        cached = _validation_cache.get(key)
+        if cached is not None:
+            expire_ts, cached_result = cached
+            if time.monotonic() < expire_ts:
+                return cached_result
+            del _validation_cache[key]
+
+    persona = get_persona(persona_id)
+    guidelines = load_prompt_guidelines()
+
+    dimension_scores: list[dict[str, Any]] = []
+    merged_strengths: list[str] = []
+    merged_issues: list[str] = []
+
+    guideline_evaluation: dict[str, Any] = {
+        "strict_mode": bool(guidelines.get("strict_mode", True)),
+        "penalty_applied": 0,
+        "checks": [],
+        "issues": [],
+        "sources": guidelines.get("sources", []),
+    }
+
+    llm_evaluation: dict[str, Any] = {
+        "used": False,
+        "provider": None,
+        "model": None,
+        "semantic_score": None,
+        "static_score": None,
+        "scoring_mode": "llm_only",
+        "source_of_truth_document": SOURCE_OF_TRUTH_DOC,
+        "source_of_truth_scope": SOURCE_OF_TRUTH_SCOPE,
+        "rewrite_applied_guidelines": None,
+        "rewrite_unresolved_gaps": None,
+        "error": None,
+    }
+    final_score = 0.0
+
+    provider = _selected_provider()
+    llm_module = _provider_module(provider)
+    if not llm_module:
+        raise RuntimeError("A configured LLM provider is required but none is available.")
+
+    # ── Static pre-screen ───────────────────────────────────────────────────
+    _skip_llm_eval = False
+    if STATIC_PRESCREEN_THRESHOLD > 0:
+        ps_score, ps_dims, ps_strengths, ps_issues, ps_ge = static_evaluate_prompt(
+            prompt_text, persona_id
+        )
+        if ps_score >= STATIC_PRESCREEN_THRESHOLD:
+            final_score = ps_score
+            dimension_scores = ps_dims
+            merged_issues = dedupe_preserve(ps_issues)
+            merged_strengths = dedupe_preserve(ps_strengths)
+            guideline_evaluation.update({
+                "penalty_applied": ps_ge.get("penalty_applied", 0),
+                "checks": ps_ge.get("checks", []),
+                "issues": ps_ge.get("issues", []),
+            })
+            llm_evaluation["scoring_mode"] = "static_prescreen"
+            _skip_llm_eval = True
+
+    if not _skip_llm_eval:
+        llm_evaluation["used"] = True
+        llm_evaluation["provider"] = provider
+        llm_evaluation["model"] = GROQ_MODEL if provider == "groq" else ANTHROPIC_MODEL
+
+    if not _skip_llm_eval:
+        try:
+            try:
+                evaluation = await llm_module.llm_evaluate_prompt_async(
+                    prompt_text,
+                    persona=persona,
+                    guidelines=guidelines,
+                    source_of_truth_doc=SOURCE_OF_TRUTH_DOC,
+                    source_of_truth_scope=SOURCE_OF_TRUTH_SCOPE,
+                )
+            except GroqRateLimitError:
+                fallback_module = _fallback_module_on_groq_rate_limit(provider)
+                if not fallback_module:
+                    raise
+                llm_module = fallback_module
+                llm_evaluation["provider"] = "anthropic"
+                llm_evaluation["model"] = ANTHROPIC_MODEL
+                llm_evaluation["scoring_mode"] = "llm_fallback_provider"
+                evaluation = await llm_module.llm_evaluate_prompt_async(
+                    prompt_text,
+                    persona=persona,
+                    guidelines=guidelines,
+                    source_of_truth_doc=SOURCE_OF_TRUTH_DOC,
+                    source_of_truth_scope=SOURCE_OF_TRUTH_SCOPE,
+                )
+
+            llm_evaluation["semantic_score"] = evaluation.semantic_score
+            dimension_scores = getattr(evaluation, "dimension_scores", [])
+            merged_issues = dedupe_preserve(evaluation.issues)[:6]
+            merged_strengths = dedupe_preserve(evaluation.strengths)[:5]
+
+            if getattr(evaluation, "guideline_checks", None):
+                guideline_evaluation = _build_guideline_evaluation_from_llm(
+                    getattr(evaluation, "guideline_checks", []), guidelines
+                )
+                for gi in guideline_evaluation["issues"]:
+                    if gi not in merged_issues:
+                        merged_issues.append(gi)
+            else:
+                static_ge = evaluate_guidelines(prompt_text)
+                guideline_evaluation.update({
+                    "penalty_applied": static_ge.get("penalty_applied", 0),
+                    "checks": static_ge.get("checks", []),
+                    "issues": static_ge.get("issues", []),
+                })
+                merged_issues = dedupe_preserve(merged_issues + static_ge.get("issues", []))
+
+            if dimension_scores:
+                final_score = _recompute_score(dimension_scores, guideline_evaluation, guidelines)
+            else:
+                final_score = evaluation.semantic_score
+
+        except Exception as exc:  # noqa: BLE001
+            if isinstance(exc, GroqRateLimitError) and (
+                LLM_VALIDATE_REQUIRED or not LLM_FALLBACK_ON_VALIDATE_FAILURE
+            ):
+                raise
+
+            llm_evaluation["error"] = str(exc)
+
+            if LLM_VALIDATE_REQUIRED or not LLM_FALLBACK_ON_VALIDATE_FAILURE:
+                raise RuntimeError(f"LLM validation failed: {exc}") from exc
+
+            llm_evaluation["scoring_mode"] = (
+                "rate_limit_fallback" if isinstance(exc, GroqRateLimitError) else "static_fallback"
+            )
+            fallback_score, fallback_dims, fallback_strengths, fallback_issues, fallback_ge = static_evaluate_prompt(
+                prompt_text, persona_id
+            )
+            final_score = fallback_score
+            dimension_scores = fallback_dims
+            guideline_evaluation.update({
+                "penalty_applied": fallback_ge.get("penalty_applied", 0),
+                "checks": fallback_ge.get("checks", []),
+                "issues": fallback_ge.get("issues", []),
+            })
+            merged_issues = dedupe_preserve(fallback_issues)
+            merged_strengths = dedupe_preserve(fallback_strengths)
+
+    rewrite_issues = derive_issue_based_suggestions(
+        persona_id,
+        merged_issues,
+        fallback=merged_issues,
     )
+
+    rewrite_strategy = "template"
+    improved_prompt = prompt_text
+    if auto_improve:
+        if is_prompt_too_thin_for_rewrite(prompt_text):
+            improved_prompt = improve_prompt(
+                prompt_text, persona_id, merged_issues, thin_input=True
+            )
+            rewrite_strategy = "template_thin"
+        else:
+            try:
+                try:
+                    rewrite = await llm_module.llm_rewrite_prompt_async(
+                        prompt_text,
+                        persona=persona,
+                        guidelines=guidelines,
+                        issues=rewrite_issues,
+                    )
+                except GroqRateLimitError:
+                    fallback_module = _fallback_module_on_groq_rate_limit(provider)
+                    if not fallback_module:
+                        raise
+                    llm_module = fallback_module
+                    llm_evaluation["provider"] = "anthropic"
+                    llm_evaluation["model"] = ANTHROPIC_MODEL
+                    llm_evaluation["scoring_mode"] = "llm_fallback_provider"
+                    rewrite = await llm_module.llm_rewrite_prompt_async(
+                        prompt_text,
+                        persona=persona,
+                        guidelines=guidelines,
+                        issues=rewrite_issues,
+                    )
+                improved_prompt = rewrite.improved_prompt
+                llm_evaluation["rewrite_applied_guidelines"] = rewrite.applied_guidelines
+                llm_evaluation["rewrite_unresolved_gaps"] = rewrite.unresolved_gaps
+                rewrite_strategy = "llm"
+            except Exception as _rw_exc:  # noqa: BLE001
+                _log.warning("LLM rewrite failed (%s: %s) — using template fallback",
+                             type(_rw_exc).__name__, _rw_exc)
+                thin_fb = is_prompt_too_thin_for_rewrite(prompt_text)
+                improved_prompt = improve_prompt(
+                    prompt_text, persona_id, merged_issues, thin_input=thin_fb
+                )
+
+    dimension_scores = [d for d in dimension_scores if float(d.get("weight", 0)) > 0]
+
+    result: dict[str, Any] = {
+        "score": final_score,
+        "dimension_scores": dimension_scores,
+        "strengths": merged_strengths,
+        "issues": merged_issues,
+        "guideline_evaluation": guideline_evaluation,
+        "improved_prompt": improved_prompt,
+        "llm_evaluation": llm_evaluation,
+        "rewrite_strategy": rewrite_strategy,
+    }
+
+    if PROMPT_CACHE_TTL_SECONDS > 0 and not llm_evaluation.get("error"):
+        key = _cache_key(prompt_text, persona_id, auto_improve)
+        expire_ts = time.monotonic() + PROMPT_CACHE_TTL_SECONDS
+        _validation_cache[key] = (expire_ts, result)
+
+    return result

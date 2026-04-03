@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 import time
@@ -828,4 +829,41 @@ def llm_rewrite_prompt(
         improved_prompt=improved_prompt.strip(),
         applied_guidelines=applied_out,
         unresolved_gaps=unresolved_out,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Async wrappers — Groq's sync functions use threading.Lock for rate-limiting.
+# Wrapping the INDIVIDUAL functions (not the entire validation pipeline) in
+# asyncio.to_thread keeps the lock scope tight and avoids event-loop deadlocks.
+# ---------------------------------------------------------------------------
+
+async def llm_evaluate_prompt_async(
+    prompt_text: str,
+    *,
+    persona: dict[str, Any],
+    guidelines: dict[str, Any],
+    source_of_truth_doc: str,
+    source_of_truth_scope: str,
+) -> LlmEvaluateResult:
+    """Async wrapper — runs sync llm_evaluate_prompt in thread pool."""
+    return await asyncio.to_thread(
+        llm_evaluate_prompt, prompt_text,
+        persona=persona, guidelines=guidelines,
+        source_of_truth_doc=source_of_truth_doc,
+        source_of_truth_scope=source_of_truth_scope,
+    )
+
+
+async def llm_rewrite_prompt_async(
+    prompt_text: str,
+    *,
+    persona: dict[str, Any],
+    guidelines: dict[str, Any],
+    issues: list[str],
+) -> LlmRewriteResult:
+    """Async wrapper — runs sync llm_rewrite_prompt in thread pool."""
+    return await asyncio.to_thread(
+        llm_rewrite_prompt, prompt_text,
+        persona=persona, guidelines=guidelines, issues=issues,
     )

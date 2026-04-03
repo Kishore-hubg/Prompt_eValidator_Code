@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 from dataclasses import dataclass, field
@@ -633,4 +634,201 @@ def llm_rewrite_prompt(
         improved_prompt=improved_prompt.strip(),
         applied_guidelines=applied_out,
         unresolved_gaps=unresolved_out,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Native-async variants — use httpx.AsyncClient so the FastAPI event loop
+# is never blocked during Anthropic API calls.
+# ---------------------------------------------------------------------------
+
+async def _chat_completion_async(system: str, user_content: str) -> str:
+    """Async version of _chat_completion using httpx.AsyncClient."""
+    payload: dict[str, Any] = {
+        "model": ANTHROPIC_MODEL,
+        "max_tokens": 4096,
+        "temperature": 0,
+        "system": system,
+        "messages": [{"role": "user", "content": user_content}],
+    }
+    headers = {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": ANTHROPIC_VERSION,
+        "content-type": "application/json",
+    }
+    timeout = httpx.Timeout(ANTHROPIC_TIMEOUT_SECONDS)
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        response = await client.post(ANTHROPIC_URL, json=payload, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+    blocks = data.get("content") or []
+    for block in blocks:
+        if isinstance(block, dict) and block.get("type") == "text":
+            text = block.get("text")
+            if isinstance(text, str) and text.strip():
+                return text
+    raise ValueError("Anthropic response missing text block")
+
+
+async def llm_evaluate_prompt_async(
+    prompt_text: str,
+    *,
+    persona: dict[str, Any],
+    guidelines: dict[str, Any],
+    source_of_truth_doc: str,
+    source_of_truth_scope: str,
+) -> LlmEvaluateResult:
+    """Async version of llm_evaluate_prompt — identical logic, async HTTP call only."""
+    weights: dict[str, Any] = persona.get("weights") if isinstance(persona.get("weights"), dict) else {}
+    validator_checks: list = persona.get("validator_checks") if isinstance(persona.get("validator_checks"), list) else []
+    keyword_checks: dict = persona.get("keyword_checks") if isinstance(persona.get("keyword_checks"), dict) else {}
+    penalty_triggers: list = persona.get("penalty_triggers") if isinstance(persona.get("penalty_triggers"), list) else []
+
+    global_checks_raw = guidelines.get("global_checks") if isinstance(guidelines.get("global_checks"), list) else []
+    global_checks: list[dict[str, Any]] = []
+    for item in global_checks_raw:
+        if isinstance(item, dict):
+            global_checks.append({
+                "id": str(item.get("id", "")),
+                "description": str(item.get("description", "")),
+                "keywords": item.get("keywords", [])[:8],
+            })
+
+    priorities = guidelines.get("claude_curated_priorities") if isinstance(guidelines.get("claude_curated_priorities"), list) else []
+    penalty_per_miss = int(guidelines.get("strict_penalty_per_miss", 3))
+    penalty_cap = int(guidelines.get("strict_penalty_cap", 15))
+    strict_mode = bool(guidelines.get("strict_mode", True))
+
+    dimension_criteria = _build_dimension_criteria(weights, validator_checks, keyword_checks, penalty_triggers)
+
+    system = (
+        "You are an enterprise prompt-quality auditor. "
+        "Your ONLY job is to evaluate the USER PROMPT strictly against the provided "
+        "source-of-truth framework. Do NOT use your own judgment, heuristics, or general "
+        "knowledge about prompt quality.\n\n"
+        "━━━ EVALUATION RULES (NON-NEGOTIABLE) ━━━\n"
+        "1. DIMENSIONS: Evaluate ONLY the dimensions listed in persona_dimensions. "
+        "   Do NOT add, rename, or remove any dimension.\n"
+        "2. PASS CRITERIA: Mark passed=true for a dimension ONLY when the prompt text "
+        "   explicitly contains at least one keyword_evidence item AND satisfies at least "
+        "   one criterion from that dimension's criteria list. "
+        "   If the dimension has no keyword_evidence, use the criteria list alone. "
+        "   Absence of evidence = FAILED — never assume implicit compliance.\n"
+        "3. SCORE: Each dimension score = its weight if passed, else 0. No partial scores.\n"
+        "4. GLOBAL CHECKS: Evaluate each global_check by scanning for its keywords in the prompt. "
+        "   If none of the check's keywords appear, mark it failed.\n"
+        "5. SEMANTIC SCORE: Compute as shown — do not substitute your own estimate.\n"
+        "6. ISSUES: List ONLY gaps that are ACTUALLY missing from the prompt. "
+        "   Each issue must be unique — different root cause, different wording. "
+        "   Do NOT repeat or rephrase the same gap. Maximum 6 issues. "
+        "   A better prompt (with more criteria satisfied) must yield fewer issues.\n"
+        "7. STRENGTHS: List ONLY elements that ARE explicitly present in the prompt. "
+        "   Do not list things that are absent as strengths. Maximum 5 strengths.\n"
+        "8. NO HALLUCINATION: Do not infer, assume, or credit the prompt for content "
+        "   that is not literally present in the prompt text.\n\n"
+        "━━━ SCORING FORMULA ━━━\n"
+        "  base_score = (sum_of_passed_weights / sum_of_all_weights) × 100\n"
+        f"  guideline_penalty = min(failed_global_check_count × {penalty_per_miss}, {penalty_cap})\n"
+        "  semantic_score = base_score − guideline_penalty  (minimum 0)\n\n"
+        "RATING THRESHOLDS: ≥85 Excellent | ≥70 Good | ≥50 Needs Improvement | <50 Poor\n\n"
+        f"STRICT MODE: {'ON' if strict_mode else 'OFF'} | "
+        f"{penalty_per_miss} pts per failed global check | cap: {penalty_cap} pts\n\n"
+        "━━━ MANDATORY RETURN FORMAT — single JSON object, no markdown, no prose ━━━\n"
+        '{"semantic_score":<number 0-100>,'
+        '"dimension_scores":[{"name":"<exact_dimension_name>","score":<weight_or_0>,'
+        '"weight":<weight>,"passed":<true/false>,"notes":"<one specific sentence citing evidence or gap>"}],'
+        '"guideline_checks":[{"id":"<exact_check_id>","passed":<true/false>,'
+        f'"penalty":<0_or_{penalty_per_miss}>,"issue":"<issue_if_missing or empty string>"' + '}],'
+        '"issues":["<unique actionable gap — cite the missing element>"],'
+        '"strengths":["<element that IS present in the prompt>"]}'
+    )
+
+    user_payload = {
+        "source_of_truth_document": source_of_truth_doc,
+        "persona_id": persona.get("id"),
+        "persona_name": persona.get("name"),
+        "persona_dimensions": dimension_criteria,
+        "persona_penalty_triggers": penalty_triggers[:5],
+        "org_guideline_priorities": priorities[:5],
+        "global_checks": global_checks,
+        "user_prompt": prompt_text,
+    }
+
+    content = await _chat_completion_async(system, json.dumps(user_payload, ensure_ascii=False))
+    parsed = _parse_json_object(content)
+
+    if LLM_STRICT_SCHEMA:
+        required = {"semantic_score", "issues", "strengths"}
+        if not required.issubset(parsed.keys()):
+            raise ValueError("Anthropic eval JSON schema missing required keys")
+        if not isinstance(parsed.get("issues"), list) or not isinstance(parsed.get("strengths"), list):
+            raise ValueError("Anthropic eval JSON schema has invalid list fields")
+
+    try:
+        semantic_score = float(parsed.get("semantic_score"))
+    except (TypeError, ValueError):
+        semantic_score = 0.0
+    semantic_score = max(0.0, min(100.0, semantic_score))
+
+    raw_issues = parsed.get("issues") if isinstance(parsed.get("issues"), list) else []
+    raw_strengths = parsed.get("strengths") if isinstance(parsed.get("strengths"), list) else []
+    issue_list = [str(item).strip() for item in raw_issues if str(item).strip()]
+    strength_list = [str(item).strip() for item in raw_strengths if str(item).strip()]
+
+    dim_list: list[dict[str, Any]] = []
+    raw_dims = parsed.get("dimension_scores")
+    if isinstance(raw_dims, list):
+        for d in raw_dims:
+            if isinstance(d, dict) and d.get("name"):
+                try:
+                    dim_list.append({
+                        "name": str(d["name"]),
+                        "score": float(d.get("score", 0)),
+                        "weight": float(d.get("weight", 0)),
+                        "passed": bool(d.get("passed", False)),
+                        "notes": str(d["notes"]) if d.get("notes") else None,
+                    })
+                except (TypeError, ValueError):
+                    continue
+
+    gc_list: list[dict[str, Any]] = []
+    raw_gc = parsed.get("guideline_checks")
+    if isinstance(raw_gc, list):
+        for g in raw_gc:
+            if isinstance(g, dict) and g.get("id"):
+                try:
+                    gc_list.append({
+                        "id": str(g["id"]),
+                        "passed": bool(g.get("passed", True)),
+                        "penalty": int(g.get("penalty", 0)),
+                        "issue": str(g["issue"]) if g.get("issue") else "",
+                    })
+                except (TypeError, ValueError):
+                    continue
+
+    return LlmEvaluateResult(
+        semantic_score=semantic_score,
+        issues=issue_list,
+        strengths=strength_list,
+        dimension_scores=dim_list,
+        guideline_checks=gc_list,
+    )
+
+
+async def llm_rewrite_prompt_async(
+    prompt_text: str,
+    *,
+    persona: dict[str, Any],
+    guidelines: dict[str, Any],
+    issues: list[str],
+) -> LlmRewriteResult:
+    """Async wrapper for llm_rewrite_prompt — runs in thread pool.
+
+    The rewrite system prompt is large and CPU-bound to build; the HTTP call
+    duration dominates (5–8 s).  Running in a thread is correct here — it frees
+    the event loop for other concurrent requests while the rewrite executes.
+    """
+    return await asyncio.to_thread(
+        llm_rewrite_prompt, prompt_text,
+        persona=persona, guidelines=guidelines, issues=issues,
     )
