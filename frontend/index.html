@@ -880,7 +880,7 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
   /* ── Public functions ────────────────────────────────────────── */
   window.adminOpen = function(){
     overlay.classList.add("open");
-    if(_adminToken){showDash();}else{showLogin();}
+    if(_adminToken){showDash();adminFetchPage(1);}else{showLogin();}
   };
   window.adminClose = function(){
     overlay.classList.remove("open");
@@ -921,9 +921,18 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
       const r=await fetch(`/api/v1/admin/records?${params}`,{headers:{Authorization:`Bearer ${_adminToken}`}});
       if(r.status===401){adminLogout();return;}
       const d=await r.json();
+      if(!r.ok){
+        const tbody=document.getElementById("admTbody");
+        tbody.innerHTML=`<tr><td colspan="12" style="text-align:center;padding:40px;color:#f87171">API error ${r.status}: ${d.detail||"Unknown error"}</td></tr>`;
+        return;
+      }
       renderTable(d.records);
       renderPagination(d.page,d.total_pages,d.total);
-    }catch(e){console.error("Admin fetch error",e);}
+    }catch(e){
+      console.error("Admin fetch error",e);
+      const tbody=document.getElementById("admTbody");
+      tbody.innerHTML=`<tr><td colspan="12" style="text-align:center;padding:40px;color:#f87171">Network error: ${e.message}</td></tr>`;
+    }
   };
   window.adminClearFilters = function(){
     document.getElementById("admSearch").value="";
