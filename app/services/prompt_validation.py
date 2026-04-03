@@ -25,6 +25,7 @@ from app.core.settings import (
 # Process-local only; resets on server restart.  No external dependency needed.
 # ---------------------------------------------------------------------------
 _validation_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+import httpx
 from app.services.improver import improve_prompt, is_prompt_too_thin_for_rewrite
 from app.services import llm_anthropic, llm_groq
 from app.services.llm_groq import GroqRateLimitError
@@ -229,13 +230,15 @@ def run_llm_validation(
                     source_of_truth_doc=SOURCE_OF_TRUTH_DOC,
                     source_of_truth_scope=SOURCE_OF_TRUTH_SCOPE,
                 )
-            except GroqRateLimitError:
-                fallback_module = _fallback_module_on_groq_rate_limit(provider)
+            except (httpx.HTTPStatusError, GroqRateLimitError):
+                # httpx.HTTPStatusError → Anthropic 4xx/5xx (billing, rate limit, etc.)
+                # GroqRateLimitError    → Groq 429 exhausted
+                fallback_module = _fallback_module_on_primary_failure(provider)
                 if not fallback_module:
                     raise
                 llm_module = fallback_module
-                llm_evaluation["provider"] = "anthropic"
-                llm_evaluation["model"] = ANTHROPIC_MODEL
+                llm_evaluation["provider"] = "groq"
+                llm_evaluation["model"] = GROQ_MODEL
                 llm_evaluation["scoring_mode"] = "llm_fallback_provider"
                 evaluation = llm_module.llm_evaluate_prompt(
                     prompt_text,
@@ -283,6 +286,7 @@ def run_llm_validation(
             # required AND fallback is disabled.  When fallback is allowed, a
             # rate-limit falls through to static scoring so the user always
             # receives a result rather than an error page.
+            _is_rate_limit = isinstance(exc, (GroqRateLimitError, httpx.HTTPStatusError))
             if isinstance(exc, GroqRateLimitError) and (
                 LLM_VALIDATE_REQUIRED or not LLM_FALLBACK_ON_VALIDATE_FAILURE
             ):
@@ -294,10 +298,9 @@ def run_llm_validation(
                 raise RuntimeError(f"LLM validation failed: {exc}") from exc
 
             # --- Static rules-engine fallback ---
-            # Distinguish rate-limit fallback from generic LLM error fallback
-            # so monitoring/logging can tell them apart.
+            # Distinguish rate-limit / provider-error fallback from generic LLM error.
             llm_evaluation["scoring_mode"] = (
-                "rate_limit_fallback" if isinstance(exc, GroqRateLimitError) else "static_fallback"
+                "rate_limit_fallback" if _is_rate_limit else "static_fallback"
             )
             fallback_score, fallback_dims, fallback_strengths, fallback_issues, fallback_ge = static_evaluate_prompt(
                 prompt_text, persona_id
@@ -338,13 +341,13 @@ def run_llm_validation(
                         guidelines=guidelines,
                         issues=rewrite_issues,
                     )
-                except GroqRateLimitError:
-                    fallback_module = _fallback_module_on_groq_rate_limit(provider)
+                except (httpx.HTTPStatusError, GroqRateLimitError):
+                    fallback_module = _fallback_module_on_primary_failure(provider)
                     if not fallback_module:
                         raise
                     llm_module = fallback_module
-                    llm_evaluation["provider"] = "anthropic"
-                    llm_evaluation["model"] = ANTHROPIC_MODEL
+                    llm_evaluation["provider"] = "groq"
+                    llm_evaluation["model"] = GROQ_MODEL
                     llm_evaluation["scoring_mode"] = "llm_fallback_provider"
                     rewrite = llm_module.llm_rewrite_prompt(
                         prompt_text,
@@ -399,10 +402,11 @@ def _selected_provider() -> str | None:
         return "groq" if llm_groq.llm_configured() else None
     if pref == "anthropic":
         return "anthropic" if llm_anthropic.llm_configured() else None
-    if llm_groq.llm_configured():
-        return "groq"
+    # auto: Anthropic first, Groq as fallback
     if llm_anthropic.llm_configured():
         return "anthropic"
+    if llm_groq.llm_configured():
+        return "groq"
     return None
 
 
@@ -414,11 +418,24 @@ def _provider_module(provider: str | None):
     return None
 
 
+def _fallback_module_on_primary_failure(provider: str | None):
+    """Return the secondary provider module when the primary fails.
+
+    With auto order Anthropic→Groq:
+    - primary=anthropic fails → try Groq
+    - primary=groq fails (rate limit) → try Anthropic
+    Pinned providers (groq/anthropic) have no cross-provider fallback.
+    """
+    if provider != "auto":
+        return None
+    # Primary was Anthropic → fall back to Groq
+    if llm_groq.llm_configured():
+        return llm_groq
+    return None
+
+
 def _fallback_module_on_groq_rate_limit(provider: str | None):
-    """Return Anthropic module when Groq is rate-limited and fallback is possible."""
-    # Respect explicit provider pinning:
-    # - auto  -> may fail over to Anthropic on Groq 429
-    # - groq  -> Groq only (no cross-provider fallback)
+    """Return Anthropic module when Groq is rate-limited (kept for groq-pinned path)."""
     if provider == "auto" and llm_anthropic.llm_configured():
         return llm_anthropic
     return None
