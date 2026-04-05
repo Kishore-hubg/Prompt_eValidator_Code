@@ -16,7 +16,7 @@ from app.mcp.schemas import (
     GetAnalyticsInput, AnalyticsOutput,
     SaveValidationInput, SaveValidationOutput
 )
-from app.services.prompt_validation import run_llm_validation, run_llm_validation_async
+from app.services.prompt_validation import run_llm_validation
 from app.services.persona_loader import load_personas, get_persona
 from app.services.history_service import save_validation, fetch_history
 from app.repositories.validation_repository import analytics_summary
@@ -26,21 +26,22 @@ from app.core.settings import DATABASE_BACKEND
 # ─── VALIDATION TOOLS ───────────────────────────────────────────────────────
 
 
-async def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePromptOutput:
+def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePromptOutput:
     """
     Validate a prompt against a specific persona.
 
-    Calls the existing LLM validation engine and returns structured feedback.
+    Calls the existing LLM validation engine (with fallback) and returns structured feedback.
     """
     # Verify persona exists
     persona = get_persona(input_data.persona_id)
     if not persona:
         raise ValueError(f"Unknown persona: {input_data.persona_id}")
 
-    # Call async validation service with persona_id
-    result = await run_llm_validation_async(
+    # Call validation service with fallback logic (Anthropic → Groq → static)
+    result = run_llm_validation(
         prompt_text=input_data.prompt_text,
-        persona_id=input_data.persona_id
+        persona_id=input_data.persona_id,
+        auto_improve=False
     )
 
     return ValidatePromptOutput(
@@ -52,7 +53,7 @@ async def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> Vali
     )
 
 
-async def improve_prompt_tool(db: Any, input_data: ImprovePromptInput) -> ImprovePromptOutput:
+def improve_prompt_tool(db: Any, input_data: ImprovePromptInput) -> ImprovePromptOutput:
     """
     Generate an improved version of a prompt.
 
@@ -63,8 +64,8 @@ async def improve_prompt_tool(db: Any, input_data: ImprovePromptInput) -> Improv
     if not persona:
         raise ValueError(f"Unknown persona: {input_data.persona_id}")
 
-    # Call async validation service with auto_improve enabled
-    result = await run_llm_validation_async(
+    # Call validation service with auto_improve enabled and fallback logic
+    result = run_llm_validation(
         prompt_text=input_data.prompt_text,
         persona_id=input_data.persona_id,
         auto_improve=True
