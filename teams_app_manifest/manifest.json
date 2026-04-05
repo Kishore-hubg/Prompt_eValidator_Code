@@ -25,7 +25,7 @@
   "accentColor": "#6264A7",
   "bots": [
     {
-      "botId": "89f80bcf-efa3-4a07-a4a4-e766f3557e98",
+      "botId": "7b6ec3f4-3759-48d6-a558-6a1bcd1824c6",
       "scopes": ["personal", "team", "groupchat"],
       "supportsFiles": false,
       "isNotificationOnly": false,
@@ -45,11 +45,19 @@
   ],
   "permissions": ["identity", "messageTeamMembers"],
   "validDomains": [
-    "promptvalidatorcompleterepo.vercel.app",
-    "margy-nonevolutionary-korey.ngrok-free.dev"
+    "promptvalidatorcompleterepo.vercel.app"
   ],
   "webApplicationInfo": {
     "id": "7b6ec3f4-3759-48d6-a558-6a1bcd1824c6",
     "resource": "api://7b6ec3f4-3759-48d6-a558-6a1bcd1824c6"
-  }
+  },
+  "messagingEndpoints": [
+    {
+      "name": "Teams",
+      "protocol": "https",
+      "messaging": {
+        "endpoint": "https://promptvalidatorcompleterepo.vercel.app/api/messages"
+      }
+    }
+  ]
 }
