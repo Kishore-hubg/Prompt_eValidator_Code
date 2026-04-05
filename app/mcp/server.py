@@ -7,6 +7,7 @@ The server wraps existing FastAPI endpoints without modifying them.
 Runs alongside FastAPI on port 8001 (or as Vercel function).
 """
 
+import asyncio
 import json
 import logging
 from typing import Any, Optional
@@ -77,16 +78,22 @@ class PromptValidatorMCPServer:
             # Call the tool with database and arguments
             if tool_name in ["list_personas"]:
                 # Tools that don't need parsed input
-                result = await tool_fn(db) if hasattr(tool_fn, '__call__') else tool_fn(db)
+                result = tool_fn(db)
+                if asyncio.iscoroutine(result):
+                    result = await result
             else:
                 # Tools that need parsed input
                 # Parse arguments into proper Pydantic model
                 input_model = self._get_input_model(tool_name)
                 if input_model:
                     parsed_input = input_model(**arguments)
-                    result = await tool_fn(db, parsed_input)
+                    result = tool_fn(db, parsed_input)
                 else:
-                    result = await tool_fn(db, **arguments)
+                    result = tool_fn(db, **arguments)
+
+                # Check if result is a coroutine and await if needed
+                if asyncio.iscoroutine(result):
+                    result = await result
 
             # Convert result to dict
             if hasattr(result, "model_dump"):
