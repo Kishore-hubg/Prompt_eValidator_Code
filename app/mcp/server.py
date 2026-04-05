@@ -13,7 +13,7 @@ from typing import Any, Optional
 
 from app.mcp.tools import MCP_TOOLS
 from app.db.database import SessionLocal
-from app.core.settings import DATABASE_BACKEND, get_db
+from app.core.settings import DATABASE_BACKEND
 
 _log = logging.getLogger("prompt_validator.mcp")
 

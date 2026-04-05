@@ -18,7 +18,8 @@ from app.mcp.schemas import (
 )
 from app.services.prompt_validation import run_llm_validation
 from app.services.persona_loader import load_personas, get_persona
-from app.services.history_service import save_validation, fetch_history, analytics_summary
+from app.services.history_service import save_validation, fetch_history
+from app.repositories.validation_repository import analytics_summary
 from app.core.settings import DATABASE_BACKEND
 
 
