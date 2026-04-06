@@ -44,9 +44,16 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
         auto_improve=False
     )
 
+    score = result.get("score", 0.0)
+    rating = (
+        "Excellent" if score >= 85
+        else "Good" if score >= 70
+        else "Needs Improvement" if score >= 50
+        else "Poor"
+    )
     return ValidatePromptOutput(
-        score=result.get("score", 0.0),
-        rating=result.get("rating", "Poor"),
+        score=score,
+        rating=rating,
         issues=result.get("issues", []),
         suggestions=result.get("suggestions", []),
         dimensions=result.get("dimension_scores", [])
