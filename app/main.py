@@ -3,11 +3,12 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import router
 from app.mcp.server import PromptValidatorMCPServer
+from app.mcp.jsonrpc_handler import handle_jsonrpc
 from app.core.settings import DATABASE_BACKEND, FRONTEND_DIR
 from app.db.database import initialize_schema
 from app.middleware.request_logging import RequestLoggingMiddleware
@@ -185,6 +186,79 @@ async def mcp_get_capabilities():
             "get_resources": "/mcp/resources",
         }
     })
+
+
+# ---------------------------------------------------------------------------
+# Standard MCP JSON-RPC 2.0 endpoint (claude mcp add --transport http)
+# ---------------------------------------------------------------------------
+
+@app.post("/mcp", include_in_schema=False)
+async def mcp_jsonrpc(request: Request):
+    """Standard MCP JSON-RPC 2.0 endpoint.
+
+    This is the wire-protocol endpoint used by Claude Code, Claude Desktop,
+    and any MCP-compatible client.
+
+    Registration (one-time):
+        claude mcp add --transport http prompt-validator \\
+            https://promptvalidatorcompleterepo.vercel.app/mcp
+
+    Claude Desktop (claude_desktop_config.json):
+        {
+          "mcpServers": {
+            "prompt-validator": {
+              "url": "https://promptvalidatorcompleterepo.vercel.app/mcp",
+              "transport": "http"
+            }
+          }
+        }
+
+    The existing /mcp/list-tools and /mcp/call-tool endpoints are preserved
+    for backward compatibility and direct REST demos.
+    """
+    # Parse body
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse(
+            {"jsonrpc": "2.0", "id": None,
+             "error": {"code": -32700, "message": "Parse error: invalid JSON"}},
+            status_code=400,
+        )
+
+    # Batch request (JSON-RPC 2.0 spec §6)
+    if isinstance(body, list):
+        if not body:
+            return JSONResponse(
+                {"jsonrpc": "2.0", "id": None,
+                 "error": {"code": -32600, "message": "Invalid Request: empty batch"}},
+                status_code=400,
+            )
+        responses = []
+        for msg in body:
+            resp = await handle_jsonrpc(msg, _mcp_server)
+            if resp is not None:   # omit notification responses from batch
+                responses.append(resp)
+        # If every message was a notification, return 202 with no body
+        if not responses:
+            return Response(status_code=202)
+        return JSONResponse(responses)
+
+    # Single request
+    response = await handle_jsonrpc(body, _mcp_server)
+    if response is None:
+        # Pure notification — no response body per spec
+        return Response(status_code=202)
+    return JSONResponse(response)
+
+
+@app.get("/mcp", include_in_schema=False)
+async def mcp_jsonrpc_get():
+    """MCP GET — signals that SSE transport is not supported; use POST."""
+    return JSONResponse(
+        {"error": "Use POST for MCP JSON-RPC 2.0. SSE transport not supported on this server."},
+        status_code=405,
+    )
 
 
 if FRONTEND_DIR.exists():

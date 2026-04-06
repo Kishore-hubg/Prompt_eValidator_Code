@@ -181,7 +181,7 @@ def build_block_kit_response(result: dict[str, Any], prompt_text: str) -> dict[s
 
     # ── Improved prompt ───────────────────────────────────────────────────────
     if improved and improved != prompt_text:
-        improved_display = improved[:600] + ("…" if len(improved) > 600 else "")
+        improved_display = improved[:2800] + ("…" if len(improved) > 2800 else "")
         blocks.append({"type": "divider"})
         blocks.append({
             "type": "section",
