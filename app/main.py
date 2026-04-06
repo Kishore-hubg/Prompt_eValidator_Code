@@ -59,7 +59,7 @@ app.include_router(router)
 
 # Teams Bot Framework messaging endpoint (no /api/v1 prefix)
 @app.post("/api/messages", include_in_schema=False)
-async def teams_messages(request):
+async def teams_messages(request: Request):
     """Teams Bot Framework messaging endpoint.
 
     Azure Bot Service POSTs Activities here with:
