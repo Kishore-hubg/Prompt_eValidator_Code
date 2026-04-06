@@ -38,10 +38,12 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
         raise ValueError(f"Unknown persona: {input_data.persona_id}")
 
     # Call validation service with fallback logic (Anthropic → Groq → static)
+    # auto_improve=True by default so validation + improvement happen in one call,
+    # avoiding a second round-trip and cold-start timeout in Claude Desktop.
     result = run_llm_validation(
         prompt_text=input_data.prompt_text,
         persona_id=input_data.persona_id,
-        auto_improve=False
+        auto_improve=getattr(input_data, "auto_improve", True),
     )
 
     score = result.get("score", 0.0)
@@ -56,7 +58,8 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
         rating=rating,
         issues=result.get("issues", []),
         suggestions=result.get("suggestions", []),
-        dimensions=result.get("dimension_scores", [])
+        dimensions=result.get("dimension_scores", []),
+        improved_prompt=result.get("improved_prompt") or None,
     )
 
 
@@ -210,7 +213,7 @@ def save_validation_tool(db: Any, input_data: SaveValidationInput) -> SaveValida
 MCP_TOOLS = {
     "validate_prompt": {
         "function": validate_prompt_tool,
-        "description": "Validate a prompt against a specific persona. Returns score, issues, and suggestions.",
+        "description": "Validate a prompt against a specific persona. Returns score, rating, issues, suggestions, and an AI-improved version of the prompt — all in one call (auto_improve defaults to True).",
         "input_schema": ValidatePromptInput.model_json_schema(),
         "output_schema": ValidatePromptOutput.model_json_schema(),
     },

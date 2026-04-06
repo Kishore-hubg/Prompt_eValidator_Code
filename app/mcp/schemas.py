@@ -18,17 +18,25 @@ class ValidatePromptInput(BaseModel):
         default="persona_0",
         description="Target persona: persona_0 (All), persona_1 (Dev), persona_2 (PM), persona_3 (BA), persona_4 (Support)"
     )
+    auto_improve: bool = Field(
+        default=True,
+        description="Also return an improved version of the prompt in the same response"
+    )
     user_email: Optional[str] = Field(default=None, description="User email for tracking")
     channel: str = Field(default="api", description="Channel: slack, teams, api")
 
 
 class ValidatePromptOutput(BaseModel):
     """Output schema for validate_prompt tool."""
-    score: float = Field(description="Validation score (0.0-1.0)")
-    rating: str = Field(description="Rating: Excellent, Good, Fair, Poor")
+    score: float = Field(description="Validation score (0-100)")
+    rating: str = Field(description="Rating: Excellent, Good, Needs Improvement, Poor")
     issues: list[str] = Field(description="List of identified issues")
     suggestions: list[str] = Field(description="Improvement suggestions")
     dimensions: list[dict] = Field(description="Dimension scores")
+    improved_prompt: Optional[str] = Field(
+        default=None,
+        description="AI-improved version of the prompt (populated when auto_improve=True)"
+    )
 
 
 class ImprovePromptInput(BaseModel):
