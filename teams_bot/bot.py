@@ -372,11 +372,17 @@ class PromptValidatorTeamsBot(TeamsActivityHandler):
 
         user_email = self._extract_user_email(turn_context)
         access_token = await self._get_access_token(turn_context)
-        if self._settings.oauth_connection_name and not access_token and not user_email:
-            await turn_context.send_activity(
-                "I could not resolve your identity. Please sign in through Teams and try again."
-            )
-            return
+        # Only block on missing identity when OAuth is configured AND the email
+        # cannot be resolved from the Teams activity itself (POC mode allows anon).
+        if self._settings.oauth_connection_name and access_token is None and not user_email:
+            # Try to extract a stable synthetic ID before giving up.
+            from_user = turn_context.activity.from_property
+            _aad_id = getattr(from_user, "aad_object_id", None) or getattr(from_user, "id", None)
+            if not _aad_id:
+                await turn_context.send_activity(
+                    "⚠️ Could not resolve your identity. Please sign in through Teams and try again."
+                )
+                return
 
         persona_id = _conversation_persona.get(conv_id) or None
 
@@ -391,13 +397,20 @@ class PromptValidatorTeamsBot(TeamsActivityHandler):
             else:
                 email = "teams-anonymous@teams.local"
 
-        result, error_msg = await self._call_validator(prompt_text, persona_id, email)
-        if error_msg:
-            await turn_context.send_activity(error_msg)
-            return
+        try:
+            result, error_msg = await self._call_validator(prompt_text, persona_id, email)
+            if error_msg:
+                await turn_context.send_activity(f"⚠️ {error_msg}")
+                return
 
-        _conversation_last_result[conv_id] = result
-        await turn_context.send_activity(_card_activity(_build_adaptive_card(result)))
+            _conversation_last_result[conv_id] = result
+            await turn_context.send_activity(_card_activity(_build_adaptive_card(result)))
+        except Exception as exc:
+            import logging as _logging
+            _logging.getLogger("teams_bot.bot").error("Validation send error: %s", exc, exc_info=True)
+            await turn_context.send_activity(
+                f"⚠️ Could not complete validation. Please try again.\n\n`{type(exc).__name__}: {exc}`"
+            )
 
     async def _call_validator(
         self, prompt_text: str, persona_id: str | None, email: str

@@ -13,6 +13,13 @@ _REPO_ROOT = os.path.dirname(_THIS_DIR)
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
+# Load .env from repo root so VALIDATOR_API_BASE, VALIDATOR_API_KEY, etc. are available.
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(_REPO_ROOT, ".env"), override=False)
+except ImportError:
+    pass  # python-dotenv not installed — rely on shell env vars
+
 from teams_bot.bot import PromptValidatorTeamsBot
 from teams_bot.config import TeamsBotSettings
 
