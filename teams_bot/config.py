@@ -11,6 +11,11 @@ class TeamsBotSettings:
             "BOT_APP_PASSWORD",
             os.getenv("MICROSOFT_APP_PASSWORD", ""),
         ).strip()
+        # Required for Single Tenant bots — must match the Azure Bot "App Tenant ID"
+        self.microsoft_app_tenant_id = os.getenv(
+            "BOT_APP_TENANT_ID",
+            os.getenv("MICROSOFT_APP_TENANT_ID", ""),
+        ).strip()
 
         # Optional Teams OAuth connection name for SSO token retrieval.
         self.oauth_connection_name = os.getenv("TEAMS_OAUTH_CONNECTION_NAME", "").strip()
