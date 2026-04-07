@@ -58,75 +58,196 @@ app.add_middleware(RequestLoggingMiddleware)
 app.include_router(router)
 
 
+# ---------------------------------------------------------------------------
+# Conversation persona state (best-effort; resets on container recycle)
+# ---------------------------------------------------------------------------
+_teams_persona: dict[str, str] = {}
+
+_TEAMS_HELP = (
+    "**Prompt Validator Bot** 🤖\n\n"
+    "**Commands:**\n"
+    "• `help` — show this message\n"
+    "• `/persona` — list available personas\n"
+    "• `/set-persona <id>` — e.g. `/set-persona persona_1`\n\n"
+    "**Validating:** just type or paste any prompt and send!\n\n"
+    "**Personas:**\n"
+    "• `persona_1` — 💻 Developer + QA\n"
+    "• `persona_2` — 📋 Technical PM\n"
+    "• `persona_3` — 📊 BA & PO\n"
+    "• `persona_4` — 🎧 Support Staff\n"
+    "• `persona_0` — 🏢 All Employees"
+)
+
+_PERSONA_MAP = {
+    "persona_0": {"name": "All Employees",   "emoji": "🏢"},
+    "persona_1": {"name": "Developer + QA",  "emoji": "💻"},
+    "persona_2": {"name": "Technical PM",    "emoji": "📋"},
+    "persona_3": {"name": "BA & PO",         "emoji": "📊"},
+    "persona_4": {"name": "Support Staff",   "emoji": "🎧"},
+}
+
+
+async def _teams_send_reply(
+    service_url: str,
+    conversation_id: str,
+    activity_id: str,
+    app_id: str,
+    app_password: str,
+    tenant_id: str,
+    text: str | None = None,
+    card: dict | None = None,
+) -> None:
+    """Acquire a Single-Tenant Bot Framework token and POST the reply activity."""
+    import httpx
+
+    token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        tok = await client.post(token_url, data={
+            "grant_type": "client_credentials",
+            "client_id": app_id,
+            "client_secret": app_password,
+            "scope": "https://api.botframework.com/.default",
+        })
+        tok.raise_for_status()
+        access_token = tok.json()["access_token"]
+
+        if card:
+            activity = {
+                "type": "message",
+                "attachments": [{"contentType": "application/vnd.microsoft.card.adaptive", "content": card}],
+            }
+        else:
+            activity = {"type": "message", "text": text or ""}
+
+        reply_url = (
+            f"{service_url.rstrip('/')}/v3/conversations/{conversation_id}/activities/{activity_id}"
+        )
+        _log.info("Teams reply → %s", reply_url)
+        resp = await client.post(
+            reply_url,
+            json=activity,
+            headers={"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"},
+        )
+        _log.info("Teams reply status: %s", resp.status_code)
+        resp.raise_for_status()
+
+
 # Teams Bot Framework messaging endpoint (no /api/v1 prefix)
 @app.post("/api/messages", include_in_schema=False)
 async def teams_messages(request: Request):
-    """Teams Bot Framework messaging endpoint.
+    """Teams Bot Framework messaging endpoint — botbuilder-free implementation.
 
-    Azure Bot Service POSTs Activities here with:
-    - Authorization header (bearer token from Azure)
-    - JSON body with Activity schema
+    Bypasses botbuilder's JWT validation (which has cryptography library
+    compatibility issues with Single Tenant bots) and uses direct httpx calls
+    to acquire tokens and send replies via the Bot Framework REST API.
     """
+    import asyncio
     from fastapi.responses import JSONResponse
+    from teams_bot.bot import _build_adaptive_card, _build_persona_list_card
+    from teams_bot.config import TeamsBotSettings
+    from app.integrations.teams.bot import handle_teams_message
+    from app.db.database import get_db
+
     try:
-        from botbuilder.core import BotFrameworkAdapter, BotFrameworkAdapterSettings
-        from botbuilder.schema import Activity
-        from teams_bot.bot import PromptValidatorTeamsBot
-        from teams_bot.config import TeamsBotSettings
-        from app.db.database import get_db
-
-        # Initialize on each request (stateless)
-        settings = TeamsBotSettings()
-
-        # Single Tenant fix: botbuilder ignores channel_auth_tenant for OUTGOING
-        # token acquisition and defaults to botframework.com tenant. Patch the
-        # class-level OAUTH_ENDPOINT so credentials use the correct tenant endpoint.
-        if settings.microsoft_app_tenant_id:
-            from botframework.connector.auth import MicrosoftAppCredentials
-            MicrosoftAppCredentials.OAUTH_ENDPOINT = (
-                f"https://login.microsoftonline.com/{settings.microsoft_app_tenant_id}"
-            )
-            # Clear any cached credentials that used the old botframework.com endpoint
-            BotFrameworkAdapter._app_credentials_cache.clear()
-            _log.info("Single Tenant mode: OAuth endpoint set to tenant %s", settings.microsoft_app_tenant_id)
-
-        adapter_settings = BotFrameworkAdapterSettings(
-            settings.microsoft_app_id,
-            settings.microsoft_app_password,
-            channel_auth_tenant=settings.microsoft_app_tenant_id or None,
-        )
-        adapter = BotFrameworkAdapter(adapter_settings)
-
-        async def on_error(context, error):  # both args required by botbuilder
-            _log.error("Bot turn error: %s", error, exc_info=True)
-            try:
-                await context.send_activity("Bot encountered an error. Please try again.")
-            except Exception:
-                pass
-
-        adapter.on_turn_error = on_error
-
-        # Validate content type
-        content_type = request.headers.get("Content-Type", "")
-        if "application/json" not in content_type:
+        if "application/json" not in request.headers.get("Content-Type", ""):
             return JSONResponse({"error": "Content-Type must be application/json"}, status_code=415)
 
-        # Parse activity from request body
         body = await request.json()
-        activity = Activity().deserialize(body)
-        auth_header = request.headers.get("Authorization", "")
+        activity_type = body.get("type", "")
 
-        # Get a DB session for in-process validation (avoids HTTP self-call on Vercel)
-        db_gen = get_db()
-        db = next(db_gen)
-        try:
-            bot = PromptValidatorTeamsBot(settings, adapter, db=db)
-            response = await adapter.process_activity(activity, auth_header, bot.on_turn)
-        finally:
-            db_gen.close()  # triggers generator finally → closes SQLAlchemy session
+        # Only process message activities; ACK everything else silently
+        if activity_type != "message":
+            return JSONResponse({}, status_code=200)
 
-        if response:
-            return JSONResponse(data=response.body, status_code=response.status)
+        settings = TeamsBotSettings()
+        if not settings.microsoft_app_tenant_id:
+            _log.error("BOT_APP_TENANT_ID not set — cannot send replies")
+            return JSONResponse({"error": "BOT_APP_TENANT_ID not configured"}, status_code=500)
+
+        # Extract activity fields
+        text = (body.get("text") or "").strip()
+        # Strip @mention prefix Teams injects in channel conversations
+        if "<at>" in text and "</at>" in text:
+            text = text[text.index("</at>") + 5:].strip()
+
+        value = body.get("value") or {}
+        conversation_id = (body.get("conversation") or {}).get("id", "")
+        activity_id = body.get("id", "")
+        service_url = body.get("serviceUrl", "https://smba.trafficmanager.net/teams/")
+        from_info = body.get("from") or {}
+        teams_user_id = from_info.get("aadObjectId") or from_info.get("id") or ""
+        user_email = f"{teams_user_id}@teams.local" if teams_user_id else "teams-anon@teams.local"
+
+        reply_text: str | None = None
+        reply_card: dict | None = None
+
+        # ── Adaptive Card button callbacks ──────────────────────────────────
+        if isinstance(value, dict) and value.get("action"):
+            action = value["action"]
+            if action == "set_persona":
+                pid = (value.get("persona_id") or "").strip()
+                if pid in _PERSONA_MAP:
+                    _teams_persona[conversation_id] = pid
+                    p = _PERSONA_MAP[pid]
+                    reply_text = f"✅ Persona set to **{p['emoji']} {p['name']}** (`{pid}`). Send any prompt to validate it."
+                else:
+                    reply_text = "Unknown persona. Use /persona to see options."
+            elif action == "list_personas":
+                reply_card = _build_persona_list_card()
+            elif action == "copy_prompt":
+                improved = value.get("text", "")
+                reply_text = f"**Improved Prompt** (select all & copy):\n\n```\n{improved}\n```"
+            else:
+                reply_text = "Unknown action."
+
+        # ── Text commands ───────────────────────────────────────────────────
+        elif text:
+            lower = text.lower()
+            if lower in ("help", "/help"):
+                reply_text = _TEAMS_HELP
+            elif lower in ("/persona", "persona", "list personas", "/persona list"):
+                reply_card = _build_persona_list_card()
+            elif lower.startswith("/set-persona "):
+                pid = text[13:].strip().lower()
+                if pid in _PERSONA_MAP:
+                    _teams_persona[conversation_id] = pid
+                    p = _PERSONA_MAP[pid]
+                    reply_text = f"✅ Persona set to **{p['emoji']} {p['name']}** (`{pid}`). Send any prompt to validate it."
+                else:
+                    valid = ", ".join(f"`{k}`" for k in _PERSONA_MAP)
+                    reply_text = f"Unknown persona. Valid options: {valid}"
+            else:
+                # ── Validate the prompt in-process ──────────────────────────
+                persona_id = _teams_persona.get(conversation_id)
+                db_gen = get_db()
+                db = next(db_gen)
+                try:
+                    result = await asyncio.get_event_loop().run_in_executor(
+                        None,
+                        lambda: handle_teams_message(
+                            db,
+                            user_email=user_email,
+                            message_text=text,
+                            persona_id=persona_id,
+                        ),
+                    )
+                finally:
+                    db_gen.close()
+                reply_card = _build_adaptive_card(result)
+        else:
+            return JSONResponse({}, status_code=200)
+
+        # ── Send reply ──────────────────────────────────────────────────────
+        await _teams_send_reply(
+            service_url=service_url,
+            conversation_id=conversation_id,
+            activity_id=activity_id,
+            app_id=settings.microsoft_app_id,
+            app_password=settings.microsoft_app_password,
+            tenant_id=settings.microsoft_app_tenant_id,
+            text=reply_text,
+            card=reply_card,
+        )
         return JSONResponse({}, status_code=201)
 
     except Exception as e:
