@@ -143,7 +143,7 @@ async def teams_messages(request: Request):
     """
     import asyncio
     from fastapi.responses import JSONResponse
-    from teams_bot.bot import _build_adaptive_card, _build_persona_list_card
+    from teams_bot.cards import _build_adaptive_card, _build_persona_list_card
     from teams_bot.config import TeamsBotSettings
     from app.integrations.teams.bot import handle_teams_message
     from app.db.database import get_db
