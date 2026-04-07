@@ -12,11 +12,12 @@ def normalize_delivery_channel(channel: str) -> str:
     lowered = (channel or "").strip().lower()
     mapping = {
         "api": "API",
-        "web": "API",
+        "web": "WEB",
         "rest": "API",
         "mcp": "MCP",
         "chat": "CHAT",
-        "teams": "CHAT",
+        "teams": "TEAMS",
+        "slack": "SLACK",
         "ide": "IDE",
     }
     return mapping.get(lowered, "API")

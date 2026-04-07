@@ -834,10 +834,11 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
     </select>
     <select id="admChannel" onchange="adminFetchPage(1)">
       <option value="">All Channels</option>
-      <option value="WEB">Web</option>
-      <option value="API">API</option>
-      <option value="SLACK">Slack</option>
+      <option value="WEB">Web UI</option>
+      <option value="API">REST API</option>
       <option value="TEAMS">Teams</option>
+      <option value="SLACK">Slack</option>
+      <option value="MCP">MCP</option>
     </select>
     <input type="date" id="admDateFrom" onchange="adminFetchPage(1)" title="From date"/>
     <input type="date" id="admDateTo" onchange="adminFetchPage(1)" title="To date"/>
