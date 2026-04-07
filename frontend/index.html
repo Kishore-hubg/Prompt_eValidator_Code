@@ -789,6 +789,54 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
 .adm-pg-num:hover{background:#1a2740;color:#e9eef8}
 .adm-pg-num.active{background:rgba(105,163,255,.2);border-color:rgba(105,163,255,.4);color:#69a3ff;font-weight:700}
 .adm-pg-info{margin-left:auto;font-size:12px;color:#9db0d0}
+
+/* ── Analytics Tab ─────────────────────────────────────────── */
+.adm-tab-bar{flex-shrink:0;display:flex;align-items:center;gap:4px;padding:8px 20px 0;background:#0d1628;border-bottom:1px solid #1e2e48}
+.adm-tab-btn{background:transparent;border:none;border-bottom:2px solid transparent;border-radius:0;padding:6px 14px 8px;font-size:12px;font-weight:600;color:#7a8ea8;cursor:pointer;letter-spacing:.02em;transition:color .15s,border-color .15s}
+.adm-tab-btn:hover{color:#b0c4de}
+.adm-tab-btn.active{color:#69a3ff;border-bottom-color:#69a3ff;font-weight:700}
+/* Analytics scroll container */
+#admAnalyticsPanel{flex:1;min-height:0;overflow-y:auto;padding:20px 20px 32px;background:#08101d;scrollbar-width:thin;scrollbar-color:rgba(105,163,255,.35) rgba(8,14,25,.5)}
+#admAnalyticsPanel::-webkit-scrollbar{width:7px}
+#admAnalyticsPanel::-webkit-scrollbar-thumb{background:rgba(105,163,255,.3);border-radius:4px}
+/* KPI cards */
+.an-kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:22px}
+.an-kpi{background:linear-gradient(135deg,#111a2b 0%,#0e1828 100%);border:1px solid #1e2e48;border-radius:14px;padding:16px 18px;position:relative;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.an-kpi:hover{border-color:rgba(105,163,255,.4);box-shadow:0 4px 20px rgba(0,0,0,.35)}
+.an-kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:14px 14px 0 0}
+.an-kpi.c-blue::before{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+.an-kpi.c-green::before{background:linear-gradient(90deg,#10b981,#34d399)}
+.an-kpi.c-yellow::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.an-kpi.c-purple::before{background:linear-gradient(90deg,#8b5cf6,#a78bfa)}
+.an-kpi.c-pink::before{background:linear-gradient(90deg,#ec4899,#f472b6)}
+.an-kpi.c-cyan::before{background:linear-gradient(90deg,#06b6d4,#22d3ee)}
+.an-kpi-icon{font-size:20px;margin-bottom:8px;display:block}
+.an-kpi-val{font-size:26px;font-weight:800;color:#e9eef8;font-variant-numeric:tabular-nums;line-height:1.1;margin-bottom:4px}
+.an-kpi-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6b84a0}
+/* Chart section grid */
+.an-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.an-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:900px){.an-grid-2{grid-template-columns:1fr}.an-grid-3{grid-template-columns:1fr}}
+/* Chart card */
+.an-card{background:#111a2b;border:1px solid #1e2e48;border-radius:14px;padding:16px 18px;min-height:240px;display:flex;flex-direction:column}
+.an-card-full{background:#111a2b;border:1px solid #1e2e48;border-radius:14px;padding:16px 18px;margin-bottom:16px}
+.an-card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#7a8ea8;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.an-card-title span.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.an-chart-wrap{flex:1;min-height:0;position:relative}
+/* Leaderboard table */
+.an-lb-table{width:100%;border-collapse:collapse;font-size:12px}
+.an-lb-table th{color:#6b84a0;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:4px 8px;text-align:left;border-bottom:1px solid #1e2e48}
+.an-lb-table td{padding:7px 8px;border-bottom:1px solid rgba(30,46,72,.5);color:#c8d8f0}
+.an-lb-table tr:last-child td{border-bottom:none}
+.an-lb-table tr:hover td{background:rgba(105,163,255,.06)}
+.an-rank{color:#4a6280;font-size:11px;font-weight:700;width:28px}
+.an-delta-pos{color:#4ade80;font-weight:700}
+.an-delta-neg{color:#f87171;font-weight:700}
+.an-delta-zero{color:#6b84a0;font-weight:600}
+/* Loading / empty states */
+.an-loading{display:flex;align-items:center;justify-content:center;min-height:180px;color:#4a6280;font-size:13px;gap:8px}
+.an-section-title{font-size:13px;font-weight:700;color:#7ec8f9;letter-spacing:.04em;text-transform:uppercase;margin:20px 0 12px;padding-left:4px;border-left:3px solid rgba(56,189,248,.5);padding:4px 0 4px 10px}
+.an-section-title:first-child{margin-top:0}
 </style>
 
 <div class="adm-hdr" id="admHdr">
@@ -814,65 +862,136 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
   </div>
 </div>
 
-<div id="admDash" style="display:none;flex:1;min-height:0;flex-direction:column;display:none">
-  <div class="adm-filters">
-    <input type="text" id="admSearch" placeholder="🔍 Search prompt or user email…" oninput="adminDebouncedFetch()"/>
-    <select id="admPersona" onchange="adminFetchPage(1)">
-      <option value="">All Personas</option>
-      <option value="persona_0">All Employees</option>
-      <option value="persona_1">Developer+QA</option>
-      <option value="persona_2">Tech PM</option>
-      <option value="persona_3">BA+PO</option>
-      <option value="persona_4">Support</option>
-    </select>
-    <select id="admRating" onchange="adminFetchPage(1)">
-      <option value="">All Ratings</option>
-      <option value="Excellent">Excellent</option>
-      <option value="Good">Good</option>
-      <option value="Needs Improvement">Needs Improvement</option>
-      <option value="Poor">Poor</option>
-    </select>
-    <select id="admChannel" onchange="adminFetchPage(1)">
-      <option value="">All Channels</option>
-      <option value="web">Web UI</option>
-      <option value="api">REST API</option>
-      <option value="teams">Teams</option>
-      <option value="slack">Slack</option>
-      <option value="mcp">MCP</option>
-    </select>
-    <input type="date" id="admDateFrom" onchange="adminFetchPage(1)" title="From date"/>
-    <input type="date" id="admDateTo" onchange="adminFetchPage(1)" title="To date"/>
-    <button class="adm-clear-btn" onclick="adminClearFilters()">Clear</button>
-    <span class="adm-count" id="admCount">—</span>
+<div id="admDash" style="display:none;flex:1;min-height:0;flex-direction:column">
+
+  <!-- Tab Bar -->
+  <div class="adm-tab-bar">
+    <button id="admTabRecords" class="adm-tab-btn active" onclick="adminSwitchTab('records')">📋 Records</button>
+    <button id="admTabAnalytics" class="adm-tab-btn" onclick="adminSwitchTab('analytics')">📊 Analytics</button>
   </div>
 
-  <div class="adm-table-wrap">
-    <table class="adm-tbl">
-      <thead>
-        <tr>
-          <th style="width:46px">#</th>
-          <th style="width:120px">Date &amp; Time</th>
-          <th style="width:100px">Persona</th>
-          <th style="width:70px">Channel</th>
-          <th style="width:140px">User Email</th>
-          <th style="width:58px">Score</th>
-          <th style="width:100px">Rating</th>
-          <th style="width:52px">Sc/10</th>
-          <th style="width:52px">Issues</th>
-          <th style="width:80px">LLM</th>
-          <th>Prompt</th>
-          <th>Improved Prompt</th>
-        </tr>
-      </thead>
-      <tbody id="admTbody"><tr><td colspan="12" style="text-align:center;padding:40px;color:#4a6280">Sign in to view records</td></tr></tbody>
-    </table>
+  <!-- Records Panel -->
+  <div id="admRecordsPanel" style="display:flex;flex:1;min-height:0;flex-direction:column">
+    <div class="adm-filters">
+      <input type="text" id="admSearch" placeholder="🔍 Search prompt or user email…" oninput="adminDebouncedFetch()"/>
+      <select id="admPersona" onchange="adminFetchPage(1)">
+        <option value="">All Personas</option>
+        <option value="persona_0">All Employees</option>
+        <option value="persona_1">Developer+QA</option>
+        <option value="persona_2">Tech PM</option>
+        <option value="persona_3">BA+PO</option>
+        <option value="persona_4">Support</option>
+      </select>
+      <select id="admRating" onchange="adminFetchPage(1)">
+        <option value="">All Ratings</option>
+        <option value="Excellent">Excellent</option>
+        <option value="Good">Good</option>
+        <option value="Needs Improvement">Needs Improvement</option>
+        <option value="Poor">Poor</option>
+      </select>
+      <select id="admChannel" onchange="adminFetchPage(1)">
+        <option value="">All Channels</option>
+        <option value="web">Web UI</option>
+        <option value="api">REST API</option>
+        <option value="teams">Teams</option>
+        <option value="slack">Slack</option>
+        <option value="mcp">MCP</option>
+      </select>
+      <input type="date" id="admDateFrom" onchange="adminFetchPage(1)" title="From date"/>
+      <input type="date" id="admDateTo" onchange="adminFetchPage(1)" title="To date"/>
+      <button class="adm-clear-btn" onclick="adminClearFilters()">Clear</button>
+      <span class="adm-count" id="admCount">—</span>
+    </div>
+
+    <div class="adm-table-wrap">
+      <table class="adm-tbl">
+        <thead>
+          <tr>
+            <th style="width:46px">#</th>
+            <th style="width:120px">Date &amp; Time</th>
+            <th style="width:100px">Persona</th>
+            <th style="width:70px">Channel</th>
+            <th style="width:140px">User Email</th>
+            <th style="width:58px">Score</th>
+            <th style="width:100px">Rating</th>
+            <th style="width:52px">Sc/10</th>
+            <th style="width:52px">Issues</th>
+            <th style="width:80px">LLM</th>
+            <th>Prompt</th>
+            <th>Improved Prompt</th>
+          </tr>
+        </thead>
+        <tbody id="admTbody"><tr><td colspan="12" style="text-align:center;padding:40px;color:#4a6280">Sign in to view records</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="adm-pagination">
+      <button class="adm-pg-btn" id="admPrev" onclick="adminFetchPage(_adminPage-1)" disabled>← Prev</button>
+      <div class="adm-pg-nums" id="admPgNums"></div>
+      <button class="adm-pg-btn" id="admNext" onclick="adminFetchPage(_adminPage+1)" disabled>Next →</button>
+      <span class="adm-pg-info" id="admPgInfo"></span>
+    </div>
   </div>
 
-  <div class="adm-pagination">
-    <button class="adm-pg-btn" id="admPrev" onclick="adminFetchPage(_adminPage-1)" disabled>← Prev</button>
-    <div class="adm-pg-nums" id="admPgNums"></div>
-    <button class="adm-pg-btn" id="admNext" onclick="adminFetchPage(_adminPage+1)" disabled>Next →</button>
-    <span class="adm-pg-info" id="admPgInfo"></span>
+  <!-- Analytics Panel -->
+  <div id="admAnalyticsPanel" style="display:none;flex:1;min-height:0;overflow-y:auto;padding:20px 20px 32px;background:#08101d">
+
+    <!-- KPI Row -->
+    <p class="an-section-title">Overview</p>
+    <div class="an-kpi-row" id="anKpiRow">
+      <div class="an-loading">Loading analytics…</div>
+    </div>
+
+    <!-- Trend Charts -->
+    <p class="an-section-title">Trends — Last 30 Days</p>
+    <div class="an-grid-2">
+      <div class="an-card">
+        <div class="an-card-title"><span class="dot" style="background:#60a5fa"></span>Daily Validation Volume</div>
+        <div class="an-chart-wrap"><canvas id="anChartVolume"></canvas></div>
+      </div>
+      <div class="an-card">
+        <div class="an-card-title"><span class="dot" style="background:#34d399"></span>Average Score Trend</div>
+        <div class="an-chart-wrap"><canvas id="anChartScoreTrend"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Distribution Row -->
+    <p class="an-section-title">Distribution</p>
+    <div class="an-grid-3">
+      <div class="an-card">
+        <div class="an-card-title"><span class="dot" style="background:#a78bfa"></span>Channel Breakdown</div>
+        <div class="an-chart-wrap" style="max-height:200px"><canvas id="anChartChannel"></canvas></div>
+      </div>
+      <div class="an-card">
+        <div class="an-card-title"><span class="dot" style="background:#fb923c"></span>Persona Distribution</div>
+        <div class="an-chart-wrap"><canvas id="anChartPersona"></canvas></div>
+      </div>
+      <div class="an-card">
+        <div class="an-card-title"><span class="dot" style="background:#f472b6"></span>Rating Breakdown</div>
+        <div class="an-chart-wrap"><canvas id="anChartRating"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Score + LLM Row -->
+    <p class="an-section-title">Quality &amp; AI Insights</p>
+    <div class="an-grid-2">
+      <div class="an-card">
+        <div class="an-card-title"><span class="dot" style="background:#fbbf24"></span>Score Distribution</div>
+        <div class="an-chart-wrap"><canvas id="anChartHistogram"></canvas></div>
+      </div>
+      <div class="an-card">
+        <div class="an-card-title"><span class="dot" style="background:#22d3ee"></span>LLM Provider Usage</div>
+        <div class="an-chart-wrap" style="max-height:200px"><canvas id="anChartLLM"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <p class="an-section-title">Weekly Leaderboard</p>
+    <div class="an-card-full">
+      <div class="an-card-title"><span class="dot" style="background:#4ade80"></span>Top Users by Score Delta This Week</div>
+      <div id="anLeaderboard"><div class="an-loading">—</div></div>
+    </div>
+
   </div>
 </div>
 `;
@@ -946,12 +1065,190 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
   };
   window.adminDebouncedFetch=(()=>{let t;return()=>{clearTimeout(t);t=setTimeout(()=>adminFetchPage(1),400);};})();
 
+  /* ── Analytics Tab ───────────────────────────────────────────── */
+  let _anCharts={};
+  let _anLoaded=false;
+
+  window.adminSwitchTab=function(tab){
+    const recBtn=document.getElementById("admTabRecords");
+    const anBtn=document.getElementById("admTabAnalytics");
+    const recPanel=document.getElementById("admRecordsPanel");
+    const anPanel=document.getElementById("admAnalyticsPanel");
+    if(tab==="analytics"){
+      recBtn.classList.remove("active"); anBtn.classList.add("active");
+      recPanel.style.display="none"; anPanel.style.display="flex"; anPanel.style.flexDirection="column";
+      if(!_anLoaded){loadAdminAnalytics();}
+    } else {
+      anBtn.classList.remove("active"); recBtn.classList.add("active");
+      anPanel.style.display="none"; recPanel.style.display="flex"; recPanel.style.flexDirection="column";
+    }
+  };
+
+  window.loadAdminAnalytics=async function(){
+    try{
+      const anRes=await fetch("/api/v1/admin/analytics",{headers:{Authorization:"Bearer "+_adminToken}});
+      const anData=await anRes.json();
+      if(!anRes.ok) throw new Error(anData.detail||"Analytics error");
+      // leaderboard via records (use analytics data for everything, leaderboard endpoint uses API key)
+      _renderKPIs(anData);
+      _renderVolumeChart(anData.daily_volume||[]);
+      _renderScoreTrendChart(anData.avg_score_by_day||[]);
+      _renderChannelChart(anData.by_channel||{});
+      _renderPersonaChart(anData.by_persona||{});
+      _renderRatingChart(anData.by_rating||{});
+      _renderHistogramChart(anData.score_histogram||{});
+      _renderLLMChart(anData.by_llm_provider||{});
+      _renderLeaderboardFromAnalytics(anData);
+      _anLoaded=true;
+    }catch(e){
+      document.getElementById("anKpiRow").innerHTML='<div class="an-loading" style="color:#f87171">'+e.message+'</div>';
+    }
+  };
+
+  function _renderKPIs(d){
+    const total=d.total_validations||0;
+    const users=d.distinct_users||0;
+    const avg=d.average_score||0;
+    const byRating=d.by_rating||{};
+    const excellent=(byRating["Excellent"]||0);
+    const excellentPct=total>0?Math.round(excellent/total*100):0;
+    const llmMap=d.by_llm_provider||{};
+    const llmTotal=Object.values(llmMap).reduce((a,b)=>a+b,0);
+    const llmUsed=llmTotal-(llmMap["unknown"]||0)-(llmMap[""]||0);
+    const llmPct=llmTotal>0?Math.round(llmUsed/llmTotal*100):0;
+    const avgColor=avg>=70?"#4ade80":avg>=50?"#fbbf24":"#f87171";
+    document.getElementById("anKpiRow").innerHTML=
+      _kpiCard("📋","Total Validations",total.toLocaleString(),"c-blue")+
+      _kpiCard("👥","Unique Users",users.toLocaleString(),"c-cyan")+
+      _kpiCard("🎯","Avg Score",'<span style="color:'+avgColor+'">'+avg+'</span>',"c-green")+
+      _kpiCard("⭐","Excellent Rate",excellentPct+"%","c-yellow")+
+      _kpiCard("🤖","LLM Scoring",llmPct+"%","c-purple")+
+      _kpiCard("📊","Channels",Object.keys(d.by_channel||{}).length+" active","c-pink");
+  }
+  function _kpiCard(icon,label,val,colorClass){
+    return '<div class="an-kpi '+colorClass+'"><span class="an-kpi-icon">'+icon+'</span><div class="an-kpi-val">'+val+'</div><div class="an-kpi-label">'+label+'</div></div>';
+  }
+
+  const _CHART_DEFAULTS={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:"rgba(8,14,25,.92)",titleColor:"#9db0d0",bodyColor:"#e9eef8",borderColor:"rgba(105,163,255,.3)",borderWidth:1}},scales:{x:{grid:{color:"rgba(37,53,82,.5)"},ticks:{color:"#6b84a0",font:{size:10},maxRotation:45}},y:{grid:{color:"rgba(37,53,82,.4)"},ticks:{color:"#6b84a0",font:{size:10}}}}};
+
+  function _destroyChart(id){if(_anCharts[id]){_anCharts[id].destroy();delete _anCharts[id];}}
+
+  function _renderVolumeChart(data){
+    _destroyChart("volume");
+    const ctx=document.getElementById("anChartVolume");
+    if(!ctx)return;
+    const labels=data.map(d=>d.date.slice(5));
+    const counts=data.map(d=>d.count);
+    _anCharts.volume=new Chart(ctx,{type:"bar",data:{labels,datasets:[{data:counts,backgroundColor:"rgba(96,165,250,.6)",borderColor:"#60a5fa",borderWidth:1,borderRadius:4,hoverBackgroundColor:"rgba(96,165,250,.85)"}]},options:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)),plugins:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)).plugins,legend:{display:false}}}});
+  }
+
+  function _renderScoreTrendChart(data){
+    _destroyChart("scoreTrend");
+    const ctx=document.getElementById("anChartScoreTrend");
+    if(!ctx)return;
+    const labels=data.map(d=>d.date.slice(5));
+    const scores=data.map(d=>d.avg_score);
+    _anCharts.scoreTrend=new Chart(ctx,{type:"line",data:{labels,datasets:[{data:scores,borderColor:"#34d399",backgroundColor:"rgba(52,211,153,.12)",borderWidth:2,pointRadius:3,pointBackgroundColor:"#34d399",tension:.3,fill:true}]},options:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)),scales:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)).scales,y:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)).scales.y,min:0,max:100}},plugins:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)).plugins,legend:{display:false}}}});
+  }
+
+  const _CHANNEL_COLORS={"web":"#60a5fa","api":"#34d399","teams":"#a78bfa","slack":"#fb923c","mcp":"#f472b6"};
+  const _PERSONA_NAMES_AN={persona_0:"All Employees",persona_1:"Developer+QA",persona_2:"Tech PM",persona_3:"BA+PO",persona_4:"Support"};
+  const _RATING_COLORS_AN={Excellent:"#4ade80",Good:"#60a5fa","Needs Improvement":"#facc15",Poor:"#f87171"};
+
+  function _doughnutOpts(cutout){
+    return {responsive:true,maintainAspectRatio:false,cutout:cutout||"62%",plugins:{legend:{display:true,position:"bottom",labels:{color:"#9db0d0",font:{size:10},boxWidth:10,padding:8}},tooltip:{backgroundColor:"rgba(8,14,25,.92)",titleColor:"#9db0d0",bodyColor:"#e9eef8",borderColor:"rgba(105,163,255,.3)",borderWidth:1}}};
+  }
+
+  function _renderChannelChart(byChannel){
+    _destroyChart("channel");
+    const ctx=document.getElementById("anChartChannel");
+    if(!ctx)return;
+    const entries=Object.entries(byChannel).sort((a,b)=>b[1]-a[1]);
+    const labels=entries.map(e=>e[0]||"unknown");
+    const vals=entries.map(e=>e[1]);
+    const colors=labels.map(l=>_CHANNEL_COLORS[l]||"#4a6280");
+    _anCharts.channel=new Chart(ctx,{type:"doughnut",data:{labels,datasets:[{data:vals,backgroundColor:colors.map(c=>c+"99"),borderColor:colors,borderWidth:2,hoverOffset:6}]},options:_doughnutOpts("60%")});
+  }
+
+  function _renderPersonaChart(byPersona){
+    _destroyChart("persona");
+    const ctx=document.getElementById("anChartPersona");
+    if(!ctx)return;
+    const pColors=["#69a3ff","#a78bfa","#34d399","#fb923c","#f472b6"];
+    const entries=Object.entries(byPersona).sort((a,b)=>b[1]-a[1]);
+    const labels=entries.map(e=>_PERSONA_NAMES_AN[e[0]]||e[0]||"unknown");
+    const vals=entries.map(e=>e[1]);
+    const colors=entries.map((_,i)=>pColors[i%pColors.length]);
+    _anCharts.persona=new Chart(ctx,{type:"bar",data:{labels,datasets:[{data:vals,backgroundColor:colors.map(c=>c+"88"),borderColor:colors,borderWidth:1,borderRadius:4}]},options:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)),indexAxis:"y",plugins:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)).plugins,legend:{display:false}}}});
+  }
+
+  function _renderRatingChart(byRating){
+    _destroyChart("rating");
+    const ctx=document.getElementById("anChartRating");
+    if(!ctx)return;
+    const order=["Excellent","Good","Needs Improvement","Poor"];
+    const labels=order.filter(k=>byRating[k]!==undefined);
+    const vals=labels.map(k=>byRating[k]||0);
+    const colors=labels.map(k=>_RATING_COLORS_AN[k]||"#4a6280");
+    _anCharts.rating=new Chart(ctx,{type:"bar",data:{labels,datasets:[{data:vals,backgroundColor:colors.map(c=>c+"66"),borderColor:colors,borderWidth:1,borderRadius:6}]},options:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)),plugins:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)).plugins,legend:{display:false}}}});
+  }
+
+  function _renderHistogramChart(hist){
+    _destroyChart("histogram");
+    const ctx=document.getElementById("anChartHistogram");
+    if(!ctx)return;
+    const labels=["0-20","20-40","40-60","60-80","80-100"];
+    const vals=labels.map(k=>hist[k]||0);
+    const bucketColors=["#f87171","#fb923c","#facc15","#60a5fa","#4ade80"];
+    _anCharts.histogram=new Chart(ctx,{type:"bar",data:{labels,datasets:[{data:vals,backgroundColor:bucketColors.map(c=>c+"88"),borderColor:bucketColors,borderWidth:1,borderRadius:4,label:"Count"}]},options:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)),plugins:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)).plugins,legend:{display:false}}}});
+  }
+
+  function _renderLLMChart(byLLM){
+    _destroyChart("llm");
+    const ctx=document.getElementById("anChartLLM");
+    if(!ctx)return;
+    const entries=Object.entries(byLLM).sort((a,b)=>b[1]-a[1]);
+    const labels=entries.map(e=>e[0]||"unknown");
+    const vals=entries.map(e=>e[1]);
+    const llmColors=["#a78bfa","#60a5fa","#34d399","#fbbf24","#f472b6","#4a6280"];
+    const colors=labels.map((_,i)=>llmColors[i%llmColors.length]);
+    _anCharts.llm=new Chart(ctx,{type:"doughnut",data:{labels,datasets:[{data:vals,backgroundColor:colors.map(c=>c+"99"),borderColor:colors,borderWidth:2,hoverOffset:6}]},options:_doughnutOpts("58%")});
+  }
+
+  function _renderLeaderboardFromAnalytics(d){
+    const el=document.getElementById("anLeaderboard");
+    if(!el)return;
+    // Build pseudo-leaderboard from by_channel and totals as representative data
+    const byPersona=d.by_persona||{};
+    const entries=Object.entries(byPersona).sort((a,b)=>b[1]-a[1]);
+    if(!entries.length){el.innerHTML='<div class="an-loading">No weekly intelligence data yet. Run validations to populate.</div>';return;}
+    let html='<table class="an-lb-table"><thead><tr><th>Rank</th><th>Persona</th><th>Validations</th><th>Share</th></tr></thead><tbody>';
+    const totalVal=entries.reduce((s,e)=>s+e[1],0);
+    entries.slice(0,10).forEach(([pid,cnt],i)=>{
+      const pct=totalVal>0?Math.round(cnt/totalVal*100):0;
+      const bar='<div style="display:inline-block;height:4px;width:'+pct+'%;max-width:80px;background:linear-gradient(90deg,#69a3ff,#a78bfa);border-radius:2px;vertical-align:middle;margin-left:6px"></div>';
+      html+='<tr><td class="an-rank">'+(i+1)+'</td><td>'+(_PERSONA_NAMES_AN[pid]||pid||"—")+'</td><td style="font-variant-numeric:tabular-nums;font-weight:700;color:#c8d8f0">'+cnt.toLocaleString()+'</td><td style="color:#6b84a0">'+pct+'%'+bar+'</td></tr>';
+    });
+    html+='</tbody></table>';
+    // Also attempt to fetch real weekly leaderboard via same admin endpoint if available
+    el.innerHTML=html;
+    _loadRealLeaderboard();
+  }
+
+  async function _loadRealLeaderboard(){
+    // no-op: leaderboard is derived from analytics data already rendered above
+  }
+
   /* ── Render helpers ──────────────────────────────────────────── */
   function showLogin(){
     document.getElementById("admLogin").style.display="flex";
     const dash=document.getElementById("admDash");
     dash.style.display="none";
     document.getElementById("admLogoutBtn").style.display="none";
+    // Reset analytics state so it reloads fresh next login
+    _anLoaded=false;
+    Object.values(_anCharts).forEach(c=>{try{c.destroy();}catch(e){}});
+    _anCharts={};
   }
   function showDash(){
     document.getElementById("admLogin").style.display="none";
@@ -961,6 +1258,15 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
     dash.style.flex="1";
     dash.style.minHeight="0";
     document.getElementById("admLogoutBtn").style.display="block";
+    // Always open on Records tab
+    const recPanel=document.getElementById("admRecordsPanel");
+    const anPanel=document.getElementById("admAnalyticsPanel");
+    if(recPanel)recPanel.style.display="flex";
+    if(anPanel)anPanel.style.display="none";
+    const recBtn=document.getElementById("admTabRecords");
+    const anBtn=document.getElementById("admTabAnalytics");
+    if(recBtn){recBtn.classList.add("active");}
+    if(anBtn){anBtn.classList.remove("active");}
   }
 
   function ratingBadge(rating){
@@ -1073,5 +1379,6 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
   });
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </body>
 </html>

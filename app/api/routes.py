@@ -741,3 +741,151 @@ def admin_records(
         "per_page": per_page,
         "total_pages": max(1, (total + per_page - 1) // per_page),
     }
+
+
+@router.get("/admin/analytics", include_in_schema=False)
+def admin_analytics(db: DbDep, authorization: str = Header(default="")):
+    """Aggregated analytics for the admin dashboard analytics tab — uses admin JWT auth."""
+    _require_admin(authorization)
+    import json as _json
+    from datetime import datetime as _dt, timedelta as _td
+    from collections import defaultdict
+    from sqlalchemy.orm import Session
+
+    # ── MongoDB path ──────────────────────────────────────────────────────────
+    if not isinstance(db, Session):
+        from pymongo.database import Database as _MDB
+        if not isinstance(db, _MDB):
+            raise HTTPException(status_code=501, detail="Unsupported database backend.")
+
+        pv = db.prompt_validations
+        total = pv.count_documents({})
+        distinct_users = len(pv.distinct("user_email")) if total else 0
+        avg_doc = list(pv.aggregate([{"$group": {"_id": None, "avg": {"$avg": "$score"}}}]))
+        avg_score = round(float(avg_doc[0]["avg"]), 2) if avg_doc and avg_doc[0].get("avg") is not None else 0.0
+
+        def _mongo_group(field: str) -> dict:
+            result: dict = {}
+            for row in pv.aggregate([{"$group": {"_id": f"${field}", "c": {"$sum": 1}}}]):
+                result[str(row["_id"] or "")] = int(row["c"])
+            return result
+
+        by_channel = _mongo_group("channel")
+        by_persona = _mongo_group("persona_id")
+        by_rating = _mongo_group("rating")
+
+        by_llm: dict = defaultdict(int)
+        for doc in pv.find({}, {"llm_evaluation_json": 1, "_id": 0}):
+            try:
+                ev = _json.loads(doc.get("llm_evaluation_json") or "{}")
+                prov = ev.get("provider") or "unknown"
+            except Exception:
+                prov = "unknown"
+            by_llm[prov] += 1
+
+        cutoff = _dt.utcnow() - _td(days=30)
+        daily_map: dict = defaultdict(int)
+        score_day_map: dict = defaultdict(list)
+        for doc in pv.find({"created_at": {"$gte": cutoff}}, {"created_at": 1, "score": 1, "_id": 0}):
+            day = doc["created_at"].strftime("%Y-%m-%d") if isinstance(doc.get("created_at"), _dt) else str(doc.get("created_at", ""))[:10]
+            daily_map[day] += 1
+            score_day_map[day].append(float(doc.get("score") or 0))
+
+        histogram = {"0-20": 0, "20-40": 0, "40-60": 0, "60-80": 0, "80-100": 0}
+        for doc in pv.find({}, {"score": 1, "_id": 0}):
+            sv = float(doc.get("score") or 0)
+            if sv < 20: histogram["0-20"] += 1
+            elif sv < 40: histogram["20-40"] += 1
+            elif sv < 60: histogram["40-60"] += 1
+            elif sv < 80: histogram["60-80"] += 1
+            else: histogram["80-100"] += 1
+
+        daily_volume = sorted([{"date": k, "count": v} for k, v in daily_map.items()], key=lambda x: x["date"])
+        avg_score_by_day = sorted(
+            [{"date": k, "avg_score": round(sum(v) / len(v), 1)} for k, v in score_day_map.items() if v],
+            key=lambda x: x["date"],
+        )
+        return {
+            "total_validations": total,
+            "distinct_users": distinct_users,
+            "average_score": avg_score,
+            "by_channel": by_channel,
+            "by_persona": by_persona,
+            "by_rating": by_rating,
+            "by_llm_provider": dict(by_llm),
+            "daily_volume": daily_volume,
+            "avg_score_by_day": avg_score_by_day,
+            "score_histogram": histogram,
+        }
+
+    # ── SQLite path ───────────────────────────────────────────────────────────
+    from datetime import datetime as _dt, timedelta as _td
+    from collections import defaultdict
+    import sqlalchemy as _sa
+    from app.models.db_models import PromptValidationRecord
+
+    total = db.execute(_sa.select(func.count(PromptValidationRecord.id))).scalar_one()
+    distinct_users = db.execute(_sa.select(func.count(func.distinct(PromptValidationRecord.user_email)))).scalar_one()
+    avg_score_raw = db.execute(_sa.select(func.avg(PromptValidationRecord.score))).scalar_one() or 0.0
+    avg_score = round(float(avg_score_raw), 2)
+
+    by_channel = {(k or ""): int(v) for k, v in db.execute(
+        _sa.select(PromptValidationRecord.channel, func.count(PromptValidationRecord.id))
+        .group_by(PromptValidationRecord.channel)
+    ).all()}
+    by_persona = {(k or ""): int(v) for k, v in db.execute(
+        _sa.select(PromptValidationRecord.persona_id, func.count(PromptValidationRecord.id))
+        .group_by(PromptValidationRecord.persona_id)
+    ).all()}
+    by_rating = {(k or ""): int(v) for k, v in db.execute(
+        _sa.select(PromptValidationRecord.rating, func.count(PromptValidationRecord.id))
+        .group_by(PromptValidationRecord.rating)
+    ).all()}
+
+    by_llm: dict = defaultdict(int)
+    for (llm_raw,) in db.execute(_sa.select(PromptValidationRecord.llm_evaluation_json)).all():
+        try:
+            import json as _json
+            ev = _json.loads(llm_raw or "{}")
+            prov = ev.get("provider") or "unknown"
+        except Exception:
+            prov = "unknown"
+        by_llm[prov] += 1
+
+    cutoff_dt = _dt.utcnow() - _td(days=30)
+    daily_map_s: dict = defaultdict(int)
+    score_day_map_s: dict = defaultdict(list)
+    for (created_at, score_val) in db.execute(
+        _sa.select(PromptValidationRecord.created_at, PromptValidationRecord.score)
+        .where(PromptValidationRecord.created_at >= cutoff_dt)
+    ).all():
+        day = created_at.strftime("%Y-%m-%d") if isinstance(created_at, _dt) else str(created_at or "")[:10]
+        daily_map_s[day] += 1
+        score_day_map_s[day].append(float(score_val or 0))
+
+    histogram = {"0-20": 0, "20-40": 0, "40-60": 0, "60-80": 0, "80-100": 0}
+    for (sv,) in db.execute(_sa.select(PromptValidationRecord.score)).all():
+        s = float(sv or 0)
+        if s < 20: histogram["0-20"] += 1
+        elif s < 40: histogram["20-40"] += 1
+        elif s < 60: histogram["40-60"] += 1
+        elif s < 80: histogram["60-80"] += 1
+        else: histogram["80-100"] += 1
+
+    daily_volume = sorted([{"date": k, "count": v} for k, v in daily_map_s.items()], key=lambda x: x["date"])
+    avg_score_by_day = sorted(
+        [{"date": k, "avg_score": round(sum(v) / len(v), 1)} for k, v in score_day_map_s.items() if v],
+        key=lambda x: x["date"],
+    )
+    return {
+        "total_validations": total,
+        "distinct_users": distinct_users,
+        "average_score": avg_score,
+        "by_channel": by_channel,
+        "by_persona": by_persona,
+        "by_rating": by_rating,
+        "by_llm_provider": dict(by_llm),
+        "daily_volume": daily_volume,
+        "avg_score_by_day": avg_score_by_day,
+        "score_histogram": histogram,
+    }
