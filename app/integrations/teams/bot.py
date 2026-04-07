@@ -43,11 +43,13 @@ def handle_teams_message(
         "channel": "teams",
         "user_email": email,
         "persona_id": result["persona_id"],
+        "persona_name": result.get("persona_name", result["persona_id"]),
         "score": result["score"],
         "rating": result["rating"],
         "issues": result["issues"],
         "suggestions": result["suggestions"],
         "improved_prompt": result["improved_prompt"],
+        "dimension_scores": result.get("dimension_scores") or [],
         "message": (
             f"[Teams Bot] Score {result['score']} ({result['rating']}) for {result['persona_name']}. "
             "Use improved_prompt for best output."
