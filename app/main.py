@@ -157,7 +157,7 @@ async def teams_messages(request: Request):
 
         # Only process message activities; ACK everything else silently
         if activity_type != "message":
-            return JSONResponse({"ack": "ok", "build": "6596986-b"}, status_code=200)
+            return JSONResponse({}, status_code=200)
 
         settings = TeamsBotSettings()
         if not settings.microsoft_app_tenant_id:

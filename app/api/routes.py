@@ -85,7 +85,7 @@ def _derive_issue_based_suggestions(persona_id: str, issues: list[str], fallback
 
 @router.get("/health")
 def health():
-    return {"status": "ok", "build": "59c3d3f"}
+    return {"status": "ok"}
 
 
 @router.get("/validation-mode")
