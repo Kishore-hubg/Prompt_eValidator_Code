@@ -85,29 +85,46 @@ def _build_adaptive_card(result: dict[str, Any]) -> dict[str, Any]:
 
     # --- Dimension breakdown (compact) ---
     if dimensions:
-        dim_cols: list[dict[str, Any]] = []
-        for d in dimensions[:6]:
+        dim_rows: list[dict[str, Any]] = []
+        for d in dimensions[:8]:
             passed = bool(d.get("passed"))
             label = str(d.get("name", "")).replace("_", " ").title()
-            dim_cols.append({
-                "type": "Column",
-                "width": "stretch",
-                "items": [
-                    {"type": "TextBlock", "text": "✅" if passed else "❌",
-                     "horizontalAlignment": "Center", "size": "Small"},
-                    {"type": "TextBlock", "text": label,
-                     "size": "Small", "wrap": True,
-                     "horizontalAlignment": "Center", "isSubtle": True},
+            dim_score = d.get("score", 0)
+            dim_weight = d.get("weight", 0)
+            score_txt = f"{int(dim_score)}/{int(dim_weight)}"
+            icon = "✅" if passed else "❌"
+            dim_rows.append({
+                "type": "ColumnSet",
+                "spacing": "Small",
+                "columns": [
+                    {
+                        "type": "Column",
+                        "width": "auto",
+                        "items": [{"type": "TextBlock", "text": icon, "size": "Small"}],
+                    },
+                    {
+                        "type": "Column",
+                        "width": "stretch",
+                        "items": [{"type": "TextBlock", "text": label,
+                                   "size": "Small", "wrap": True, "isSubtle": True}],
+                    },
+                    {
+                        "type": "Column",
+                        "width": "auto",
+                        "items": [{"type": "TextBlock", "text": score_txt,
+                                   "size": "Small", "weight": "Bolder",
+                                   "color": "Good" if passed else "Attention"}],
+                    },
                 ],
             })
-        if dim_cols:
+        if dim_rows:
             body.append({
                 "type": "Container",
                 "separator": True,
                 "items": [
-                    {"type": "TextBlock", "text": "DIMENSIONS", "size": "Small",
+                    {"type": "TextBlock", "text": "DIMENSION SCORES", "size": "Small",
                      "weight": "Bolder", "isSubtle": True, "spacing": "Medium"},
-                    {"type": "ColumnSet", "columns": dim_cols},
+                    *dim_rows,
                 ],
             })
 
