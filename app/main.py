@@ -77,6 +77,19 @@ async def teams_messages(request: Request):
 
         # Initialize on each request (stateless)
         settings = TeamsBotSettings()
+
+        # Single Tenant fix: botbuilder ignores channel_auth_tenant for OUTGOING
+        # token acquisition and defaults to botframework.com tenant. Patch the
+        # class-level OAUTH_ENDPOINT so credentials use the correct tenant endpoint.
+        if settings.microsoft_app_tenant_id:
+            from botframework.connector.auth import MicrosoftAppCredentials
+            MicrosoftAppCredentials.OAUTH_ENDPOINT = (
+                f"https://login.microsoftonline.com/{settings.microsoft_app_tenant_id}"
+            )
+            # Clear any cached credentials that used the old botframework.com endpoint
+            BotFrameworkAdapter._app_credentials_cache.clear()
+            _log.info("Single Tenant mode: OAuth endpoint set to tenant %s", settings.microsoft_app_tenant_id)
+
         adapter_settings = BotFrameworkAdapterSettings(
             settings.microsoft_app_id,
             settings.microsoft_app_password,
@@ -84,8 +97,12 @@ async def teams_messages(request: Request):
         )
         adapter = BotFrameworkAdapter(adapter_settings)
 
-        async def on_error(context):
-            await context.send_activity("Bot encountered an error or it has crashed.")
+        async def on_error(context, error):  # both args required by botbuilder
+            _log.error("Bot turn error: %s", error, exc_info=True)
+            try:
+                await context.send_activity("Bot encountered an error. Please try again.")
+            except Exception:
+                pass
 
         adapter.on_turn_error = on_error
 
