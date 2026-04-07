@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from app.auth.persona_mapping import resolve_persona_for_user
 from app.integrations.mcp.server import run_mcp_validation
 from app.integrations.oauth.provider import resolve_user_from_token
+from app.services.llm_groq import GroqRateLimitError
 
 
 def handle_teams_message(
@@ -31,14 +32,19 @@ def handle_teams_message(
             email = "teams-anonymous@teams.local"
 
     resolved_persona = persona_id or resolve_persona_for_user(db, email=email)
-    result = run_mcp_validation(
-        db,
-        prompt_text=message_text,
-        persona_id=resolved_persona,
-        user_email=email,
-        auto_improve=True,
-        channel="teams",
-    )
+    try:
+        result = run_mcp_validation(
+            db,
+            prompt_text=message_text,
+            persona_id=resolved_persona,
+            user_email=email,
+            auto_improve=True,
+            channel="teams",
+        )
+    except GroqRateLimitError as exc:
+        raise HTTPException(status_code=429, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     return {
         "channel": "teams",
         "user_email": email,
