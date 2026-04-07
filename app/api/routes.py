@@ -644,7 +644,9 @@ def admin_records(
         if rating:
             mongo_filter["rating"] = rating
         if channel:
-            mongo_filter["delivery_channel"] = channel
+            # Match on raw channel field (case-insensitive) so both old records
+            # (e.g. delivery_channel=CHAT for teams) and new records are found.
+            mongo_filter["channel"] = {"$regex": f"^{channel}$", "$options": "i"}
         date_filter: dict = {}
         if date_from:
             try:
@@ -700,7 +702,7 @@ def admin_records(
     if rating:
         filters.append(PromptValidationRecord.rating == rating)
     if channel:
-        filters.append(PromptValidationRecord.delivery_channel == channel)
+        filters.append(PromptValidationRecord.channel.ilike(channel))
     if date_from:
         try:
             filters.append(PromptValidationRecord.created_at >= _dt.strptime(date_from, "%Y-%m-%d"))
