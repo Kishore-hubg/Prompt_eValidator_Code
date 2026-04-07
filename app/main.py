@@ -73,6 +73,7 @@ async def teams_messages(request: Request):
         from botbuilder.schema import Activity
         from teams_bot.bot import PromptValidatorTeamsBot
         from teams_bot.config import TeamsBotSettings
+        from app.db.database import get_db
 
         # Initialize on each request (stateless)
         settings = TeamsBotSettings()
@@ -83,10 +84,9 @@ async def teams_messages(request: Request):
         adapter = BotFrameworkAdapter(adapter_settings)
 
         async def on_error(context):
-            await context.send_activity(f"Bot encountered an error or it has crashed.")
+            await context.send_activity("Bot encountered an error or it has crashed.")
 
         adapter.on_turn_error = on_error
-        bot = PromptValidatorTeamsBot(settings, adapter)
 
         # Validate content type
         content_type = request.headers.get("Content-Type", "")
@@ -98,8 +98,14 @@ async def teams_messages(request: Request):
         activity = Activity().deserialize(body)
         auth_header = request.headers.get("Authorization", "")
 
-        # Process the activity through the adapter
-        response = await adapter.process_activity(activity, auth_header, bot.on_turn)
+        # Get a DB session for in-process validation (avoids HTTP self-call on Vercel)
+        db_gen = get_db()
+        db = next(db_gen)
+        try:
+            bot = PromptValidatorTeamsBot(settings, adapter, db=db)
+            response = await adapter.process_activity(activity, auth_header, bot.on_turn)
+        finally:
+            db_gen.close()  # triggers generator finally → closes SQLAlchemy session
 
         if response:
             return JSONResponse(data=response.body, status_code=response.status)

@@ -259,10 +259,11 @@ def _card_activity(card: dict[str, Any]) -> Activity:
 # ---------------------------------------------------------------------------
 
 class PromptValidatorTeamsBot(TeamsActivityHandler):
-    def __init__(self, settings: TeamsBotSettings, adapter: BotFrameworkAdapter) -> None:
+    def __init__(self, settings: TeamsBotSettings, adapter: BotFrameworkAdapter, db=None) -> None:
         super().__init__()
         self._settings = settings
         self._adapter = adapter
+        self._db = db  # optional in-process DB session for direct service calls
 
     # ------------------------------------------------------------------
     # Main message handler
@@ -379,24 +380,65 @@ class PromptValidatorTeamsBot(TeamsActivityHandler):
 
         persona_id = _conversation_persona.get(conv_id) or None
 
-        # Extract Teams AAD object ID as a stable fallback identifier when email
-        # is not available (e.g. POC/dev without OAuth configured).
         from_user = turn_context.activity.from_property
         teams_user_id: str | None = getattr(from_user, "aad_object_id", None) or getattr(from_user, "id", None) or None
 
+        # Build stable email fallback from Teams AAD ID when OAuth is not configured
+        email = user_email or ""
+        if not email:
+            if teams_user_id:
+                email = f"{teams_user_id.lower().replace(' ', '-')}@teams.local"
+            else:
+                email = "teams-anonymous@teams.local"
+
+        result, error_msg = await self._call_validator(prompt_text, persona_id, email)
+        if error_msg:
+            await turn_context.send_activity(error_msg)
+            return
+
+        _conversation_last_result[conv_id] = result
+        await turn_context.send_activity(_card_activity(_build_adaptive_card(result)))
+
+    async def _call_validator(
+        self, prompt_text: str, persona_id: str | None, email: str
+    ) -> tuple[dict[str, Any], str]:
+        """Call the validator — in-process when db is available, HTTP otherwise.
+
+        Returns (result_dict, error_message). Exactly one of the two is truthy.
+        """
+        import asyncio
+        import logging as _logging
+        _log = _logging.getLogger("teams_bot.bot")
+
+        if self._db is not None:
+            # In-process direct call: avoids HTTP self-round-trip on Vercel
+            try:
+                from app.integrations.teams.bot import handle_teams_message
+                loop = asyncio.get_event_loop()
+                result = await loop.run_in_executor(
+                    None,
+                    lambda: handle_teams_message(
+                        self._db,
+                        user_email=email,
+                        message_text=prompt_text,
+                        persona_id=persona_id,
+                    ),
+                )
+                return result, ""
+            except Exception as exc:
+                _log.error("In-process validation error: %s", exc, exc_info=True)
+                # Fall through to HTTP fallback
+
+        # HTTP fallback (used when running standalone or VALIDATOR_API_BASE is set explicitly)
         payload: dict[str, Any] = {
-            "user_email": user_email or None,
+            "user_email": email or None,
             "message_text": prompt_text,
             "persona_id": persona_id,
-            "access_token": access_token,
-            "email_hint": user_email or None,
-            "teams_user_id": teams_user_id,
         }
         headers = {
             "x-api-key": self._settings.validator_api_key,
             "content-type": "application/json",
         }
-
         try:
             async with httpx.AsyncClient(timeout=45.0) as client:
                 response = await client.post(
@@ -405,20 +447,12 @@ class PromptValidatorTeamsBot(TeamsActivityHandler):
                     headers=headers,
                 )
                 response.raise_for_status()
-                result = response.json()
+                return response.json(), ""
         except httpx.HTTPStatusError as exc:
-            await turn_context.send_activity(
-                f"Validator API error ({exc.response.status_code}): {exc.response.text}"
-            )
-            return
-        except Exception:
-            await turn_context.send_activity(
-                "Unable to reach the validator service right now. Please try again."
-            )
-            return
-
-        _conversation_last_result[conv_id] = result
-        await turn_context.send_activity(_card_activity(_build_adaptive_card(result)))
+            return {}, f"Validator API error ({exc.response.status_code}): {exc.response.text}"
+        except Exception as exc:
+            _log.error("HTTP validation error: %s", exc, exc_info=True)
+            return {}, "Unable to reach the validator service right now. Please try again."
 
     # ------------------------------------------------------------------
     # Identity helpers
