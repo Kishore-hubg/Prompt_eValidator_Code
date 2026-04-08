@@ -45,6 +45,7 @@ class LlmEvaluateResult:
     strengths: list[str]
     dimension_scores: list[dict[str, Any]] = field(default_factory=list)
     guideline_checks: list[dict[str, Any]] = field(default_factory=list)
+    token_usage: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -52,6 +53,7 @@ class LlmRewriteResult:
     improved_prompt: str
     applied_guidelines: list[str]
     unresolved_gaps: list[str]
+    token_usage: dict[str, Any] = field(default_factory=dict)
 
 
 def llm_configured() -> bool:
@@ -191,7 +193,7 @@ def _chat_completion(
     json_mode: bool,
     model: str | None = None,
     max_retries: int = 3,
-) -> str:
+) -> tuple[str, dict[str, Any]]:
     """Call the Groq chat completions endpoint with automatic 429 retry.
 
     Args:
@@ -268,7 +270,13 @@ def _chat_completion(
         content = message.get("content")
         if not isinstance(content, str) or not content.strip():
             raise ValueError("Groq response missing content")
-        return content
+        raw_usage = data.get("usage") or {}
+        usage = {
+            "prompt_tokens": int(raw_usage.get("prompt_tokens") or 0),
+            "completion_tokens": int(raw_usage.get("completion_tokens") or 0),
+            "total_tokens": int(raw_usage.get("total_tokens") or 0),
+        }
+        return content, usage
 
     # Should never reach here — loop either returns or raises
     raise RuntimeError("_chat_completion: unexpected loop exit")
@@ -414,7 +422,7 @@ def llm_evaluate_prompt(
         "user_prompt": prompt_text,
     }
 
-    content = _chat_completion(
+    content, eval_usage = _chat_completion(
         [
             {"role": "system", "content": system},
             {"role": "user", "content": json.dumps(user_payload, ensure_ascii=False)},
@@ -483,6 +491,7 @@ def llm_evaluate_prompt(
         strengths=strength_list,
         dimension_scores=dim_list,
         guideline_checks=gc_list,
+        token_usage=eval_usage,
     )
 
 
@@ -769,7 +778,7 @@ def llm_rewrite_prompt(
         f"{gaps_block}\n\n"
         f"Prompt to rewrite:\n{prompt_text.strip()}\n"
     )
-    content = _chat_completion(
+    content, rewrite_usage = _chat_completion(
         [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
@@ -829,6 +838,7 @@ def llm_rewrite_prompt(
         improved_prompt=improved_prompt.strip(),
         applied_guidelines=applied_out,
         unresolved_gaps=unresolved_out,
+        token_usage=rewrite_usage,
     )
 
 

@@ -26,6 +26,7 @@ class LlmEvaluateResult:
     strengths: list[str]
     dimension_scores: list[dict[str, Any]] = field(default_factory=list)
     guideline_checks: list[dict[str, Any]] = field(default_factory=list)
+    token_usage: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -33,6 +34,7 @@ class LlmRewriteResult:
     improved_prompt: str
     applied_guidelines: list[str]
     unresolved_gaps: list[str]
+    token_usage: dict[str, Any] = field(default_factory=dict)
 
 
 def llm_configured() -> bool:
@@ -51,7 +53,7 @@ def _parse_json_object(content: str) -> dict[str, Any]:
     return json.loads(_strip_code_fences(content))
 
 
-def _chat_completion(system: str, user_content: str) -> str:
+def _chat_completion(system: str, user_content: str) -> tuple[str, dict[str, Any]]:
     payload: dict[str, Any] = {
         "model": ANTHROPIC_MODEL,
         "max_tokens": 4096,
@@ -69,12 +71,18 @@ def _chat_completion(system: str, user_content: str) -> str:
         response = client.post(ANTHROPIC_URL, json=payload, headers=headers)
         response.raise_for_status()
         data = response.json()
+    raw_usage = data.get("usage") or {}
+    usage = {
+        "prompt_tokens": int(raw_usage.get("input_tokens") or 0),
+        "completion_tokens": int(raw_usage.get("output_tokens") or 0),
+        "total_tokens": int((raw_usage.get("input_tokens") or 0) + (raw_usage.get("output_tokens") or 0)),
+    }
     blocks = data.get("content") or []
     for block in blocks:
         if isinstance(block, dict) and block.get("type") == "text":
             text = block.get("text")
             if isinstance(text, str) and text.strip():
-                return text
+                return text, usage
     raise ValueError("Anthropic response missing text block")
 
 
@@ -204,7 +212,7 @@ def llm_evaluate_prompt(
         "user_prompt": prompt_text,
     }
 
-    content = _chat_completion(system, json.dumps(user_payload, ensure_ascii=False))
+    content, eval_usage = _chat_completion(system, json.dumps(user_payload, ensure_ascii=False))
     parsed = _parse_json_object(content)
 
     # --- Validate core schema ---
@@ -267,6 +275,7 @@ def llm_evaluate_prompt(
         strengths=strength_list,
         dimension_scores=dim_list,
         guideline_checks=gc_list,
+        token_usage=eval_usage,
     )
 
 
@@ -611,7 +620,7 @@ def llm_rewrite_prompt(
         f"Prompt to rewrite:\n{prompt_text.strip()}\n"
     )
 
-    content = _chat_completion(system, user)
+    content, rewrite_usage = _chat_completion(system, user)
     parsed = _parse_json_object(content)
     if LLM_STRICT_SCHEMA:
         required = {"improved_prompt", "applied_guidelines", "unresolved_gaps"}
@@ -634,6 +643,7 @@ def llm_rewrite_prompt(
         improved_prompt=improved_prompt.strip(),
         applied_guidelines=applied_out,
         unresolved_gaps=unresolved_out,
+        token_usage=rewrite_usage,
     )
 
 
@@ -642,7 +652,7 @@ def llm_rewrite_prompt(
 # is never blocked during Anthropic API calls.
 # ---------------------------------------------------------------------------
 
-async def _chat_completion_async(system: str, user_content: str) -> str:
+async def _chat_completion_async(system: str, user_content: str) -> tuple[str, dict[str, Any]]:
     """Async version of _chat_completion using httpx.AsyncClient."""
     payload: dict[str, Any] = {
         "model": ANTHROPIC_MODEL,
@@ -661,12 +671,18 @@ async def _chat_completion_async(system: str, user_content: str) -> str:
         response = await client.post(ANTHROPIC_URL, json=payload, headers=headers)
         response.raise_for_status()
         data = response.json()
+    raw_usage = data.get("usage") or {}
+    usage = {
+        "prompt_tokens": int(raw_usage.get("input_tokens") or 0),
+        "completion_tokens": int(raw_usage.get("output_tokens") or 0),
+        "total_tokens": int((raw_usage.get("input_tokens") or 0) + (raw_usage.get("output_tokens") or 0)),
+    }
     blocks = data.get("content") or []
     for block in blocks:
         if isinstance(block, dict) and block.get("type") == "text":
             text = block.get("text")
             if isinstance(text, str) and text.strip():
-                return text
+                return text, usage
     raise ValueError("Anthropic response missing text block")
 
 
@@ -754,7 +770,7 @@ async def llm_evaluate_prompt_async(
         "user_prompt": prompt_text,
     }
 
-    content = await _chat_completion_async(system, json.dumps(user_payload, ensure_ascii=False))
+    content, eval_usage = await _chat_completion_async(system, json.dumps(user_payload, ensure_ascii=False))
     parsed = _parse_json_object(content)
 
     if LLM_STRICT_SCHEMA:
@@ -812,6 +828,7 @@ async def llm_evaluate_prompt_async(
         strengths=strength_list,
         dimension_scores=dim_list,
         guideline_checks=gc_list,
+        token_usage=eval_usage,
     )
 
 

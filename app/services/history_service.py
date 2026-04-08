@@ -51,6 +51,7 @@ def save_validation(
     validation_score_10: float = 0.0,
     rewrite_strategy: str = "template",
     rewrite_metadata: dict[str, Any] | None = None,
+    token_usage: dict[str, Any] | None = None,
 ) -> Any:
     # ── Track user across all channels ────────────────────────────────────────
     # Upserts into the `users` table so we can count unique users per channel.
@@ -78,6 +79,7 @@ def save_validation(
             validation_score_10=validation_score_10,
             rewrite_strategy=rewrite_strategy,
             rewrite_metadata=rewrite_metadata,
+            token_usage=token_usage,
         )
     return _save_validation_sql(
         db,
@@ -98,6 +100,7 @@ def save_validation(
         validation_score_10=validation_score_10,
         rewrite_strategy=rewrite_strategy,
         rewrite_metadata=rewrite_metadata,
+        token_usage=token_usage,
     )
 
 
@@ -121,6 +124,7 @@ def _save_validation_sql(
     validation_score_10: float,
     rewrite_strategy: str,
     rewrite_metadata: dict[str, Any] | None,
+    token_usage: dict[str, Any] | None,
 ):
     record = PromptValidationRecord(
         persona_id=persona_id,
@@ -138,6 +142,7 @@ def _save_validation_sql(
         llm_evaluation_json=json.dumps(llm_evaluation or {}),
         data_governance_json=json.dumps(data_governance or {}),
         source_of_truth_json=json.dumps(source_of_truth or {}),
+        token_usage_json=json.dumps(token_usage or {}),
     )
     db.add(record)
     db.commit()
@@ -206,6 +211,7 @@ def _save_validation_mongo(
     validation_score_10: float,
     rewrite_strategy: str,
     rewrite_metadata: dict[str, Any] | None,
+    token_usage: dict[str, Any] | None,
 ):
     vid = next_sequence(db, "prompt_validations")
     now = datetime.utcnow()
@@ -226,6 +232,7 @@ def _save_validation_mongo(
         "llm_evaluation_json": json.dumps(llm_evaluation or {}),
         "data_governance_json": json.dumps(data_governance or {}),
         "source_of_truth_json": json.dumps(source_of_truth or {}),
+        "token_usage_json": json.dumps(token_usage or {}),
         "created_at": now,
     }
     db.prompt_validations.insert_one(doc)

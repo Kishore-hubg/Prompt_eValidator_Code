@@ -44,6 +44,7 @@ class PromptValidationRecord(Base):
     llm_evaluation_json: Mapped[str] = mapped_column(Text, default="{}")
     data_governance_json: Mapped[str] = mapped_column(Text, default="{}")
     source_of_truth_json: Mapped[str] = mapped_column(Text, default="{}")
+    token_usage_json: Mapped[str] = mapped_column(Text, default="{}")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 

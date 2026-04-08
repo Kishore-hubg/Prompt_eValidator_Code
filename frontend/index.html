@@ -1019,6 +1019,24 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
       <div id="anLeaderboard"><div class="an-loading">—</div></div>
     </div>
 
+    <!-- Token Usage & Cost -->
+    <p class="an-section-title" style="margin-top:20px">💰 Token Usage &amp; Cost</p>
+    <div class="an-kpi-row" id="anTokenKpiRow"><div class="an-loading">—</div></div>
+    <div class="an-grid-3" style="margin-top:12px">
+      <div class="an-card">
+        <div class="an-card-title"><span class="dot" style="background:#f59e0b"></span>Daily Token Volume</div>
+        <canvas id="anChartTokenDaily" height="160"></canvas>
+      </div>
+      <div class="an-card">
+        <div class="an-card-title"><span class="dot" style="background:#10b981"></span>Cost by Model (USD)</div>
+        <canvas id="anChartTokenModel" height="160"></canvas>
+      </div>
+      <div class="an-card">
+        <div class="an-card-title"><span class="dot" style="background:#818cf8"></span>Tokens by Channel</div>
+        <canvas id="anChartTokenChannel" height="160"></canvas>
+      </div>
+    </div>
+
   </div>
 </div>
 `;
@@ -1128,6 +1146,7 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
       _renderLeaderboardFromAnalytics(anData);
       _renderUsersPerChannel(anData.unique_users_by_channel||{}, anData.by_channel||{});
       _renderUserEmailList(anData.users_by_channel||{});
+      _renderTokenUsage(anData.token_usage||{});
       _anLoaded=true;
     }catch(e){
       document.getElementById("anKpiRow").innerHTML='<div class="an-loading" style="color:#f87171">'+e.message+'</div>';
@@ -1313,6 +1332,50 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
       html+='</div>';
     });
     el.innerHTML=html;
+  }
+
+  function _renderTokenUsage(tu){
+    // ── KPI cards ─────────────────────────────────────────────────────────
+    const kpiEl=document.getElementById("anTokenKpiRow");
+    if(kpiEl){
+      const totalTok=(tu.total_tokens||0).toLocaleString();
+      const totalCost="$"+(+(tu.total_cost_usd||0)).toFixed(4);
+      const avgCost="$"+(+(tu.avg_cost_per_validation||0)).toFixed(6);
+      const avgTok=Math.round(tu.avg_tokens_per_validation||0).toLocaleString();
+      kpiEl.innerHTML=
+        '<div class="an-kpi"><div class="an-kpi-label">Total Tokens</div><div class="an-kpi-val" style="color:#f59e0b">'+totalTok+'</div></div>'+
+        '<div class="an-kpi"><div class="an-kpi-label">Total Cost (USD)</div><div class="an-kpi-val" style="color:#34d399">'+totalCost+'</div></div>'+
+        '<div class="an-kpi"><div class="an-kpi-label">Avg Tokens / Validation</div><div class="an-kpi-val" style="color:#60a5fa">'+avgTok+'</div></div>'+
+        '<div class="an-kpi"><div class="an-kpi-label">Avg Cost / Validation</div><div class="an-kpi-val" style="color:#a78bfa">'+avgCost+'</div></div>';
+    }
+    // ── Daily token trend bar ─────────────────────────────────────────────
+    _destroyChart("tokenDaily");
+    const ctxD=document.getElementById("anChartTokenDaily");
+    if(ctxD&&(tu.daily_tokens||[]).length){
+      const days=tu.daily_tokens.map(d=>d.date.slice(5));
+      const toks=tu.daily_tokens.map(d=>d.tokens);
+      _anCharts.tokenDaily=new Chart(ctxD,{type:"bar",data:{labels:days,datasets:[{label:"Tokens",data:toks,backgroundColor:"rgba(245,158,11,.55)",borderColor:"#f59e0b",borderWidth:1,borderRadius:3}]},options:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)),plugins:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)).plugins,legend:{display:false}}}});
+    }else if(ctxD){ctxD.parentElement.innerHTML+='<div class="an-loading" style="margin-top:-8px">No token data yet</div>';}
+    // ── Cost by model bar ────────────────────────────────────────────────
+    _destroyChart("tokenModel");
+    const ctxM=document.getElementById("anChartTokenModel");
+    const modelData=(tu.by_model||[]).filter(m=>m.tokens>0);
+    if(ctxM&&modelData.length){
+      const labels=modelData.map(m=>m.model.split("/").pop().replace(/-versatile|-instant/g,""));
+      const costs=modelData.map(m=>+m.cost.toFixed(6));
+      const colors=["#10b981","#34d399","#6ee7b7","#a7f3d0","#d1fae5"].slice(0,labels.length);
+      _anCharts.tokenModel=new Chart(ctxM,{type:"bar",data:{labels,datasets:[{label:"Cost USD",data:costs,backgroundColor:colors.map(c=>c+"99"),borderColor:colors,borderWidth:1,borderRadius:3}]},options:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)),indexAxis:"y",plugins:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)).plugins,legend:{display:false}}}});
+    }else if(ctxM){ctxM.parentElement.innerHTML+='<div class="an-loading" style="margin-top:-8px">No cost data yet</div>';}
+    // ── Tokens by channel doughnut ────────────────────────────────────────
+    _destroyChart("tokenChannel");
+    const ctxC=document.getElementById("anChartTokenChannel");
+    const chanData=(tu.by_channel||[]).filter(c=>c.tokens>0);
+    if(ctxC&&chanData.length){
+      const chLabels=chanData.map(c=>c.channel);
+      const chToks=chanData.map(c=>c.tokens);
+      const chColors=chLabels.map(ch=>_CH_COLORS[ch]||"#4a6280");
+      _anCharts.tokenChannel=new Chart(ctxC,{type:"doughnut",data:{labels:chLabels,datasets:[{data:chToks,backgroundColor:chColors.map(c=>c+"aa"),borderColor:chColors,borderWidth:1}]},options:{...JSON.parse(JSON.stringify(_CHART_DEFAULTS)),cutout:"62%"}});
+    }else if(ctxC){ctxC.parentElement.innerHTML+='<div class="an-loading" style="margin-top:-8px">No channel data yet</div>';}
   }
 
   async function _loadRealLeaderboard(){

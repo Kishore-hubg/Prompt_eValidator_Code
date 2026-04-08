@@ -34,6 +34,7 @@ from app.services.prompt_guidelines_loader import load_prompt_guidelines
 from app.services.rules_engine import evaluate_guidelines, evaluate_prompt as static_evaluate_prompt
 from app.services.data_strategy import SOURCE_OF_TRUTH_DOC, SOURCE_OF_TRUTH_SCOPE
 from app.services.suggestion_engine import derive_issue_based_suggestions
+from app.core.pricing import calculate_cost
 
 
 def _normalize(text: str) -> str:
@@ -160,6 +161,8 @@ def run_llm_validation(
     dimension_scores: list[dict[str, Any]] = []
     merged_strengths: list[str] = []
     merged_issues: list[str] = []
+    _eval_token_usage: dict[str, Any] = {}
+    _rewrite_token_usage: dict[str, Any] = {}
 
     # Default guideline_evaluation — populated from LLM response or static fallback below
     guideline_evaluation: dict[str, Any] = {
@@ -250,6 +253,7 @@ def run_llm_validation(
                 )
 
             llm_evaluation["semantic_score"] = evaluation.semantic_score  # kept for audit/debug
+            _eval_token_usage = getattr(evaluation, "token_usage", {}) or {}
             dimension_scores = getattr(evaluation, "dimension_scores", [])
             merged_issues = dedupe_preserve(evaluation.issues)[:6]        # cap: LLM may ignore the limit
             merged_strengths = dedupe_preserve(evaluation.strengths)[:5]
@@ -358,6 +362,7 @@ def run_llm_validation(
                         issues=rewrite_issues,
                     )
                 improved_prompt = rewrite.improved_prompt
+                _rewrite_token_usage = getattr(rewrite, "token_usage", {}) or {}
                 llm_evaluation["rewrite_applied_guidelines"] = rewrite.applied_guidelines
                 llm_evaluation["rewrite_unresolved_gaps"] = rewrite.unresolved_gaps
                 rewrite_strategy = "llm"
@@ -376,6 +381,31 @@ def run_llm_validation(
     # carry no scoring weight and are irrelevant to the final score.
     dimension_scores = [d for d in dimension_scores if float(d.get("weight", 0)) > 0]
 
+    # ── Token usage aggregation ─────────────────────────────────────────────
+    # Collect tokens from eval + rewrite sentinel dicts (populated above when
+    # LLM calls succeeded; remain empty for static pre-screen / fallback paths).
+    _eval_prompt_tokens      = int(_eval_token_usage.get("prompt_tokens", 0))
+    _eval_completion_tokens  = int(_eval_token_usage.get("completion_tokens", 0))
+    _rewrite_prompt_tokens   = int(_rewrite_token_usage.get("prompt_tokens", 0))
+    _rewrite_completion_tokens = int(_rewrite_token_usage.get("completion_tokens", 0))
+    _total_tokens = _eval_prompt_tokens + _eval_completion_tokens + _rewrite_prompt_tokens + _rewrite_completion_tokens
+    _model = llm_evaluation.get("model") or ""
+    _cost = calculate_cost(
+        _model,
+        _eval_prompt_tokens + _rewrite_prompt_tokens,
+        _eval_completion_tokens + _rewrite_completion_tokens,
+    ) if _total_tokens > 0 else 0.0
+    token_usage_data: dict[str, Any] = {
+        "eval_prompt_tokens": _eval_prompt_tokens,
+        "eval_completion_tokens": _eval_completion_tokens,
+        "rewrite_prompt_tokens": _rewrite_prompt_tokens,
+        "rewrite_completion_tokens": _rewrite_completion_tokens,
+        "total_tokens": _total_tokens,
+        "estimated_cost_usd": _cost,
+        "model": _model,
+        "provider": llm_evaluation.get("provider") or "",
+    }
+
     result: dict[str, Any] = {
         "score": final_score,
         "dimension_scores": dimension_scores,
@@ -385,6 +415,7 @@ def run_llm_validation(
         "improved_prompt": improved_prompt,
         "llm_evaluation": llm_evaluation,
         "rewrite_strategy": rewrite_strategy,
+        "token_usage": token_usage_data,
     }
 
     # ── Cache store ─────────────────────────────────────────────────────────
@@ -471,6 +502,8 @@ async def run_llm_validation_async(
     dimension_scores: list[dict[str, Any]] = []
     merged_strengths: list[str] = []
     merged_issues: list[str] = []
+    _eval_token_usage_async: dict[str, Any] = {}
+    _rewrite_token_usage_async: dict[str, Any] = {}
 
     guideline_evaluation: dict[str, Any] = {
         "strict_mode": bool(guidelines.get("strict_mode", True)),
@@ -526,6 +559,7 @@ async def run_llm_validation_async(
                 source_of_truth_scope=SOURCE_OF_TRUTH_SCOPE,
             )
             llm_evaluation["semantic_score"] = evaluation.semantic_score
+            _eval_token_usage_async = getattr(evaluation, "token_usage", {}) or {}
             dimension_scores = getattr(evaluation, "dimension_scores", [])
             merged_issues = dedupe_preserve(evaluation.issues)[:6]
             merged_strengths = dedupe_preserve(evaluation.strengths)[:5]
@@ -593,6 +627,7 @@ async def run_llm_validation_async(
                     issues=rewrite_issues,
                 )
                 improved_prompt = rewrite.improved_prompt
+                _rewrite_token_usage_async = getattr(rewrite, "token_usage", {}) or {}
                 llm_evaluation["rewrite_applied_guidelines"] = rewrite.applied_guidelines
                 llm_evaluation["rewrite_unresolved_gaps"] = rewrite.unresolved_gaps
                 rewrite_strategy = "llm"
@@ -606,6 +641,25 @@ async def run_llm_validation_async(
 
     dimension_scores = [d for d in dimension_scores if float(d.get("weight", 0)) > 0]
 
+    # ── Token usage aggregation (async path) ─────────────────────────────────
+    _ae_pt  = int(_eval_token_usage_async.get("prompt_tokens", 0))
+    _ae_ct  = int(_eval_token_usage_async.get("completion_tokens", 0))
+    _ar_pt  = int(_rewrite_token_usage_async.get("prompt_tokens", 0))
+    _ar_ct  = int(_rewrite_token_usage_async.get("completion_tokens", 0))
+    _a_total = _ae_pt + _ae_ct + _ar_pt + _ar_ct
+    _a_model = llm_evaluation.get("model") or ""
+    _a_cost = calculate_cost(_a_model, _ae_pt + _ar_pt, _ae_ct + _ar_ct) if _a_total > 0 else 0.0
+    token_usage_data_async: dict[str, Any] = {
+        "eval_prompt_tokens": _ae_pt,
+        "eval_completion_tokens": _ae_ct,
+        "rewrite_prompt_tokens": _ar_pt,
+        "rewrite_completion_tokens": _ar_ct,
+        "total_tokens": _a_total,
+        "estimated_cost_usd": _a_cost,
+        "model": _a_model,
+        "provider": llm_evaluation.get("provider") or "",
+    }
+
     result: dict[str, Any] = {
         "score": final_score,
         "dimension_scores": dimension_scores,
@@ -615,6 +669,7 @@ async def run_llm_validation_async(
         "improved_prompt": improved_prompt,
         "llm_evaluation": llm_evaluation,
         "rewrite_strategy": rewrite_strategy,
+        "token_usage": token_usage_data_async,
     }
 
     if PROMPT_CACHE_TTL_SECONDS > 0 and not llm_evaluation.get("error"):

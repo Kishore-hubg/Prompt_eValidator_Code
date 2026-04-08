@@ -81,6 +81,7 @@ def run_mcp_validation(
             "rewrite_applied_guidelines": (validation.get("llm_evaluation") or {}).get("rewrite_applied_guidelines"),
             "rewrite_unresolved_gaps": (validation.get("llm_evaluation") or {}).get("rewrite_unresolved_gaps"),
         },
+        token_usage=validation.get("token_usage"),
     )
     try:
         capture_enriched_event(

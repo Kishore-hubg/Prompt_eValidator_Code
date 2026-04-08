@@ -282,6 +282,7 @@ def _run_db_writes(
                 if validation.get("llm_evaluation")
                 else None,
             },
+            token_usage=validation.get("token_usage"),
         )
     except Exception:
         pass
@@ -825,6 +826,40 @@ def admin_analytics(db: DbDep, authorization: str = Header(default="")):
             emails = pv.distinct("user_email", {"channel": ch})
             users_by_channel[ch] = [e for e in emails if e]
 
+        # Token usage aggregation
+        _token_total = 0
+        _token_cost = 0.0
+        _token_by_model: dict = defaultdict(lambda: {"tokens": 0, "cost": 0.0})
+        _token_by_channel: dict = defaultdict(int)
+        _daily_tokens: dict = defaultdict(int)
+        for doc in pv.find({}, {"token_usage_json": 1, "channel": 1, "created_at": 1, "_id": 0}):
+            try:
+                tu = _json.loads(doc.get("token_usage_json") or "{}")
+                toks = int(tu.get("total_tokens") or 0)
+                cost = float(tu.get("estimated_cost_usd") or 0.0)
+                mdl = str(tu.get("model") or "unknown")
+                ch = str(doc.get("channel") or "")
+                _token_total += toks
+                _token_cost += cost
+                _token_by_model[mdl]["tokens"] += toks
+                _token_by_model[mdl]["cost"] += cost
+                if ch:
+                    _token_by_channel[ch] += toks
+                day = doc["created_at"].strftime("%Y-%m-%d") if isinstance(doc.get("created_at"), _dt) else str(doc.get("created_at", ""))[:10]
+                if day:
+                    _daily_tokens[day] += toks
+            except Exception:
+                pass
+        token_usage_stats = {
+            "total_tokens": _token_total,
+            "total_cost_usd": round(_token_cost, 6),
+            "avg_tokens_per_validation": round(_token_total / total, 1) if total else 0,
+            "avg_cost_per_validation": round(_token_cost / total, 8) if total else 0.0,
+            "by_model": [{"model": k, "tokens": v["tokens"], "cost": round(v["cost"], 6)} for k, v in _token_by_model.items()],
+            "by_channel": [{"channel": k, "tokens": v} for k, v in _token_by_channel.items()],
+            "daily_tokens": sorted([{"date": k, "tokens": v} for k, v in _daily_tokens.items()], key=lambda x: x["date"]),
+        }
+
         return {
             "total_validations": total,
             "distinct_users": distinct_users,
@@ -839,6 +874,7 @@ def admin_analytics(db: DbDep, authorization: str = Header(default="")):
             "daily_volume": daily_volume,
             "avg_score_by_day": avg_score_by_day,
             "score_histogram": histogram,
+            "token_usage": token_usage_stats,
         }
 
     # ── SQLite path ───────────────────────────────────────────────────────────
@@ -924,6 +960,42 @@ def admin_analytics(db: DbDep, authorization: str = Header(default="")):
         ).scalars().all()
         users_by_channel[ch] = list(rows)
 
+    # Token usage aggregation (SQLite)
+    import json as _json_tok
+    _tok_total = 0
+    _tok_cost = 0.0
+    _tok_by_model: dict = defaultdict(lambda: {"tokens": 0, "cost": 0.0})
+    _tok_by_channel: dict = defaultdict(int)
+    _tok_daily: dict = defaultdict(int)
+    for (tu_raw, ch_val, created_at_val) in db.execute(
+        _sa.select(PromptValidationRecord.token_usage_json, PromptValidationRecord.channel, PromptValidationRecord.created_at)
+    ).all():
+        try:
+            tu = _json_tok.loads(tu_raw or "{}")
+            toks = int(tu.get("total_tokens") or 0)
+            cost = float(tu.get("estimated_cost_usd") or 0.0)
+            mdl = str(tu.get("model") or "unknown")
+            _tok_total += toks
+            _tok_cost += cost
+            _tok_by_model[mdl]["tokens"] += toks
+            _tok_by_model[mdl]["cost"] += cost
+            if ch_val:
+                _tok_by_channel[str(ch_val)] += toks
+            day = created_at_val.strftime("%Y-%m-%d") if isinstance(created_at_val, _dt) else str(created_at_val or "")[:10]
+            if day:
+                _tok_daily[day] += toks
+        except Exception:
+            pass
+    token_usage_stats = {
+        "total_tokens": _tok_total,
+        "total_cost_usd": round(_tok_cost, 6),
+        "avg_tokens_per_validation": round(_tok_total / total, 1) if total else 0,
+        "avg_cost_per_validation": round(_tok_cost / total, 8) if total else 0.0,
+        "by_model": [{"model": k, "tokens": v["tokens"], "cost": round(v["cost"], 6)} for k, v in _tok_by_model.items()],
+        "by_channel": [{"channel": k, "tokens": v} for k, v in _tok_by_channel.items()],
+        "daily_tokens": sorted([{"date": k, "tokens": v} for k, v in _tok_daily.items()], key=lambda x: x["date"]),
+    }
+
     return {
         "total_validations": total,
         "distinct_users": distinct_users,
@@ -938,4 +1010,5 @@ def admin_analytics(db: DbDep, authorization: str = Header(default="")):
         "daily_volume": daily_volume,
         "avg_score_by_day": avg_score_by_day,
         "score_histogram": histogram,
+        "token_usage": token_usage_stats,
     }
