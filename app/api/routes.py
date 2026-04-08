@@ -805,11 +805,34 @@ def admin_analytics(db: DbDep, authorization: str = Header(default="")):
             [{"date": k, "avg_score": round(sum(v) / len(v), 1)} for k, v in score_day_map.items() if v],
             key=lambda x: x["date"],
         )
+
+        # Unique users per channel (from prompt_validations, distinct user_email per channel)
+        unique_users_by_channel: dict = {}
+        for row in pv.aggregate([
+            {"$group": {"_id": {"channel": "$channel", "email": "$user_email"}}},
+            {"$group": {"_id": "$_id.channel", "unique_users": {"$sum": 1}}},
+        ]):
+            unique_users_by_channel[str(row["_id"] or "")] = int(row["unique_users"])
+
+        # Registered users count from dedicated users collection
+        registered_users = db.users.count_documents({}) if "users" in db.list_collection_names() else distinct_users
+
+        # User list per channel (for admin table — top 50)
+        users_by_channel: dict = {}
+        for ch in by_channel:
+            if not ch:
+                continue
+            emails = pv.distinct("user_email", {"channel": ch})
+            users_by_channel[ch] = [e for e in emails if e]
+
         return {
             "total_validations": total,
             "distinct_users": distinct_users,
+            "registered_users": registered_users,
             "average_score": avg_score,
             "by_channel": by_channel,
+            "unique_users_by_channel": unique_users_by_channel,
+            "users_by_channel": users_by_channel,
             "by_persona": by_persona,
             "by_rating": by_rating,
             "by_llm_provider": dict(by_llm),
@@ -877,11 +900,38 @@ def admin_analytics(db: DbDep, authorization: str = Header(default="")):
         [{"date": k, "avg_score": round(sum(v) / len(v), 1)} for k, v in score_day_map_s.items() if v],
         key=lambda x: x["date"],
     )
+
+    # Unique users per channel
+    from app.models.db_models import User
+    unique_users_by_channel_rows = db.execute(
+        _sa.select(PromptValidationRecord.channel, func.count(func.distinct(PromptValidationRecord.user_email)))
+        .group_by(PromptValidationRecord.channel)
+    ).all()
+    unique_users_by_channel = {(k or ""): int(v) for k, v in unique_users_by_channel_rows}
+
+    # Registered users count (from users table)
+    registered_users = db.execute(_sa.select(func.count(User.id))).scalar_one()
+
+    # User list per channel
+    users_by_channel: dict = {}
+    for ch in by_channel:
+        if not ch:
+            continue
+        rows = db.execute(
+            _sa.select(func.distinct(PromptValidationRecord.user_email))
+            .where(PromptValidationRecord.channel == ch,
+                   PromptValidationRecord.user_email != "")
+        ).scalars().all()
+        users_by_channel[ch] = list(rows)
+
     return {
         "total_validations": total,
         "distinct_users": distinct_users,
+        "registered_users": registered_users,
         "average_score": avg_score,
         "by_channel": by_channel,
+        "unique_users_by_channel": unique_users_by_channel,
+        "users_by_channel": users_by_channel,
         "by_persona": by_persona,
         "by_rating": by_rating,
         "by_llm_provider": dict(by_llm),

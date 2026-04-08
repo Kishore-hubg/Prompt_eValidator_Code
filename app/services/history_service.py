@@ -16,6 +16,7 @@ from app.models.db_models import (
     PromptRewriteRecord,
     PromptValidationRecord,
 )
+from app.services.user_service import upsert_user
 
 
 @dataclass
@@ -51,6 +52,12 @@ def save_validation(
     rewrite_strategy: str = "template",
     rewrite_metadata: dict[str, Any] | None = None,
 ) -> Any:
+    # ── Track user across all channels ────────────────────────────────────────
+    # Upserts into the `users` table so we can count unique users per channel.
+    # Uses real email when available (Web/API/OAuth Teams), or a stable synthetic
+    # identifier (@teams.local / @slack.local) for channels without OAuth.
+    upsert_user(db, email=user_email, channel=channel)
+
     if DATABASE_BACKEND == "mongodb":
         return _save_validation_mongo(
             db,

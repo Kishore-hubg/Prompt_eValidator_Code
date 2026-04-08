@@ -9,6 +9,7 @@ import httpx
 
 from app.auth.persona_mapping import resolve_persona_for_user
 from app.integrations.mcp.server import run_mcp_validation
+from app.core.settings import SLACK_BOT_TOKEN
 
 _log = logging.getLogger("prompt_validator.slack.handler")
 
@@ -214,6 +215,44 @@ def build_block_kit_response(result: dict[str, Any], prompt_text: str) -> dict[s
 
 
 # ---------------------------------------------------------------------------
+# Slack user identity resolution
+# ---------------------------------------------------------------------------
+
+def resolve_slack_email(slack_user_id: str) -> str:
+    """Resolve a Slack user ID to a real email address.
+
+    Calls ``users.info`` with the bot token when ``SLACK_BOT_TOKEN`` is set
+    and the ``users:read.email`` scope is granted.  Falls back gracefully to
+    a stable synthetic identifier so validation still records the user.
+
+    Args:
+        slack_user_id: Slack user ID string (e.g. ``U012AB3CD``).
+
+    Returns:
+        Real email address if resolvable, otherwise
+        ``<slack_user_id_lower>@slack.local``.
+    """
+    fallback = f"{slack_user_id.lower()}@slack.local"
+    if not SLACK_BOT_TOKEN:
+        return fallback
+    try:
+        with httpx.Client(timeout=5) as client:
+            resp = client.get(
+                "https://slack.com/api/users.info",
+                params={"user": slack_user_id},
+                headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}"},
+            )
+            data = resp.json()
+            if data.get("ok"):
+                email = (data.get("user") or {}).get("profile", {}).get("email", "")
+                if email:
+                    return email.strip().lower()
+    except Exception as exc:  # noqa: BLE001
+        _log.warning("Could not resolve Slack email for %s: %s", slack_user_id, exc)
+    return fallback
+
+
+# ---------------------------------------------------------------------------
 # Background processor — called via FastAPI BackgroundTasks
 # ---------------------------------------------------------------------------
 
@@ -234,10 +273,11 @@ def process_and_respond(
         db:           Database session/client from FastAPI dependency.
         prompt_text:  The raw prompt submitted by the user.
         persona_id:   Resolved persona ID string.
-        slack_user_id: Slack user ID (e.g. ``U012AB3CD``) for email synthesis.
+        slack_user_id: Slack user ID (e.g. ``U012AB3CD``) for email resolution.
         response_url: Slack webhook URL to POST the final result.
     """
-    email = f"{slack_user_id.lower()}@slack.local"
+    # Try to resolve real email via Slack API; fall back to synthetic identifier
+    email = resolve_slack_email(slack_user_id)
 
     try:
         result = run_mcp_validation(

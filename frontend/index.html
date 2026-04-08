@@ -837,6 +837,20 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
 .an-loading{display:flex;align-items:center;justify-content:center;min-height:180px;color:#4a6280;font-size:13px;gap:8px}
 .an-section-title{font-size:13px;font-weight:700;color:#7ec8f9;letter-spacing:.04em;text-transform:uppercase;margin:20px 0 12px;padding-left:4px;border-left:3px solid rgba(56,189,248,.5);padding:4px 0 4px 10px}
 .an-section-title:first-child{margin-top:0}
+/* Users-by-channel grid reuse */
+.an-grid-2.an-grid-fill{grid-template-columns:1fr 1fr;margin-bottom:0}
+/* User email pills */
+.an-email-pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;background:rgba(105,163,255,.12);color:#93c5ef;border:1px solid rgba(105,163,255,.2);margin:2px 3px 2px 0;white-space:nowrap}
+.an-email-pill.synthetic{background:rgba(251,191,36,.08);color:#fbbf24;border-color:rgba(251,191,36,.2)}
+.an-channel-section{margin-bottom:12px}
+.an-channel-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b84a0;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.an-channel-dot{width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0}
+/* Unique-users bar */
+.an-ubar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.an-ubar-label{min-width:70px;font-size:11px;color:#c8d8f0;font-weight:600;text-transform:capitalize}
+.an-ubar-track{flex:1;height:6px;background:rgba(37,53,82,.7);border-radius:3px;overflow:hidden}
+.an-ubar-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.an-ubar-count{min-width:28px;text-align:right;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;color:#e9eef8}
 </style>
 
 <div class="adm-hdr" id="admHdr">
@@ -985,10 +999,23 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
       </div>
     </div>
 
+    <!-- Users per Channel -->
+    <p class="an-section-title">Users by Channel</p>
+    <div class="an-grid-2">
+      <div class="an-card-full" style="margin-bottom:0">
+        <div class="an-card-title"><span class="dot" style="background:#60a5fa"></span>Unique Users per Channel</div>
+        <div id="anUsersPerChannel"><div class="an-loading">—</div></div>
+      </div>
+      <div class="an-card-full" style="margin-bottom:0">
+        <div class="an-card-title"><span class="dot" style="background:#a78bfa"></span>User Email List by Channel</div>
+        <div id="anUserEmailList"><div class="an-loading">—</div></div>
+      </div>
+    </div>
+
     <!-- Leaderboard -->
-    <p class="an-section-title">Weekly Leaderboard</p>
+    <p class="an-section-title" style="margin-top:20px">Persona Usage Leaderboard</p>
     <div class="an-card-full">
-      <div class="an-card-title"><span class="dot" style="background:#4ade80"></span>Top Users by Score Delta This Week</div>
+      <div class="an-card-title"><span class="dot" style="background:#4ade80"></span>Validation Count by Persona</div>
       <div id="anLeaderboard"><div class="an-loading">—</div></div>
     </div>
 
@@ -1099,6 +1126,8 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
       _renderHistogramChart(anData.score_histogram||{});
       _renderLLMChart(anData.by_llm_provider||{});
       _renderLeaderboardFromAnalytics(anData);
+      _renderUsersPerChannel(anData.unique_users_by_channel||{}, anData.by_channel||{});
+      _renderUserEmailList(anData.users_by_channel||{});
       _anLoaded=true;
     }catch(e){
       document.getElementById("anKpiRow").innerHTML='<div class="an-loading" style="color:#f87171">'+e.message+'</div>';
@@ -1108,6 +1137,7 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
   function _renderKPIs(d){
     const total=d.total_validations||0;
     const users=d.distinct_users||0;
+    const regUsers=d.registered_users||users;
     const avg=d.average_score||0;
     const byRating=d.by_rating||{};
     const excellent=(byRating["Excellent"]||0);
@@ -1117,13 +1147,15 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
     const llmUsed=llmTotal-(llmMap["unknown"]||0)-(llmMap[""]||0);
     const llmPct=llmTotal>0?Math.round(llmUsed/llmTotal*100):0;
     const avgColor=avg>=70?"#4ade80":avg>=50?"#fbbf24":"#f87171";
+    const channels=Object.keys(d.by_channel||{}).length;
     document.getElementById("anKpiRow").innerHTML=
       _kpiCard("📋","Total Validations",total.toLocaleString(),"c-blue")+
-      _kpiCard("👥","Unique Users",users.toLocaleString(),"c-cyan")+
+      _kpiCard("👤","Registered Users",regUsers.toLocaleString(),"c-cyan")+
+      _kpiCard("👥","Active Users",users.toLocaleString(),"c-cyan")+
       _kpiCard("🎯","Avg Score",'<span style="color:'+avgColor+'">'+avg+'</span>',"c-green")+
       _kpiCard("⭐","Excellent Rate",excellentPct+"%","c-yellow")+
       _kpiCard("🤖","LLM Scoring",llmPct+"%","c-purple")+
-      _kpiCard("📊","Channels",Object.keys(d.by_channel||{}).length+" active","c-pink");
+      _kpiCard("📡","Active Channels",channels+" active","c-pink");
   }
   function _kpiCard(icon,label,val,colorClass){
     return '<div class="an-kpi '+colorClass+'"><span class="an-kpi-icon">'+icon+'</span><div class="an-kpi-val">'+val+'</div><div class="an-kpi-label">'+label+'</div></div>';
@@ -1233,6 +1265,54 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
     // Also attempt to fetch real weekly leaderboard via same admin endpoint if available
     el.innerHTML=html;
     _loadRealLeaderboard();
+  }
+
+  const _CH_COLORS={"web":"#60a5fa","api":"#34d399","teams":"#a78bfa","slack":"#fb923c","mcp":"#f472b6"};
+
+  function _renderUsersPerChannel(uniqueMap, totalMap){
+    const el=document.getElementById("anUsersPerChannel");
+    if(!el)return;
+    const entries=Object.entries(uniqueMap).sort((a,b)=>b[1]-a[1]);
+    if(!entries.length){el.innerHTML='<div class="an-loading">No user data yet</div>';return;}
+    const maxVal=Math.max(...entries.map(e=>e[1]),1);
+    let html='';
+    entries.forEach(([ch,uniq])=>{
+      const total=totalMap[ch]||0;
+      const pct=Math.round(uniq/maxVal*100);
+      const color=_CH_COLORS[ch]||"#4a6280";
+      html+='<div class="an-ubar-row">'+
+        '<span class="an-ubar-label">'+ch+'</span>'+
+        '<div class="an-ubar-track"><div class="an-ubar-fill" style="width:'+pct+'%;background:'+color+'"></div></div>'+
+        '<span class="an-ubar-count" style="color:'+color+'">'+uniq+'</span>'+
+        '<span style="font-size:10px;color:#4a6280;min-width:60px">&nbsp;/&nbsp;'+total+' runs</span>'+
+      '</div>';
+    });
+    el.innerHTML=html;
+  }
+
+  function _renderUserEmailList(usersByChannel){
+    const el=document.getElementById("anUserEmailList");
+    if(!el)return;
+    const entries=Object.entries(usersByChannel).filter(e=>e[1]&&e[1].length);
+    if(!entries.length){el.innerHTML='<div class="an-loading">No user emails captured yet</div>';return;}
+    let html='';
+    entries.forEach(([ch,emails])=>{
+      const color=_CH_COLORS[ch]||"#4a6280";
+      html+='<div class="an-channel-section">'+
+        '<div class="an-channel-label">'+
+          '<span class="an-channel-dot" style="background:'+color+'"></span>'+
+          ch.toUpperCase()+' &nbsp;<span style="color:#4a6280;font-weight:400;text-transform:none">('+emails.length+' user'+( emails.length!==1?'s':'')+' )</span>'+
+        '</div>';
+      emails.slice(0,20).forEach(email=>{
+        const synthetic=email.endsWith("@teams.local")||email.endsWith("@slack.local");
+        const cls=synthetic?" synthetic":"";
+        const icon=synthetic?"🔑":"✉️";
+        html+='<span class="an-email-pill'+cls+'" title="'+(synthetic?"Synthetic ID — OAuth not configured":"Real email")+'">'+icon+' '+email+'</span>';
+      });
+      if(emails.length>20){html+='<span style="font-size:10px;color:#4a6280;margin-left:4px">+&nbsp;'+(emails.length-20)+' more</span>';}
+      html+='</div>';
+    });
+    el.innerHTML=html;
   }
 
   async function _loadRealLeaderboard(){
