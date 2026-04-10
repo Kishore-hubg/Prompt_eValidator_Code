@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prompt Validator MVP — Consolidated Program &amp; Technical Report</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #fff;
+      --text: #1a1d26;
+      --muted: #5c6370;
+      --accent: #2563eb;
+      --border: #e2e6ef;
+      --tab-active: #1e40af;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      font-size: 15px;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    header.doc {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+      color: #fff;
+      padding: 2rem 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+    }
+    header.doc h1 { margin: 0 0 0.5rem; font-size: 1.65rem; font-weight: 650; }
+    header.doc .meta { opacity: 0.92; font-size: 0.95rem; }
+    h2 {
+      font-size: 1.25rem;
+      margin: 2rem 0 0.75rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 2px solid var(--border);
+      color: #111827;
+    }
+    h3 { font-size: 1.05rem; margin: 1.35rem 0 0.5rem; color: #374151; }
+    p { margin: 0.65rem 0; color: var(--text); }
+    .muted { color: var(--muted); font-size: 0.92rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.35rem;
+      margin: 1rem 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin: 0.75rem 0;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.45rem 0.55rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #f1f5f9; font-weight: 600; }
+    tr:nth-child(even) td { background: #fafbfc; }
+    code { background: #eef2ff; padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.88em; }
+    ul { margin: 0.5rem 0 0.5rem 1.2rem; }
+    .toc { list-style: none; padding: 0; margin: 0; }
+    .toc li { margin: 0.35rem 0; }
+    .toc a { color: var(--accent); text-decoration: none; cursor: pointer; }
+    .toc a:hover { text-decoration: underline; }
+
+    .main-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 1.5rem 0 0; border-bottom: 2px solid var(--border); padding-bottom: 0; align-items: flex-end; }
+    .main-tabs button {
+      border: 1px solid var(--border);
+      background: #e8ecf4;
+      color: #334155;
+      padding: 0.55rem 0.75rem;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .main-tabs button:hover { background: #dce3f0; }
+    .main-tabs button.active {
+      background: var(--card);
+      border-bottom-color: var(--card);
+      color: var(--tab-active);
+      margin-bottom: -2px;
+      padding-bottom: calc(0.55rem + 2px);
+    }
+    .tab-panel { display: none; padding-top: 1rem; }
+    .tab-panel.active { display: block; }
+
+    .sub-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 1rem 0; }
+    .sub-tabs button {
+      border: 1px solid var(--border);
+      background: #f1f5f9;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .sub-tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .sub-panel { display: none; }
+    .sub-panel.active { display: block; }
+
+    .mermaid { margin: 1rem 0; text-align: center; background: #fff; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); overflow-x: auto; }
+    .tech-iframe {
+      width: 100%;
+      min-height: 85vh;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+    }
+    footer.end {
+      margin-top: 3rem;
+      padding: 1.5rem;
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.95rem;
+    }
+    footer.end strong { color: #fff; }
+    @media print {
+      .main-tabs, .sub-tabs { display: none; }
+      .tab-panel, .sub-panel { display: block !important; }
+      .tech-iframe { min-height: 1200px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="doc">
+      <h1>Prompt Validator MVP</h1>
+      <div class="meta">Consolidated program &amp; technical report · Infovision CoE AI/GenAI Practice<br />
+        FastAPI · Vercel · MongoDB/SQLite · Anthropic/Groq · Teams · Slack · MCP</div>
+    </header>
+
+    <div class="card">
+      <h3 style="margin-top:0">Navigate</h3>
+      <ul class="toc">
+        <li><a data-main-tab="t1">1. Executive document</a> — objectives, problem, ROI, architecture, channels, stack, DB, APIs</li>
+        <li><a data-main-tab="t2">2. Cost &amp; budget</a> — Anthropic, 3,000 users, low-usage plan, daily limits</li>
+        <li><a data-main-tab="t3">3. Governance &amp; security</a> — data governance, prompt injection, risks</li>
+        <li><a data-main-tab="t4">4. Summary conclusion</a> — final assessment</li>
+        <li><a data-main-tab="t5">5. Visualizations</a> — MCP + Claude Desktop, workflow, Skills vs MCP, Teams</li>
+        <li><a data-main-tab="t6">6. Full technical document (embedded)</a> — existing HTML doc + Markdown link</li>
+      </ul>
+      <p class="muted" style="margin-bottom:0">Diagrams use Mermaid (CDN). Tab 6 embeds <code>Prompt_Validator_Technical_Documentation.html</code> from this folder.</p>
+    </div>
+
+    <div class="main-tabs" role="tablist">
+      <button type="button" class="active" data-main-tab="t1">Executive</button>
+      <button type="button" data-main-tab="t2">Cost</button>
+      <button type="button" data-main-tab="t3">Governance</button>
+      <button type="button" data-main-tab="t4">Conclusion</button>
+      <button type="button" data-main-tab="t5">Visualizations</button>
+      <button type="button" data-main-tab="t6">Full technical HTML</button>
+    </div>
+
+    <section id="panel-t1" class="tab-panel active" data-panel="t1">
+      <h2>1. Objective &amp; goals</h2>
+      <p><strong>Objective:</strong> Provide one persona-aware prompt quality service that scores prompts, lists issues, optionally rewrites them, persists results for analytics, and exposes the same capability through web UI, REST API, MCP, Microsoft Teams, and Slack.</p>
+      <p><strong>Goals:</strong> Consistent evaluation against configurable personas; auditable source-of-truth configuration; measurable adoption via analytics; deployability on serverless hosting (Vercel); governance-oriented metadata on validations.</p>
+
+      <h2>2. Business problem</h2>
+      <p>Inconsistent prompt quality drives rework, higher LLM token use, and weak cross-role standards. Fragmented tools prevent a single audit trail and coaching loop.</p>
+
+      <h2>3. Solution summary</h2>
+      <p>A <strong>FastAPI</strong> application (<code>app/main.py</code>) exposes REST under <code>/api/v1/*</code>, serves a static web UI at <code>/</code>, implements <strong>MCP</strong> at <code>POST /mcp</code> (JSON-RPC 2.0) plus legacy <code>/mcp/*</code> helpers, handles <strong>Teams</strong> at <code>POST /api/messages</code>, and <strong>Slack</strong> at <code>POST /api/v1/slack/validate</code>. Core validation uses <code>run_llm_validation</code> with LLM providers (Anthropic / Groq) and optional static prescreen and fallbacks. Persistence uses <strong>MongoDB Atlas</strong> (default) or <strong>SQLite</strong>.</p>
+
+      <h2>4. ROI (qualitative)</h2>
+      <table>
+        <tr><th>Theme</th><th>Mechanism</th></tr>
+        <tr><td>Lower LLM waste</td><td>Fewer bad prompts → fewer retries; optional cache and prescreen in settings</td></tr>
+        <tr><td>Faster onboarding</td><td>Personas encode role expectations; demo samples API</td></tr>
+        <tr><td>Measurable adoption</td><td>Analytics, weekly leaderboard, org/team views</td></tr>
+        <tr><td>Governance</td><td>Data governance payload, source-of-truth references, Day-2 checklist endpoint</td></tr>
+      </table>
+
+      <h2>5. Workflow (high level)</h2>
+      <ol>
+        <li>Ingress: prompt + <code>persona_id</code> (+ optional <code>user_email</code>, <code>channel</code>).</li>
+        <li>Optional persona resolution when using baseline persona with email.</li>
+        <li>LLM validation (and rewrite when <code>auto_improve</code> is true).</li>
+        <li>Response: score, rating, strengths, issues, suggestions, improved prompt, dimensions.</li>
+        <li>Background persistence: raw events, validation records, enriched events.</li>
+        <li>Downstream: analytics and intelligence repositories.</li>
+      </ol>
+
+      <h2>6. Architecture</h2>
+      <div class="mermaid mm-arch">
+flowchart TB
+  subgraph Clients["Channels"]
+    WEB["Web UI"]
+    REST["API clients"]
+    MCP["MCP clients"]
+    TEAMS["Microsoft Teams"]
+    SLACK["Slack"]
+  end
+  subgraph Edge["Hosting"]
+    V["Vercel vercel.json to api/index"]
+  end
+  subgraph App["FastAPI"]
+    R["/api/v1/*"]
+    M["/mcp JSON-RPC"]
+    T["/api/messages"]
+  end
+  subgraph Core["Core"]
+    PV["run_llm_validation"]
+    PL["Persona / guidelines"]
+  end
+  subgraph Data["Data"]
+    MG[(MongoDB)]
+    SQ[(SQLite)]
+  end
+  subgraph LLM["LLM APIs"]
+    A["Anthropic"]
+    G["Groq"]
+  end
+  Clients --> V --> App
+  R --> PV
+  M --> PV
+  T --> PV
+  PV --> PL
+  PV --> A
+  PV --> G
+  R --> MG
+  R --> SQ
+      </div>
+      <p class="muted"><code>api/index.py</code> exposes the ASGI app as Vercel’s <code>handler</code>. <code>vercel.json</code> rewrites traffic to that function.</p>
+
+      <h2>7. Implementation by channel</h2>
+      <table>
+        <tr><th>Channel</th><th>Summary</th><th>Touchpoints</th></tr>
+        <tr><td>Web</td><td><code>GET /</code>, static assets</td><td><code>frontend/</code>, <code>app/main.py</code></td></tr>
+        <tr><td>REST</td><td>Validate, personas, guidelines, history, analytics, auth, admin</td><td><code>app/api/routes.py</code></td></tr>
+        <tr><td>MCP</td><td><code>POST /mcp</code> JSON-RPC; <code>/mcp/list-tools</code>, <code>call-tool</code>, <code>resources</code>, <code>capabilities</code>; <code>POST /api/v1/mcp/validate</code></td><td><code>app/mcp/</code>, <code>app/main.py</code></td></tr>
+        <tr><td>Teams</td><td><code>POST /api/messages</code> Bot Framework; optional <code>POST /api/v1/teams/message</code></td><td><code>app/main.py</code>, <code>app/integrations/teams/</code></td></tr>
+        <tr><td>Slack</td><td><code>POST /api/v1/slack/validate</code> with signature verification</td><td><code>app/integrations/slack/</code></td></tr>
+      </table>
+
+      <h2>8. Technology stack</h2>
+      <table>
+        <tr><th>Layer</th><th>Technology</th></tr>
+        <tr><td>Runtime</td><td>Python, ASGI (Uvicorn local; Vercel serverless in prod)</td></tr>
+        <tr><td>Framework</td><td>FastAPI, Pydantic v2</td></tr>
+        <tr><td>HTTP / LLM</td><td>httpx to Anthropic and Groq APIs</td></tr>
+        <tr><td>Data</td><td>SQLAlchemy + SQLite <em>or</em> PyMongo + MongoDB Atlas</td></tr>
+        <tr><td>Auth patterns</td><td>API key (<code>x-api-key</code>), Slack HMAC, Microsoft JWT settings for OAuth flows</td></tr>
+        <tr><td>Hosting</td><td>Vercel (<code>vercel.json</code>, <code>api/index.py</code>)</td></tr>
+      </table>
+
+      <h2>9. Database &amp; limitations</h2>
+      <ul>
+        <li><strong>MongoDB:</strong> default production; connection via <code>MONGODB_URI</code> or Atlas-style env vars.</li>
+        <li><strong>SQLite:</strong> local file <code>prompt_validator.db</code> for dev.</li>
+        <li><strong>Limitations:</strong> dual code paths to maintain; Teams persona state in memory is not durable across instances; admin credentials in source are not enterprise-safe; permissive CORS in app settings.</li>
+      </ul>
+
+      <h2>10. API endpoints (summary)</h2>
+      <h3>Core &amp; health</h3>
+      <table>
+        <tr><th>Method</th><th>Path</th><th>Auth</th><th>Description</th></tr>
+        <tr><td>GET</td><td>/api/v1/health</td><td>None</td><td>Liveness</td></tr>
+        <tr><td>GET</td><td>/api/v1/validation-mode</td><td>None</td><td>LLM config snapshot</td></tr>
+        <tr><td>GET</td><td>/api/v1/compliance/day2-checklist</td><td>None</td><td>Day-2 governance checks</td></tr>
+        <tr><td>GET</td><td>/api/v1/health/db</td><td>None</td><td>DB ping</td></tr>
+      </table>
+      <h3>Validation &amp; demos</h3>
+      <table>
+        <tr><th>Method</th><th>Path</th><th>Auth</th><th>Description</th></tr>
+        <tr><td>POST</td><td>/api/v1/validate</td><td>None*</td><td>Main validation</td></tr>
+        <tr><td>POST</td><td>/api/v1/improve</td><td>None*</td><td>Improve path</td></tr>
+        <tr><td>GET</td><td>/api/v1/demo-samples</td><td>None</td><td>Demo prompts</td></tr>
+        <tr><td>GET</td><td>/api/v1/demo-sample</td><td>None</td><td>Single sample</td></tr>
+      </table>
+      <p class="muted">*Confirm whether public access is intended; protect via gateway if needed.</p>
+      <h3>Personas &amp; history</h3>
+      <table>
+        <tr><th>Method</th><th>Path</th><th>Auth</th><th>Description</th></tr>
+        <tr><td>GET</td><td>/api/v1/personas</td><td>None</td><td>List personas</td></tr>
+        <tr><td>GET</td><td>/api/v1/guidelines</td><td>None</td><td>Guidelines config</td></tr>
+        <tr><td>GET</td><td>/api/v1/history</td><td>None</td><td>Recent history</td></tr>
+      </table>
+      <h3>Auth &amp; MCP REST</h3>
+      <table>
+        <tr><th>Method</th><th>Path</th><th>Auth</th><th>Description</th></tr>
+        <tr><td>POST</td><td>/api/v1/auth/resolve</td><td>API key</td><td>OAuth / token resolve</td></tr>
+        <tr><td>POST</td><td>/api/v1/auth/map-persona</td><td>API key</td><td>Map email → persona</td></tr>
+        <tr><td>POST</td><td>/api/v1/mcp/validate</td><td>API key</td><td>MCP-style validation</td></tr>
+      </table>
+      <h3>Integrations</h3>
+      <table>
+        <tr><th>Method</th><th>Path</th><th>Auth</th><th>Description</th></tr>
+        <tr><td>POST</td><td>/api/v1/teams/message</td><td>API key</td><td>Teams handler</td></tr>
+        <tr><td>POST</td><td>/api/v1/slack/validate</td><td>Slack signature</td><td>Slash command</td></tr>
+        <tr><td>POST</td><td>/api/messages</td><td>Bot Framework</td><td>Primary Teams webhook</td></tr>
+      </table>
+      <h3>Analytics &amp; intelligence</h3>
+      <table>
+        <tr><th>Method</th><th>Path</th><th>Auth</th></tr>
+        <tr><td>GET</td><td>/api/v1/analytics/summary</td><td>API key</td></tr>
+        <tr><td>POST</td><td>/api/v1/aggregation/weekly/refresh</td><td>API key</td></tr>
+        <tr><td>GET</td><td>/api/v1/user/weekly-summary</td><td>API key</td></tr>
+        <tr><td>GET</td><td>/api/v1/leaderboard/weekly</td><td>API key</td></tr>
+        <tr><td>GET</td><td>/api/v1/leadership/org-dashboard</td><td>API key</td></tr>
+        <tr><td>GET</td><td>/api/v1/leadership/team-report/{team_id}</td><td>API key</td></tr>
+      </table>
+      <h3>Admin</h3>
+      <table>
+        <tr><th>Method</th><th>Path</th><th>Auth</th></tr>
+        <tr><td>POST</td><td>/api/v1/admin/login</td><td>Body</td></tr>
+        <tr><td>GET</td><td>/api/v1/admin/records</td><td>Bearer admin token</td></tr>
+      </table>
+      <h3>MCP server</h3>
+      <table>
+        <tr><th>Method</th><th>Path</th><th>Description</th></tr>
+        <tr><td>POST</td><td>/mcp</td><td>JSON-RPC 2.0 MCP</td></tr>
+        <tr><td>GET</td><td>/mcp</td><td>POST only — SSE not supported</td></tr>
+        <tr><td>POST</td><td>/mcp/list-tools</td><td>List tools</td></tr>
+        <tr><td>POST</td><td>/mcp/call-tool</td><td>Execute tool</td></tr>
+        <tr><td>GET</td><td>/mcp/resources</td><td>Resources</td></tr>
+        <tr><td>GET</td><td>/mcp/capabilities</td><td>Server metadata</td></tr>
+      </table>
+    </section>
+
+    <section id="panel-t2" class="tab-panel" data-panel="t2">
+      <h2>Cost &amp; budget — Anthropic and channels</h2>
+      <p><strong>Principle:</strong> LLM cost scales with <strong>validations and tokens</strong>, not with “channel” — Web, API, MCP, Teams, and Slack share the same validation engine. Platform costs (Vercel, MongoDB, Azure Bot) are usually secondary to LLM at moderate scale.</p>
+      <p><strong>Pricing assumption (verify on Anthropic):</strong> illustrative Sonnet-class rates ~<strong>$3 / M input</strong> and ~<strong>$15 / M output</strong> tokens. Each validation often uses up to <strong>two</strong> LLM calls (evaluate + rewrite) when <code>auto_improve</code> is true; prescreen and cache can reduce calls.</p>
+
+      <h3>Organization scale — 3,000 users (illustrative)</h3>
+      <table>
+        <tr><th>Scenario</th><th>Validations / user / day</th><th>Validations / day</th><th>Approx. Anthropic / day @ ~$0.07/val</th></tr>
+        <tr><td>Light</td><td>1</td><td>3,000</td><td>~$210</td></tr>
+        <tr><td>Medium</td><td>3</td><td>9,000</td><td>~$630</td></tr>
+        <tr><td>Heavy</td><td>5</td><td>15,000</td><td>~$1,050</td></tr>
+      </table>
+
+      <h3>Low usage — all personas (budget-friendly)</h3>
+      <p>Persona choice does not change the pricing model in code; volume does. For <strong>very low</strong> adoption (~<strong>2–5</strong> validations per user per month):</p>
+      <table>
+        <tr><th>Scenario</th><th>Total validations / month</th><th>~$0.06/validation</th><th>~$0.08/validation (upper)</th></tr>
+        <tr><td>Minimal</td><td>6,000</td><td>~$360</td><td>~$480</td></tr>
+        <tr><td>Light</td><td>9,000</td><td>~$540</td><td>~$720</td></tr>
+        <tr><td>Low+</td><td>15,000</td><td>~$900</td><td>~$1,200</td></tr>
+      </table>
+      <p><strong>Planning envelope:</strong> roughly <strong>$400–$700/month</strong> Anthropic API for low adoption, with <strong>+20% contingency</strong>. Reconcile using Anthropic usage dashboards.</p>
+
+      <h3>Daily usage limits</h3>
+      <ul>
+        <li><strong>Product quotas:</strong> define per-user and org caps at API gateway if required.</li>
+        <li><strong>Provider limits:</strong> Anthropic tier limits (RPM/TPM/spend) in Anthropic console.</li>
+        <li><strong>Code:</strong> in-memory cache and static prescreen reduce redundant LLM spend.</li>
+      </ul>
+    </section>
+
+    <section id="panel-t3" class="tab-panel" data-panel="t3">
+      <h2>Governance &amp; security</h2>
+      <h3>Data governance (what exists)</h3>
+      <ul>
+        <li>Governance metadata: delivery channel, scores, LLM provider/model; masked email hash fields in governance payload (<code>app/services/data_strategy.py</code>).</li>
+        <li>Source-of-truth document references.</li>
+        <li>Compliance checklist endpoint for Day-2 style verification.</li>
+      </ul>
+      <h3>Gaps</h3>
+      <ul>
+        <li>Full prompt text may be stored and sent to the LLM — no automatic DLP redaction of secrets in prompt body by default.</li>
+        <li>Some routes may be exposed without API key depending on deployment.</li>
+        <li>Admin: hardcoded credentials pattern in routes — replace for production.</li>
+        <li>CORS configured permissively — tighten for production.</li>
+      </ul>
+      <h3>Prompt injection</h3>
+      <p><strong>Yes — relevant.</strong> User-supplied text is embedded in LLM requests. System prompts constrain behavior but <strong>do not deterministically block</strong> adversarial instructions. Plan mitigations: gateway auth, quotas, retention, monitoring, residual LLM risk acceptance.</p>
+    </section>
+
+    <section id="panel-t4" class="tab-panel" data-panel="t4">
+      <h2>Final conclusion — summary report</h2>
+      <div class="card">
+        <p><strong>Summary:</strong> The Prompt Validator MVP delivers a <strong>unified prompt-quality engine</strong> with <strong>multiple channels</strong> (web, REST, MCP, Teams, Slack), <strong>persona-based evaluation</strong>, <strong>persistence</strong> for analytics, and <strong>governance-oriented metadata</strong>. It is well suited as a <strong>pilot or CoE showcase</strong>.</p>
+        <p><strong>Production readiness:</strong> requires <strong>hardening</strong> — authentication/authorization on sensitive routes, secrets and admin flows removed from code, CORS and network policy, retention and residency alignment, abuse and spend controls, and explicit handling of <strong>residual LLM risks</strong> including <strong>prompt injection</strong>.</p>
+        <p><strong>Bottom line:</strong> <em>Strong functional MVP for controlled rollout; invest in security and governance before org-wide mandatory use or regulated data.</em></p>
+      </div>
+    </section>
+
+    <section id="panel-t5" class="tab-panel" data-panel="t5">
+      <h2>Visualizations — MCP, Skills, Teams</h2>
+      <div class="sub-tabs">
+        <button type="button" class="active" data-sub="v1">MCP + Claude Desktop</button>
+        <button type="button" data-sub="v2">MCP workflow</button>
+        <button type="button" data-sub="v3">Skills vs MCP</button>
+        <button type="button" data-sub="v4">Teams integration</button>
+      </div>
+      <div id="sub-v1" class="sub-panel active">
+        <p>Register HTTP MCP (replace host):</p>
+        <pre style="background:#f1f5f9;padding:1rem;border-radius:8px;overflow:auto;font-size:0.82rem;">claude mcp add --transport http prompt-validator https://&lt;your-host&gt;/mcp</pre>
+        <div class="mermaid mm-v1">
+flowchart LR
+  subgraph Desktop["Claude Desktop"]
+    CC["MCP client JSON-RPC over HTTP"]
+  end
+  subgraph Host["Deployment"]
+    EP["POST /mcp"]
+    SRV["PromptValidatorMCPServer"]
+    T["Tools validate_prompt list_personas"]
+    ENG["run_llm_validation"]
+  end
+  CC --> EP --> SRV --> T --> ENG
+        </div>
+      </div>
+      <div id="sub-v2" class="sub-panel">
+        <div class="mermaid mm-v2">
+sequenceDiagram
+  participant U as User
+  participant CD as Claude Desktop
+  participant API as POST /mcp
+  participant MCP as MCP Server
+  participant Tool as validate_prompt
+  participant LLM as LLM engine
+  U->>CD: Validate this prompt
+  CD->>API: tools/call
+  API->>MCP: dispatch
+  MCP->>Tool: execute
+  Tool->>LLM: run_llm_validation
+  LLM-->>Tool: structured result
+  Tool-->>MCP: JSON
+  MCP-->>CD: result
+  CD-->>U: Answer
+        </div>
+      </div>
+      <div id="sub-v3" class="sub-panel">
+        <table>
+          <tr><th>Concept</th><th>Role</th></tr>
+          <tr><td>Skills / SKILL.md (client)</td><td>Rubric and instructions local to the assistant.</td></tr>
+          <tr><td>MCP tools (server)</td><td>Remote tools — authoritative scoring and persistence from your backend.</td></tr>
+        </table>
+        <div class="mermaid mm-v3">
+flowchart TB
+  SK["Skills SKILL.md"]
+  CD["Claude Desktop"]
+  MCP["MCP tools on server"]
+  DB[("Database")]
+  SK -.-> CD
+  CD --> MCP --> DB
+        </div>
+      </div>
+      <div id="sub-v4" class="sub-panel">
+        <div class="mermaid mm-v4">
+flowchart TD
+  T["Teams user"] --> BF["Azure Bot POST /api/messages"]
+  BF --> H["handle_teams_message"]
+  H --> R["run_mcp_validation channel=teams"]
+  R --> V["run_llm_validation"]
+  R --> DB[("Store validation")]
+  V --> REP["Reply via Bot Framework REST"]
+        </div>
+      </div>
+    </section>
+
+    <section id="panel-t6" class="tab-panel" data-panel="t6">
+      <h2>Full technical document (embedded)</h2>
+      <p class="muted">The repository includes a standalone HTML technical doc and the full Markdown source. Embedded below: <strong>Prompt_Validator_Technical_Documentation.html</strong> (same <code>docs/</code> folder). If the frame is blank (e.g. browser file restrictions), open the files directly.</p>
+      <p>
+        <a href="Prompt_Validator_Technical_Documentation.html" target="_blank" rel="noopener">Open technical HTML in new tab</a>
+        ·
+        <a href="PROMPT_VALIDATOR_TECHNICAL_DOCUMENT.md" target="_blank" rel="noopener">Open PROMPT_VALIDATOR_TECHNICAL_DOCUMENT.md</a>
+      </p>
+      <iframe class="tech-iframe" title="Full technical documentation" src="Prompt_Validator_Technical_Documentation.html"></iframe>
+    </section>
+
+    <footer class="end">
+      <strong>End of consolidated report.</strong><br />
+      This page includes: program/technical summary, API catalog, cost notes, governance &amp; prompt-injection considerations, final conclusion, MCP/Teams visualizations, and an embedded copy of <code>Prompt_Validator_Technical_Documentation.html</code>. The canonical long-form Markdown remains <code>PROMPT_VALIDATOR_TECHNICAL_DOCUMENT.md</code>.<br /><br />
+      <span style="opacity:.85">Verify Anthropic pricing and production security controls before sign-off.</span>
+    </footer>
+  </div>
+
+  <script>
+    mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' });
+
+    async function runMermaidIn(containerSel) {
+      if (!window.mermaid) return;
+      var el = document.querySelector(containerSel);
+      if (!el) return;
+      var nodes = el.querySelectorAll('.mermaid');
+      if (!nodes.length) return;
+      try {
+        await mermaid.run({ nodes: nodes });
+      } catch (err) {
+        console.warn('Mermaid render:', err);
+      }
+    }
+
+    function showMainTab(id) {
+      document.querySelectorAll('.main-tabs button').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-main-tab') === id);
+      });
+      document.querySelectorAll('.tab-panel').forEach(function (p) {
+        p.classList.toggle('active', p.getAttribute('data-panel') === id);
+      });
+      setTimeout(function () {
+        if (id === 't5') {
+          var sub = document.querySelector('#panel-t5 .sub-panel.active');
+          if (sub) runMermaidIn('#' + sub.id);
+        } else {
+          runMermaidIn('#panel-' + id);
+        }
+      }, 30);
+    }
+
+    document.querySelectorAll('.main-tabs button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        showMainTab(btn.getAttribute('data-main-tab'));
+      });
+    });
+
+    document.querySelectorAll('a[data-main-tab]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        showMainTab(a.getAttribute('data-main-tab'));
+      });
+    });
+
+    document.querySelectorAll('.sub-tabs button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var sub = btn.getAttribute('data-sub');
+        btn.parentElement.querySelectorAll('button').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        document.querySelectorAll('#panel-t5 .sub-panel').forEach(function (p) {
+          p.classList.toggle('active', p.id === 'sub-' + sub);
+        });
+        setTimeout(function () { runMermaidIn('#sub-' + sub); }, 30);
+      });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+      showMainTab('t1');
+    });
+  </script>
+</body>
+</html>

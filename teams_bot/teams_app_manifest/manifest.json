@@ -1,0 +1,61 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0",
+  "id": "89f80bcf-efa3-4a07-a4a4-e766f3557e98",
+  "developer": {
+    "name": "Infovision CoE AI/GenAI Practice",
+    "websiteUrl": "https://promptvalidatorcompleterepo.vercel.app",
+    "privacyUrl": "https://promptvalidatorcompleterepo.vercel.app",
+    "termsOfUseUrl": "https://promptvalidatorcompleterepo.vercel.app"
+  },
+  "name": {
+    "short": "Prompt Validator",
+    "full": "Infovision Prompt Validator — AI Prompt Quality Tool"
+  },
+  "description": {
+    "short": "Validate and improve AI prompts by persona",
+    "full": "Evaluate prompt quality against role-specific personas (Developer, PM, BA, Support). Get a 0-100 score, issues, and an AI-improved version instantly."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#0078D4",
+  "bots": [
+    {
+      "botId": "89f80bcf-efa3-4a07-a4a4-e766f3557e98",
+      "scopes": ["personal", "team", "groupChat"],
+      "supportsFiles": false,
+      "isNotificationOnly": false,
+      "commandLists": [
+        {
+          "scopes": ["personal", "team", "groupChat"],
+          "commands": [
+            {
+              "title": "validate",
+              "description": "Validate a prompt — usage: validate [persona:dev|pm|ba|support] Your prompt here"
+            },
+            {
+              "title": "improve",
+              "description": "Improve a prompt — usage: improve Your prompt here"
+            },
+            {
+              "title": "list personas",
+              "description": "Show all available personas and their criteria"
+            },
+            {
+              "title": "help",
+              "description": "Show usage instructions"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "permissions": ["identity", "messageTeamMembers"],
+  "validDomains": [
+    "promptvalidatorcompleterepo.vercel.app",
+    "token.botframework.com"
+  ]
+}
