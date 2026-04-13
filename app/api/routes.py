@@ -624,6 +624,7 @@ def admin_records(
             "issue_count": int(iss_cnt or 0),
             "llm_provider": llm_ev.get("provider", ""),
             "llm_model": llm_ev.get("model", ""),
+            "llm_scoring_mode": llm_ev.get("scoring_mode", ""),
             "prompt_text": prompt or "",
             "improved_prompt": improved or "",
         }

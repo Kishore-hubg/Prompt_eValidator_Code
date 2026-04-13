@@ -1475,9 +1475,30 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
       td=document.createElement("td");
       td.innerHTML=`<span style="color:${r.issue_count>3?"#f87171":r.issue_count>0?"#facc15":"#4ade80"}">${r.issue_count}</span>`;
       tr.appendChild(td);
-      // LLM
+      // LLM — show provider, or scoring mode badge when LLM was skipped
       td=document.createElement("td");
-      td.innerHTML=`<span class="adm-chip" style="${r.llm_provider==="anthropic"?"color:#c084fc;background:rgba(192,132,252,.12);border-color:rgba(192,132,252,.25)":""}">${r.llm_provider||"—"}</span>`;
+      (function(){
+        let _lbl="—", _style="";
+        if(r.llm_provider==="anthropic"){
+          _lbl="anthropic";
+          _style="color:#c084fc;background:rgba(192,132,252,.12);border-color:rgba(192,132,252,.25)";
+        } else if(r.llm_provider==="groq"){
+          _lbl="groq";
+          _style="color:#f59e0b;background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.25)";
+        } else if(r.llm_provider){
+          _lbl=r.llm_provider;
+        } else if(r.llm_scoring_mode==="static_prescreen"){
+          _lbl="static";
+          _style="color:#94a3b8;background:rgba(148,163,184,.10);border-color:rgba(148,163,184,.25)";
+        } else if(r.llm_scoring_mode==="llm_fallback_provider"){
+          _lbl="fallback";
+          _style="color:#f97316;background:rgba(249,115,22,.12);border-color:rgba(249,115,22,.25)";
+        } else if(r.llm_scoring_mode==="static_fallback"||r.llm_scoring_mode==="rate_limit_fallback"){
+          _lbl="static";
+          _style="color:#94a3b8;background:rgba(148,163,184,.10);border-color:rgba(148,163,184,.25)";
+        }
+        td.innerHTML=`<span class="adm-chip" style="${_style}" title="${r.llm_scoring_mode||r.llm_provider||''}">${_lbl}</span>`;
+      })();
       tr.appendChild(td);
       // Prompt
       tr.appendChild(makeTruncCell(r.prompt_text,"wide"));
