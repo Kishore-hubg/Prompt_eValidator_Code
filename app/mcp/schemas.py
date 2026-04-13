@@ -28,8 +28,9 @@ class ValidatePromptInput(BaseModel):
 
 class ValidatePromptOutput(BaseModel):
     """Output schema for validate_prompt tool."""
-    score: float = Field(description="Validation score (0-100)")
-    rating: str = Field(description="Rating: Excellent, Good, Needs Improvement, Poor")
+    score: float = Field(description="Validation score on a 0-100 scale (e.g. 37.9 means 37.9 out of 100)")
+    score_display: str = Field(description="Human-readable score string, e.g. '37.9 / 100'")
+    rating: str = Field(description="Rating: Excellent (≥85), Good (≥70), Needs Improvement (≥50), Poor (<50)")
     issues: list[str] = Field(description="List of identified issues")
     suggestions: list[str] = Field(description="Improvement suggestions")
     dimensions: list[dict] = Field(description="Dimension scores")

@@ -55,6 +55,7 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
     )
     return ValidatePromptOutput(
         score=score,
+        score_display=f"{round(score, 1)} / 100",
         rating=rating,
         issues=result.get("issues", []),
         suggestions=result.get("suggestions", []),
