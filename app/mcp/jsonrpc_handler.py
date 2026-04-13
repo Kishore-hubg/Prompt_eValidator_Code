@@ -131,6 +131,35 @@ async def _dispatch(method: str, params: dict, mcp_server) -> Any:
                 "isError": True,
             }
 
+        # For validate_prompt: return the pre-built formatted_report as Markdown text
+        # so Claude Desktop renders it directly instead of summarizing raw JSON.
+        if tool_name == "validate_prompt" and isinstance(result, dict) and result.get("formatted_report"):
+            return {
+                "content": [{"type": "text", "text": result["formatted_report"]}],
+                "isError": False,
+            }
+
+        # For improve_prompt: return the improved prompt in a clean Markdown block
+        if tool_name == "improve_prompt" and isinstance(result, dict) and result.get("improved_prompt"):
+            lines = [
+                "## Improved Prompt",
+                "",
+                result["improved_prompt"],
+                "",
+                "---",
+                "### Changes Made",
+                "",
+            ]
+            for change in result.get("changes", []):
+                lines.append(f"- {change}")
+            rationale = result.get("improvement_rationale", "")
+            if rationale:
+                lines += ["", f"**Rationale:** {rationale}"]
+            return {
+                "content": [{"type": "text", "text": "\n".join(lines)}],
+                "isError": False,
+            }
+
         result_text = json.dumps(result, indent=2, default=str)
         return {
             "content": [{"type": "text", "text": result_text}],
