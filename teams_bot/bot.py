@@ -389,10 +389,15 @@ class PromptValidatorTeamsBot(TeamsActivityHandler):
         from_user = turn_context.activity.from_property
         teams_user_id: str | None = getattr(from_user, "aad_object_id", None) or getattr(from_user, "id", None) or None
 
-        # Build email: prefer direct activity email → Graph API lookup → stable UUID fallback
+        # Resolution chain:
+        # 1. Direct email/UPN from activity from_property (rare in production Teams)
+        # 2. TeamsInfo.get_member() via bot connector — uses bot credentials, no user OAuth needed
+        # 3. Microsoft Graph /v1.0/me with OAuth access token (if SSO is active)
+        # 4. Stable UUID@teams.local fallback
         email = user_email or ""
+        if not email and teams_user_id:
+            email = await self._resolve_email_via_teams_info(turn_context, teams_user_id)
         if not email and access_token:
-            # Try Microsoft Graph /v1.0/me to get the real UPN / mail field
             email = await self._resolve_email_via_graph(access_token)
         if not email:
             if teams_user_id:
@@ -484,6 +489,39 @@ class PromptValidatorTeamsBot(TeamsActivityHandler):
         principal_name = getattr(from_user, "user_principal_name", "") or ""
         if isinstance(principal_name, str) and "@" in principal_name:
             return principal_name.strip().lower()
+        return ""
+
+    async def _resolve_email_via_teams_info(
+        self, turn_context: TurnContext, member_id: str
+    ) -> str:
+        """Resolve real user email via TeamsInfo.get_member() using bot credentials.
+
+        This uses the Bot Framework connector service (service URL + bot app
+        credentials) to look up the full TeamsChannelAccount for the user.
+        Does NOT require user OAuth — works as long as the bot has a valid
+        service URL in the activity (always true in production Teams).
+
+        Args:
+            turn_context: Current turn context with service URL and bot credentials.
+            member_id: The AAD Object ID or Teams user ID from activity.from_property.
+
+        Returns:
+            Lowercase email or userPrincipalName if resolved, otherwise empty string.
+        """
+        try:
+            from botbuilder.core.teams import TeamsInfo
+            member = await TeamsInfo.get_member(turn_context, member_id)
+            email = (getattr(member, "email", "") or "").strip()
+            if email and "@" in email:
+                return email.lower()
+            upn = (getattr(member, "user_principal_name", "") or "").strip()
+            if upn and "@" in upn:
+                return upn.lower()
+        except Exception as exc:  # noqa: BLE001
+            import logging as _logging
+            _logging.getLogger("teams_bot.bot").warning(
+                "TeamsInfo.get_member failed for %s: %s", member_id, exc
+            )
         return ""
 
     async def _resolve_email_via_graph(self, access_token: str) -> str:
