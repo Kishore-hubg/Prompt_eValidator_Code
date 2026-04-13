@@ -18,6 +18,7 @@ from app.mcp.schemas import (
 )
 from app.services.prompt_validation import run_llm_validation
 from app.services.persona_loader import load_personas, get_persona
+from app.services.suggestion_engine import derive_issue_based_suggestions
 from app.services.history_service import save_validation, fetch_history
 from app.repositories.validation_repository import analytics_summary
 from app.core.settings import DATABASE_BACKEND
@@ -47,18 +48,22 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
     )
 
     score = result.get("score", 0.0)
+    issues = result.get("issues", [])
     rating = (
         "Excellent" if score >= 85
         else "Good" if score >= 70
         else "Needs Improvement" if score >= 50
         else "Poor"
     )
+    suggestions = derive_issue_based_suggestions(
+        input_data.persona_id, issues, fallback=issues
+    )
     return ValidatePromptOutput(
         score=score,
         score_display=f"{round(score, 1)} / 100",
         rating=rating,
-        issues=result.get("issues", []),
-        suggestions=result.get("suggestions", []),
+        issues=issues,
+        suggestions=suggestions,
         dimensions=result.get("dimension_scores", []),
         improved_prompt=result.get("improved_prompt") or None,
     )
