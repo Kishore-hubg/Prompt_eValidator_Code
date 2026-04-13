@@ -87,6 +87,65 @@ _PERSONA_MAP = {
 }
 
 
+async def _resolve_teams_user_email(
+    service_url: str,
+    conversation_id: str,
+    user_id: str,
+    app_id: str,
+    app_password: str,
+    tenant_id: str,
+) -> str:
+    """Look up the real email/UPN for a Teams user via the Bot Framework connector.
+
+    Uses the same bot app credentials as _teams_send_reply — no extra permissions
+    or user OAuth required.  Calls:
+        GET {serviceUrl}/v3/conversations/{conversationId}/members/{userId}
+
+    Args:
+        service_url:     Teams service URL from the incoming activity.
+        conversation_id: Conversation ID from the incoming activity.
+        user_id:         AAD Object ID or Teams user ID (from_property.id).
+        app_id:          BOT_APP_ID (Azure bot app registration client ID).
+        app_password:    BOT_APP_PASSWORD.
+        tenant_id:       BOT_APP_TENANT_ID.
+
+    Returns:
+        Lowercase email string if resolved, otherwise empty string.
+    """
+    import httpx
+
+    try:
+        token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            tok = await client.post(token_url, data={
+                "grant_type": "client_credentials",
+                "client_id": app_id,
+                "client_secret": app_password,
+                "scope": "https://api.botframework.com/.default",
+            })
+            tok.raise_for_status()
+            bot_token = tok.json()["access_token"]
+
+            members_url = (
+                f"{service_url.rstrip('/')}/v3/conversations/{conversation_id}/members/{user_id}"
+            )
+            resp = await client.get(
+                members_url,
+                headers={"Authorization": f"Bearer {bot_token}"},
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                email = (data.get("email") or "").strip()
+                if email and "@" in email:
+                    return email.lower()
+                upn = (data.get("userPrincipalName") or "").strip()
+                if upn and "@" in upn:
+                    return upn.lower()
+    except Exception as exc:  # noqa: BLE001
+        _log.warning("Teams member lookup failed for user %s: %s", user_id, exc)
+    return ""
+
+
 async def _teams_send_reply(
     service_url: str,
     conversation_id: str,
@@ -176,7 +235,21 @@ async def teams_messages(request: Request):
         service_url = body.get("serviceUrl", "https://smba.trafficmanager.net/teams/")
         from_info = body.get("from") or {}
         teams_user_id = from_info.get("aadObjectId") or from_info.get("id") or ""
-        user_email = f"{teams_user_id}@teams.local" if teams_user_id else "teams-anon@teams.local"
+
+        # Resolve real email via Bot Framework connector (same bot credentials,
+        # no user OAuth required). Falls back to UUID@teams.local if unavailable.
+        user_email = ""
+        if teams_user_id and settings.microsoft_app_id and settings.microsoft_app_password:
+            user_email = await _resolve_teams_user_email(
+                service_url=service_url,
+                conversation_id=conversation_id,
+                user_id=teams_user_id,
+                app_id=settings.microsoft_app_id,
+                app_password=settings.microsoft_app_password,
+                tenant_id=settings.microsoft_app_tenant_id,
+            )
+        if not user_email:
+            user_email = f"{teams_user_id}@teams.local" if teams_user_id else "teams-anon@teams.local"
 
         reply_text: str | None = None
         reply_card: dict | None = None
