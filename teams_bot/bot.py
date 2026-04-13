@@ -389,8 +389,11 @@ class PromptValidatorTeamsBot(TeamsActivityHandler):
         from_user = turn_context.activity.from_property
         teams_user_id: str | None = getattr(from_user, "aad_object_id", None) or getattr(from_user, "id", None) or None
 
-        # Build stable email fallback from Teams AAD ID when OAuth is not configured
+        # Build email: prefer direct activity email → Graph API lookup → stable UUID fallback
         email = user_email or ""
+        if not email and access_token:
+            # Try Microsoft Graph /v1.0/me to get the real UPN / mail field
+            email = await self._resolve_email_via_graph(access_token)
         if not email:
             if teams_user_id:
                 email = f"{teams_user_id.lower().replace(' ', '-')}@teams.local"
@@ -481,6 +484,40 @@ class PromptValidatorTeamsBot(TeamsActivityHandler):
         principal_name = getattr(from_user, "user_principal_name", "") or ""
         if isinstance(principal_name, str) and "@" in principal_name:
             return principal_name.strip().lower()
+        return ""
+
+    async def _resolve_email_via_graph(self, access_token: str) -> str:
+        """Resolve real user email from Microsoft Graph API /v1.0/me.
+
+        Called when the Teams activity payload does not include email/UPN
+        directly (common in production Teams where the Bot Framework activity
+        from_property only carries the AAD Object ID).
+
+        Args:
+            access_token: A valid Microsoft identity access token with
+                ``User.Read`` scope (obtained via Teams SSO OAuth flow).
+
+        Returns:
+            Lowercase email string if resolved, otherwise empty string so the
+            caller can fall back gracefully without raising.
+        """
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(
+                    "https://graph.microsoft.com/v1.0/me",
+                    headers={"Authorization": f"Bearer {access_token}"},
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    # Prefer mail over userPrincipalName (UPN can be a UUID for guest users)
+                    email = (data.get("mail") or data.get("userPrincipalName") or "").strip()
+                    if email and "@" in email:
+                        return email.lower()
+        except Exception as exc:  # noqa: BLE001
+            import logging as _logging
+            _logging.getLogger("teams_bot.bot").warning(
+                "Graph API email lookup failed: %s", exc
+            )
         return ""
 
     async def _get_access_token(self, turn_context: TurnContext) -> str | None:
