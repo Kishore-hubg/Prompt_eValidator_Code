@@ -53,10 +53,10 @@ def _parse_json_object(content: str) -> dict[str, Any]:
     return json.loads(_strip_code_fences(content))
 
 
-def _chat_completion(system: str, user_content: str) -> tuple[str, dict[str, Any]]:
+def _chat_completion(system: str, user_content: str, max_tokens: int = 4096) -> tuple[str, dict[str, Any]]:
     payload: dict[str, Any] = {
         "model": ANTHROPIC_MODEL,
-        "max_tokens": 4096,
+        "max_tokens": max_tokens,
         "temperature": 0,
         "system": system,
         "messages": [{"role": "user", "content": user_content}],
@@ -212,7 +212,7 @@ def llm_evaluate_prompt(
         "user_prompt": prompt_text,
     }
 
-    content, eval_usage = _chat_completion(system, json.dumps(user_payload, ensure_ascii=False))
+    content, eval_usage = _chat_completion(system, json.dumps(user_payload, ensure_ascii=False), max_tokens=1500)
     parsed = _parse_json_object(content)
 
     # --- Validate core schema ---
@@ -652,11 +652,11 @@ def llm_rewrite_prompt(
 # is never blocked during Anthropic API calls.
 # ---------------------------------------------------------------------------
 
-async def _chat_completion_async(system: str, user_content: str) -> tuple[str, dict[str, Any]]:
+async def _chat_completion_async(system: str, user_content: str, max_tokens: int = 4096) -> tuple[str, dict[str, Any]]:
     """Async version of _chat_completion using httpx.AsyncClient."""
     payload: dict[str, Any] = {
         "model": ANTHROPIC_MODEL,
-        "max_tokens": 4096,
+        "max_tokens": max_tokens,
         "temperature": 0,
         "system": system,
         "messages": [{"role": "user", "content": user_content}],
@@ -770,7 +770,7 @@ async def llm_evaluate_prompt_async(
         "user_prompt": prompt_text,
     }
 
-    content, eval_usage = await _chat_completion_async(system, json.dumps(user_payload, ensure_ascii=False))
+    content, eval_usage = await _chat_completion_async(system, json.dumps(user_payload, ensure_ascii=False), max_tokens=1500)
     parsed = _parse_json_object(content)
 
     if LLM_STRICT_SCHEMA:

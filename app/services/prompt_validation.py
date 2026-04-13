@@ -337,6 +337,10 @@ def run_llm_validation(
                 prompt_text, persona_id, merged_issues, thin_input=True
             )
             rewrite_strategy = "template_thin"
+        elif final_score >= 85.0:
+            # Prompt is already Excellent — LLM rewrite adds no value and wastes tokens.
+            improved_prompt = prompt_text
+            rewrite_strategy = "skipped_high_score"
         else:
             try:
                 try:
@@ -618,6 +622,9 @@ async def run_llm_validation_async(
                 prompt_text, persona_id, merged_issues, thin_input=True
             )
             rewrite_strategy = "template_thin"
+        elif final_score >= 85.0:
+            # Prompt is already Excellent — LLM rewrite adds no value and wastes tokens.
+            rewrite_strategy = "skipped_high_score"
         else:
             try:
                 rewrite = await llm_anthropic.llm_rewrite_prompt_async(
