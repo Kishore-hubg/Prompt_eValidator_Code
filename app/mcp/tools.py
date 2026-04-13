@@ -49,6 +49,8 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
 
     score = result.get("score", 0.0)
     issues = result.get("issues", [])
+    dimensions = result.get("dimension_scores", [])
+    improved = result.get("improved_prompt") or None
     rating = (
         "Excellent" if score >= 85
         else "Good" if score >= 70
@@ -58,14 +60,51 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
     suggestions = derive_issue_based_suggestions(
         input_data.persona_id, issues, fallback=issues
     )
+    persona_name = persona.get("name", input_data.persona_id)
+
+    # Build formatted report — matches Web UI / Teams output format
+    lines = [
+        "## Prompt Validation Report",
+        "",
+        f"**Persona:** {persona_name}",
+        f"**Score:** {round(score, 1)} / 100",
+        f"**Rating:** {rating}",
+        "",
+        "---",
+        "### Dimension Scores",
+        "",
+        "| Dimension | Weight | Pass? | Notes |",
+        "|-----------|--------|-------|-------|",
+    ]
+    for d in dimensions:
+        name = d.get("name", "").replace("_", " ").title()
+        weight = f"{d.get('weight', 0):.0f}%"
+        passed = "✅" if d.get("passed") else "❌"
+        notes = (d.get("notes") or "").replace("\n", " ")[:120]
+        lines.append(f"| {name} | {weight} | {passed} | {notes} |")
+
+    lines += ["", "---", "### Issues Found", ""]
+    for issue in issues:
+        lines.append(f"- {issue}")
+
+    lines += ["", "---", "### Suggestions", ""]
+    for s in suggestions:
+        lines.append(f"- {s}")
+
+    if improved:
+        lines += ["", "---", "### Improved Prompt", "", improved]
+
+    formatted_report = "\n".join(lines)
+
     return ValidatePromptOutput(
         score=score,
         score_display=f"{round(score, 1)} / 100",
         rating=rating,
         issues=issues,
         suggestions=suggestions,
-        dimensions=result.get("dimension_scores", []),
-        improved_prompt=result.get("improved_prompt") or None,
+        dimensions=dimensions,
+        improved_prompt=improved,
+        formatted_report=formatted_report,
     )
 
 

@@ -38,6 +38,9 @@ class ValidatePromptOutput(BaseModel):
         default=None,
         description="AI-improved version of the prompt (populated when auto_improve=True)"
     )
+    formatted_report: str = Field(
+        description="Full human-readable validation report including score, dimensions, issues, suggestions, and improved prompt — ready to display directly"
+    )
 
 
 class ImprovePromptInput(BaseModel):
