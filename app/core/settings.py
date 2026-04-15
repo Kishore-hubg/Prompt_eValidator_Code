@@ -100,6 +100,12 @@ def llm_blend_weights() -> tuple[float, float]:
 SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET", "").strip()
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN", "").strip()  # optional: for proactive messages
 
+# Vercel KV (Redis) — for caching prompt validations and Teams bot state
+# Set automatically when you enable Vercel KV in your Vercel dashboard
+# Format: redis://[:password]@host:port[/db]
+# Falls back to in-memory cache if not configured (data lost on restart)
+VERCEL_KV_URL = os.getenv("VERCEL_KV_URL", "").strip()
+
 # ── Token-optimisation settings (model-agnostic: apply to Groq and Anthropic) ──
 # Static pre-screen: if the rules-engine static score is >= this threshold the
 # LLM evaluation call is skipped entirely and the static result is returned
