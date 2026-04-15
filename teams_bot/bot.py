@@ -18,7 +18,6 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 from teams_bot.config import TeamsBotSettings
-from app.services.cache_manager import get_cache_manager
 
 # ---------------------------------------------------------------------------
 # Persona catalogue (kept in-sync with persona_criteria_source_truth.json)
@@ -32,6 +31,14 @@ PERSONAS: list[dict[str, str]] = [
 ]
 
 PERSONA_BY_ID: dict[str, dict[str, str]] = {p["id"]: p for p in PERSONAS}
+
+# Per-conversation state: stores the persona the user has selected.
+# Key = conversation_id, Value = persona_id string.
+_conversation_persona: dict[str, str] = {}
+
+# Last validation result per conversation — used by /last-score command.
+# Key = conversation_id, Value = result dict from the validator API.
+_conversation_last_result: dict[str, dict] = {}
 
 # ---------------------------------------------------------------------------
 # Help text
@@ -288,8 +295,7 @@ class PromptValidatorTeamsBot(TeamsActivityHandler):
         if lower.startswith("/set-persona "):
             pid = text[13:].strip().lower()
             if pid in PERSONA_BY_ID:
-                cache_mgr = await get_cache_manager()
-                await cache_mgr.set_teams_persona(conv_id, pid, ttl_seconds=3600)
+                _conversation_persona[conv_id] = pid
                 p = PERSONA_BY_ID[pid]
                 await turn_context.send_activity(
                     f"✅ Persona set to **{p['emoji']} {p['name']}** (`{pid}`).\n\n"
@@ -303,8 +309,7 @@ class PromptValidatorTeamsBot(TeamsActivityHandler):
             return
 
         if lower in ("/my-persona", "my persona"):
-            cache_mgr = await get_cache_manager()
-            pid = await cache_mgr.get_teams_persona(conv_id)
+            pid = _conversation_persona.get(conv_id)
             if pid and pid in PERSONA_BY_ID:
                 p = PERSONA_BY_ID[pid]
                 await turn_context.send_activity(
@@ -317,8 +322,7 @@ class PromptValidatorTeamsBot(TeamsActivityHandler):
             return
 
         if lower in ("/last-score", "last score", "my score"):
-            cache_mgr = await get_cache_manager()
-            last = await cache_mgr.get_teams_result(conv_id)
+            last = _conversation_last_result.get(conv_id)
             if last:
                 await turn_context.send_activity(_card_activity(_build_adaptive_card(last)))
             else:
@@ -334,8 +338,7 @@ class PromptValidatorTeamsBot(TeamsActivityHandler):
             if action == "set_persona":
                 pid = (value.get("persona_id") or "").strip()
                 if pid in PERSONA_BY_ID:
-                    cache_mgr = await get_cache_manager()
-                    await cache_mgr.set_teams_persona(conv_id, pid, ttl_seconds=3600)
+                    _conversation_persona[conv_id] = pid
                     p = PERSONA_BY_ID[pid]
                     await turn_context.send_activity(
                         f"✅ Persona set to **{p['emoji']} {p['name']}** (`{pid}`).\n\n"
@@ -381,8 +384,7 @@ class PromptValidatorTeamsBot(TeamsActivityHandler):
                 )
                 return
 
-        cache_mgr = await get_cache_manager()
-        persona_id = await cache_mgr.get_teams_persona(conv_id)
+        persona_id = _conversation_persona.get(conv_id) or None
 
         from_user = turn_context.activity.from_property
         teams_user_id: str | None = getattr(from_user, "aad_object_id", None) or getattr(from_user, "id", None) or None
@@ -409,8 +411,7 @@ class PromptValidatorTeamsBot(TeamsActivityHandler):
                 await turn_context.send_activity(f"⚠️ {error_msg}")
                 return
 
-            cache_mgr = await get_cache_manager()
-            await cache_mgr.set_teams_result(conv_id, result, ttl_seconds=3600)
+            _conversation_last_result[conv_id] = result
             await turn_context.send_activity(_card_activity(_build_adaptive_card(result)))
         except Exception as exc:
             import logging as _logging

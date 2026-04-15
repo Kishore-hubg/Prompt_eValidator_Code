@@ -4,7 +4,6 @@ import asyncio
 import hashlib
 import logging
 import time
-import json
 from typing import Any
 
 _log = logging.getLogger("prompt_validator.validation")
@@ -19,9 +18,13 @@ from app.core.settings import (
     STATIC_PRESCREEN_THRESHOLD,
 )
 
-# Redis/Vercel KV cache manager — transparent fallback to in-memory if unavailable
-from app.services.cache_manager import get_cache_manager, get_cache_manager_sync
-
+# ---------------------------------------------------------------------------
+# In-memory prompt-result cache — avoids redundant LLM calls for identical
+# (prompt_text, persona_id, auto_improve) requests within PROMPT_CACHE_TTL_SECONDS.
+# Structure: { cache_key: (expire_timestamp, result_dict) }
+# Process-local only; resets on server restart.  No external dependency needed.
+# ---------------------------------------------------------------------------
+_validation_cache: dict[str, tuple[float, dict[str, Any]]] = {}
 import httpx
 from app.services.improver import improve_prompt, is_prompt_too_thin_for_rewrite
 from app.services import llm_anthropic, llm_groq
@@ -144,10 +147,13 @@ def run_llm_validation(
     # Cache is bypassed when PROMPT_CACHE_TTL_SECONDS=0.
     if PROMPT_CACHE_TTL_SECONDS > 0:
         key = _cache_key(prompt_text, persona_id, auto_improve)
-        cache_mgr = get_cache_manager_sync()
-        cached_result = cache_mgr.get_validation_sync(key)
-        if cached_result is not None:
-            return cached_result
+        cached = _validation_cache.get(key)
+        if cached is not None:
+            expire_ts, cached_result = cached
+            if time.monotonic() < expire_ts:
+                return cached_result
+            # Expired — evict stale entry
+            del _validation_cache[key]
 
     persona = get_persona(persona_id)
     guidelines = load_prompt_guidelines()
@@ -421,8 +427,8 @@ def run_llm_validation(
     # Pre-screened and fallback results are also safe to cache.
     if PROMPT_CACHE_TTL_SECONDS > 0 and not llm_evaluation.get("error"):
         key = _cache_key(prompt_text, persona_id, auto_improve)
-        cache_mgr = get_cache_manager_sync()
-        cache_mgr.set_validation_sync(key, result, PROMPT_CACHE_TTL_SECONDS)
+        expire_ts = time.monotonic() + PROMPT_CACHE_TTL_SECONDS
+        _validation_cache[key] = (expire_ts, result)
 
     return result
 
@@ -484,10 +490,12 @@ async def run_llm_validation_async(
     # ── Cache lookup ─────────────────────────────────────────────────────────
     if PROMPT_CACHE_TTL_SECONDS > 0:
         key = _cache_key(prompt_text, persona_id, auto_improve)
-        cache_mgr = await get_cache_manager()
-        cached_result = await cache_mgr.get_validation(key)
-        if cached_result is not None:
-            return cached_result
+        cached = _validation_cache.get(key)
+        if cached is not None:
+            expire_ts, cached_result = cached
+            if time.monotonic() < expire_ts:
+                return cached_result
+            del _validation_cache[key]
 
     if not llm_anthropic.llm_configured():
         raise RuntimeError("Anthropic API key is not configured.")
@@ -673,7 +681,7 @@ async def run_llm_validation_async(
 
     if PROMPT_CACHE_TTL_SECONDS > 0 and not llm_evaluation.get("error"):
         key = _cache_key(prompt_text, persona_id, auto_improve)
-        cache_mgr = await get_cache_manager()
-        await cache_mgr.set_validation(key, result, PROMPT_CACHE_TTL_SECONDS)
+        expire_ts = time.monotonic() + PROMPT_CACHE_TTL_SECONDS
+        _validation_cache[key] = (expire_ts, result)
 
     return result
