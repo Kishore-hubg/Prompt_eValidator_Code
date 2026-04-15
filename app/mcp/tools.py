@@ -27,6 +27,28 @@ from app.core.settings import DATABASE_BACKEND
 # ─── VALIDATION TOOLS ───────────────────────────────────────────────────────
 
 
+def _score_emoji(score: float) -> str:
+    """Return emoji badge matching Slack handler style."""
+    if score >= 85:
+        return "🟢"
+    if score >= 70:
+        return "🔵"
+    if score >= 50:
+        return "🟡"
+    return "🔴"
+
+
+def _rating_color(rating: str) -> str:
+    """Return emoji prefix matching Slack handler style."""
+    colors = {
+        "Excellent": "🟢 *Excellent*",
+        "Good": "🔵 *Good*",
+        "Needs Improvement": "🟡 *Needs Improvement*",
+        "Poor": "🔴 *Poor*",
+    }
+    return colors.get(rating, f"*{rating}*")
+
+
 def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePromptOutput:
     """
     Validate a prompt against a specific persona.
@@ -61,38 +83,76 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
         input_data.persona_id, issues, fallback=issues
     )
     persona_name = persona.get("name", input_data.persona_id)
+    provider = (result.get("llm_evaluation") or {}).get("provider", "")
 
-    # Build formatted report — matches Web UI / Teams output format
+    # Build formatted report matching Slack Block Kit visual style
+    emoji = _score_emoji(score)
+    score_int = int(round(score))
+
     lines = [
-        "## Prompt Validation Report",
+        f"{emoji} **Prompt Validator** · Score: {score_int}/100",
         "",
+        f"**Rating:** {_rating_color(rating)}",
         f"**Persona:** {persona_name}",
-        f"**Score:** {round(score, 1)} / 100",
-        f"**Rating:** {rating}",
         "",
         "---",
-        "### Dimension Scores",
         "",
-        "| Dimension | Weight | Pass? | Notes |",
-        "|-----------|--------|-------|-------|",
+        "**Your Prompt:**",
+        "```",
+        input_data.prompt_text[:280] + ("…" if len(input_data.prompt_text) > 280 else ""),
+        "```",
+        "",
+        "---",
+        "",
     ]
-    for d in dimensions:
-        name = d.get("name", "").replace("_", " ").title()
-        weight = f"{d.get('weight', 0):.0f}%"
-        passed = "✅" if d.get("passed") else "❌"
-        notes = (d.get("notes") or "").replace("\n", " ")[:120]
-        lines.append(f"| {name} | {weight} | {passed} | {notes} |")
 
-    lines += ["", "---", "### Issues Found", ""]
-    for issue in issues:
-        lines.append(f"- {issue}")
+    # Dimension Scores with checkmarks (matching Slack style)
+    if dimensions:
+        lines.append("**Dimension Breakdown:**")
+        lines.append("")
+        for d in dimensions[:7]:
+            passed = bool(d.get("passed"))
+            name = str(d.get("name", "")).replace("_", " ").title()
+            weight = int(d.get("weight", 0))
+            tick = "✅" if passed else "❌"
+            lines.append(f"{tick} {name} _(wt: {weight})_")
+        lines += ["", "---", ""]
 
-    lines += ["", "---", "### Suggestions", ""]
-    for s in suggestions:
-        lines.append(f"- {s}")
+    # Issues Found
+    if issues:
+        lines.append("**Issues Found:**")
+        lines.append("")
+        for issue in issues[:6]:
+            lines.append(f"• {issue}")
+        lines += ["", "---", ""]
 
-    if improved:
-        lines += ["", "---", "### Improved Prompt", "", improved]
+    # Suggestions
+    if suggestions:
+        lines.append("**Suggestions:**")
+        lines.append("")
+        for s in suggestions[:4]:
+            lines.append(f"• {s}")
+        lines += ["", "---", ""]
+
+    # Improved Prompt
+    if improved and improved != input_data.prompt_text:
+        improved_display = improved[:2800] + ("…" if len(improved) > 2800 else "")
+        lines += [
+            "**✨ Improved Prompt:**",
+            "",
+            "```",
+            improved_display,
+            "```",
+            "",
+            "---",
+            ""
+        ]
+
+    # Footer
+    provider_note = f" via {provider}" if provider else ""
+    lines += [
+        "*Infovision Prompt Validator*" + provider_note,
+    ]
 
     formatted_report = "\n".join(lines)
 
