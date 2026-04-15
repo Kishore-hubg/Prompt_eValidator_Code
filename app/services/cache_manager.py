@@ -12,7 +12,13 @@ import logging
 import time
 from typing import Any, Optional
 
-import redis.asyncio as redis
+# Graceful import — redis is optional; falls back to in-memory if not installed
+try:
+    import redis.asyncio as redis  # type: ignore[import]
+    _REDIS_LIB_AVAILABLE = True
+except ImportError:
+    redis = None  # type: ignore[assignment]
+    _REDIS_LIB_AVAILABLE = False
 
 _log = logging.getLogger(__name__)
 
@@ -41,6 +47,12 @@ class CacheManager:
         """Connect to Redis and verify connectivity. Safe to call multiple times."""
         if self._redis_client is not None:
             return  # Already initialized
+
+        if not _REDIS_LIB_AVAILABLE:
+            _log.warning("redis package not installed. Using in-memory fallback cache. "
+                         "Run: pip install redis>=5.0.0")
+            self._redis_available = False
+            return
 
         if not self.redis_url:
             _log.warning("VERCEL_KV_URL not configured. Using in-memory fallback cache.")
