@@ -70,6 +70,7 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
     )
 
     score = result.get("score", 0.0)
+    strengths = result.get("strengths", [])
     issues = result.get("issues", [])
     dimensions = result.get("dimension_scores", [])
     improved = result.get("improved_prompt") or None
@@ -118,6 +119,14 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
             lines.append(f"{tick} {name} _(wt: {weight})_")
         lines += ["", "---", ""]
 
+    # Strengths Found
+    if strengths:
+        lines.append("**Strengths:**")
+        lines.append("")
+        for strength in strengths[:4]:
+            lines.append(f"• {strength}")
+        lines += ["", "---", ""]
+
     # Issues Found
     if issues:
         lines.append("**Issues Found:**")
@@ -160,6 +169,7 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
         score=score,
         score_display=f"{round(score, 1)} / 100",
         rating=rating,
+        strengths=strengths,
         issues=issues,
         suggestions=suggestions,
         dimensions=dimensions,

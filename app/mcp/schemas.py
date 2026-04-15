@@ -27,13 +27,18 @@ class ValidatePromptInput(BaseModel):
 
 
 class ValidatePromptOutput(BaseModel):
-    """Output schema for validate_prompt tool."""
+    """Output schema for validate_prompt tool.
+
+    Structured response matching REST API ValidateResponse format for consistency
+    across all channels (REST, MCP, Teams, Slack, Web UI).
+    """
     score: float = Field(description="Validation score on a 0-100 scale (e.g. 37.9 means 37.9 out of 100)")
     score_display: str = Field(description="Human-readable score string, e.g. '37.9 / 100'")
     rating: str = Field(description="Rating: Excellent (≥85), Good (≥70), Needs Improvement (≥50), Poor (<50)")
+    strengths: list[str] = Field(default_factory=list, description="List of identified strengths in the prompt")
     issues: list[str] = Field(description="List of identified issues")
     suggestions: list[str] = Field(description="Improvement suggestions")
-    dimensions: list[dict] = Field(description="Dimension scores")
+    dimensions: list[dict] = Field(description="Dimension scores with name, score, weight, passed, notes")
     improved_prompt: Optional[str] = Field(
         default=None,
         description="AI-improved version of the prompt (populated when auto_improve=True)"

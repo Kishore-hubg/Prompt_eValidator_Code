@@ -248,7 +248,7 @@ def llm_evaluate_prompt(
                         "score": float(d.get("score", 0)),
                         "weight": float(d.get("weight", 0)),
                         "passed": bool(d.get("passed", False)),
-                        "notes": str(d["notes"]) if d.get("notes") else None,
+                        "notes": str(d.get("notes", "")) if d.get("notes") else "",
                     })
                 except (TypeError, ValueError):
                     continue
@@ -802,7 +802,7 @@ async def llm_evaluate_prompt_async(
                         "score": float(d.get("score", 0)),
                         "weight": float(d.get("weight", 0)),
                         "passed": bool(d.get("passed", False)),
-                        "notes": str(d["notes"]) if d.get("notes") else None,
+                        "notes": str(d.get("notes", "")) if d.get("notes") else "",
                     })
                 except (TypeError, ValueError):
                     continue
