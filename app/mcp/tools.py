@@ -48,6 +48,7 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
     )
 
     score = result.get("score", 0.0)
+    strengths = result.get("strengths", [])
     issues = result.get("issues", [])
     dimensions = result.get("dimension_scores", [])
     improved = result.get("improved_prompt") or None
@@ -83,6 +84,10 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
         notes = (d.get("notes") or "").replace("\n", " ")[:120]
         lines.append(f"| {name} | {weight} | {passed} | {notes} |")
 
+    lines += ["", "---", "### Strengths Found", ""]
+    for strength in strengths:
+        lines.append(f"- {strength}")
+
     lines += ["", "---", "### Issues Found", ""]
     for issue in issues:
         lines.append(f"- {issue}")
@@ -100,6 +105,7 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
         score=score,
         score_display=f"{round(score, 1)} / 100",
         rating=rating,
+        strengths=strengths,
         issues=issues,
         suggestions=suggestions,
         dimensions=dimensions,
