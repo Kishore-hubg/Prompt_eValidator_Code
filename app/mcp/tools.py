@@ -166,14 +166,30 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
     formatted_report = "\n".join(lines)
 
     return ValidatePromptOutput(
+        # Persona context (NEW - synced with Web UI)
+        persona_id=input_data.persona_id,
+        persona_name=persona_name,
+
+        # Core validation results
         score=score,
-        score_display=f"{round(score, 1)} / 100",
         rating=rating,
+        summary=f"{persona_name} prompt evaluated with score {score}.",
+
+        # Feedback
         strengths=strengths,
         issues=issues,
         suggestions=suggestions,
-        dimensions=dimensions,
-        improved_prompt=improved,
+
+        # Improvements
+        improved_prompt=improved or input_data.prompt_text,
+
+        # Detailed scoring (synced with Web UI - renamed from 'dimensions')
+        dimension_scores=dimensions,
+        guideline_evaluation=result.get("guideline_evaluation", {}),
+        llm_evaluation=result.get("llm_evaluation"),
+
+        # MCP-specific bonus fields
+        score_display=f"{round(score, 1)} / 100",
         formatted_report=formatted_report,
     )
 

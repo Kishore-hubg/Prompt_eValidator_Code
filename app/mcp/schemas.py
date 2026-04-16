@@ -2,10 +2,16 @@
 
 Defines input/output schemas for all MCP tools exposed by the validator.
 Used by Claude Code, Claude API, Teams bot, and other MCP clients.
+
+CRITICAL: ValidatePromptOutput MUST match Web UI API ValidateResponse structure
+to ensure consistency across all channels (MCP, REST, Slack, Teams, Web UI).
 """
 
-from typing import Any, Optional
+from typing import Any, Optional, List
 from pydantic import BaseModel, Field
+
+# Import Web UI schemas to ensure sync
+from app.models.schemas import ScoreDimension, GuidelineEvaluation, LlmEvaluation
 
 
 # ─── VALIDATION TOOLS ───────────────────────────────────────────────────────
@@ -29,22 +35,38 @@ class ValidatePromptInput(BaseModel):
 class ValidatePromptOutput(BaseModel):
     """Output schema for validate_prompt tool.
 
-    Structured response matching REST API ValidateResponse format for consistency
-    across all channels (REST, MCP, Teams, Slack, Web UI).
+    ✅ FULLY SYNCED WITH Web UI API ValidateResponse.
+    Ensures consistent response structure across MCP, REST, Slack, Teams, Web UI.
     """
-    score: float = Field(description="Validation score on a 0-100 scale (e.g. 37.9 means 37.9 out of 100)")
-    score_display: str = Field(description="Human-readable score string, e.g. '37.9 / 100'")
-    rating: str = Field(description="Rating: Excellent (≥85), Good (≥70), Needs Improvement (≥50), Poor (<50)")
-    strengths: list[str] = Field(default_factory=list, description="List of identified strengths in the prompt")
-    issues: list[str] = Field(description="List of identified issues")
-    suggestions: list[str] = Field(description="Improvement suggestions")
-    dimensions: list[dict] = Field(description="Dimension scores with name, score, weight, passed, notes")
-    improved_prompt: Optional[str] = Field(
+    # Persona context
+    persona_id: str = Field(description="Persona ID used for validation (e.g., 'persona_1')")
+    persona_name: str = Field(description="Human-readable persona name (e.g., 'Developer & QA')")
+
+    # Core validation results
+    score: float = Field(description="Validation score on a 0-100 scale")
+    rating: str = Field(description="Rating: Excellent (≥85), Good (70-84), Needs Improvement (50-69), Poor (<50)")
+    summary: str = Field(description="One-line summary of validation result")
+
+    # Feedback
+    strengths: List[str] = Field(description="List of prompt strengths identified")
+    issues: List[str] = Field(description="List of identified issues")
+    suggestions: List[str] = Field(description="Improvement suggestions")
+
+    # Improvements
+    improved_prompt: str = Field(description="AI-improved version of the prompt")
+
+    # Detailed scoring (synced with Web UI)
+    dimension_scores: List[ScoreDimension] = Field(description="Dimension-by-dimension breakdown")
+    guideline_evaluation: GuidelineEvaluation = Field(description="Guideline compliance check results")
+    llm_evaluation: Optional[LlmEvaluation] = Field(
         default=None,
-        description="AI-improved version of the prompt (populated when auto_improve=True)"
+        description="LLM scoring diagnostics (provider, model, source-of-truth info)"
     )
+
+    # MCP-specific bonus fields (not in Web UI but helpful for MCP clients)
+    score_display: str = Field(description="Human-readable score string, e.g., '78.5 / 100'")
     formatted_report: str = Field(
-        description="Full human-readable validation report including score, dimensions, issues, suggestions, and improved prompt — ready to display directly"
+        description="Pre-rendered Markdown report for direct display in MCP clients (Claude Desktop, etc.)"
     )
 
 
