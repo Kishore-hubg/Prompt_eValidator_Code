@@ -131,11 +131,18 @@ async def _dispatch(method: str, params: dict, mcp_server) -> Any:
                 "isError": True,
             }
 
-        # For validate_prompt: return the pre-built formatted_report as Markdown text
-        # so Claude Desktop renders it directly instead of summarizing raw JSON.
-        if tool_name == "validate_prompt" and isinstance(result, dict) and result.get("formatted_report"):
+        # For validate_prompt: return complete ValidatePromptOutput with formatted_report + structured data
+        # The formatted_report is rendered as text for readability, while all fields are available as JSON
+        if tool_name == "validate_prompt" and isinstance(result, dict):
+            formatted_report = result.get("formatted_report", "")
+            # Return full structured result (not just formatted_report)
+            result_json = json.dumps(result, indent=2, default=str)
+            response_text = f"{formatted_report}\n\n---\n\n**[Full structured data available in JSON]**"
             return {
-                "content": [{"type": "text", "text": result["formatted_report"]}],
+                "content": [
+                    {"type": "text", "text": response_text},
+                    {"type": "text", "text": f"```json\n{result_json}\n```"}
+                ],
                 "isError": False,
             }
 
@@ -160,6 +167,7 @@ async def _dispatch(method: str, params: dict, mcp_server) -> Any:
                 "isError": False,
             }
 
+        # Default: return full result as JSON for all other tools
         result_text = json.dumps(result, indent=2, default=str)
         return {
             "content": [{"type": "text", "text": result_text}],
