@@ -7,8 +7,14 @@ UI tier → target score band (Option C — aligns with ``rating_for_score`` in 
 - **medium** → score 50–69 → rating **Needs Improvement**
 - **excellent** → score ≥ 85 → rating **Excellent**
 
-The **Good** band (70–84) is not represented by a sample tier. LLM variance means
-scores are not guaranteed to fall inside these bands for every run.
+Complete rating criteria:
+- **Poor**: 0–49
+- **Needs Improvement**: 50–69
+- **Good**: 70–84
+- **Excellent**: 85–100
+
+The **Good** band (70–84) is intentionally not represented by a preloaded tier.
+LLM variance means scores are not guaranteed to fall inside these bands for every run.
 """
 
 from __future__ import annotations
@@ -23,8 +29,8 @@ QUALITY_EXCELLENT = "excellent"
 _VALID_QUALITIES = frozenset({QUALITY_POOR, QUALITY_MEDIUM, QUALITY_EXCELLENT})
 _VALID_PERSONAS = frozenset({f"persona_{i}" for i in range(5)})
 
-# Option C: medium prompts are intentionally incomplete vs. excellent (missing tests,
-# grounding, SLA/policy cites, structure) but more actionable than poor one-liners.
+# Option C: medium prompts are intentionally incomplete vs. excellent so they
+# generally map to Needs Improvement (50–69) rather than Good (70–84).
 
 TIER_SCORE_BANDS: dict[str, Any] = {
     QUALITY_POOR: {
@@ -60,13 +66,18 @@ _DEMO_SAMPLES: dict[str, dict[str, str]] = {
             "Maximum 350 words. Do not include internal Slack references or pricing details."
         ),
         QUALITY_MEDIUM: (
-            "Summarize the Q4 revenue highlights from the earnings report. "
-            "Mention any key figures or trends."
+            "Summarize the key highlights from our Q1 2026 business review for the "
+            "leadership team. Include financial performance and delivery risks. "
+            "Output as 5 bullet points."
         ),
         QUALITY_POOR: "Help me write something for a client.",
     },
     "persona_1": {
         QUALITY_EXCELLENT: (
+            "Implement a production-ready POST /api/v1/validate endpoint using Python 3.12 and FastAPI 0.115+ "
+            "with Pydantic v2 request validation. "
+            "Task type: new code for API validation module only (out of scope: authentication layer). "
+            "Language and framework versions are fixed; include codebase context for endpoint and schema boundaries. "
             "Using Python 3.12 and FastAPI 0.115+, implement a POST /api/v1/validate endpoint "
             "that accepts a JSON body with fields: prompt (str, required, max 2000 chars), "
             "persona_id (str, enum: persona_0 to persona_4), and auto_improve (bool, default false). "
@@ -76,12 +87,16 @@ _DEMO_SAMPLES: dict[str, dict[str, str]] = {
             "Write pytest unit tests for each edge case using FastAPI TestClient. "
             "Expected test format: TC-ID | Preconditions | Steps | Expected Result. "
             "All tests must achieve 100% coverage on the validation logic. "
-            "Document each test with the specific OWASP rule it validates."
+            "Document each test with the specific OWASP rule it validates. "
+            "For each test, include acceptance criteria and expected assertions. "
+            "Use this output structure: endpoint code, validation model, and test suite sections. "
+            "Ground the implementation in the stated API contract only; do not infer unspecified fields."
         ),
         QUALITY_MEDIUM: (
-            "Using FastAPI and Pydantic v2, add a POST /api/v1/validate route that accepts "
-            "JSON with prompt, persona_id, and auto_improve. Return 422 on bad input. "
-            "Show the route and Pydantic model in one code block."
+            "Implement a FastAPI POST /api/v1/validate endpoint using Python and Pydantic v2. "
+            "Accept JSON fields: prompt, persona_id, auto_improve. Return HTTP 422 for invalid input. "
+            "Include pytest test cases for empty prompt, invalid persona_id, and null prompt. "
+            "Show endpoint code and tests in one code block."
         ),
         QUALITY_POOR: "Write some code to validate a prompt.",
     },
@@ -99,9 +114,9 @@ _DEMO_SAMPLES: dict[str, dict[str, str]] = {
             "Report must be deliverable within 2 hours of sprint close."
         ),
         QUALITY_MEDIUM: (
-            "Write a Sprint 14 status update for the Ziply Finance Modernisation project. "
-            "Include what the team completed and the main risks identified. "
-            "Summarize the next sprint priorities."
+            "Create a Sprint 14 status update for the Ziply Finance Modernisation project. "
+            "Include completed work, top 2 risks with owners, and next sprint priorities. "
+            "Output as a Markdown table plus a 4-line summary."
         ),
         QUALITY_POOR: "Give me an update on the project.",
     },
@@ -116,8 +131,10 @@ _DEMO_SAMPLES: dict[str, dict[str, str]] = {
             "Prioritise using MoSCoW: Must Have vs Should Have. Audience: Delivery team leads."
         ),
         QUALITY_MEDIUM: (
-            "Extract the functional requirements for GL Trial Balance migration from the "
-            "project BRD. List them as bullet points."
+            "Extract user stories for the data migration module from the requirements document. "
+            "Audience: delivery team. "
+            "Format each as: As a [role], I want [goal], so that [benefit]. "
+            "Include acceptance criteria for each story and list as bullet points."
         ),
         QUALITY_POOR: "List the requirements for the project.",
     },
@@ -135,9 +152,9 @@ _DEMO_SAMPLES: dict[str, dict[str, str]] = {
             "confirmation SMS to the customer."
         ),
         QUALITY_MEDIUM: (
-            "Draft an email to a Ziply customer who was double-charged on their February invoice. "
-            "Reference ticket #TKT-20260315-0042. Apologize and outline refund next steps in a "
-            "professional tone. Aim for under 200 words."
+            "Draft a customer email for a delayed-delivery complaint. Tone should be "
+            "empathetic and professional. Keep it under 150 words and include one clear "
+            "next step for tracking the order."
         ),
         QUALITY_POOR: "Reply to an angry customer.",
     },

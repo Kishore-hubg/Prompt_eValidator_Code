@@ -32,6 +32,7 @@ from app.services.prompt_validation import run_llm_validation
 from app.services.llm_groq import GroqRateLimitError
 from app.services.history_service import save_validation, fetch_history
 from app.services.prompt_guidelines_loader import load_prompt_guidelines
+from app.services.data_governance_loader import load_data_governance_policy
 from app.auth.persona_mapping import map_persona, resolve_persona_for_user
 from app.integrations.oauth.provider import resolve_user_from_token
 from app.integrations.mcp.server import run_mcp_validation
@@ -215,6 +216,76 @@ def guidelines():
         sources=cfg.get("sources", []),
         global_checks=cfg.get("global_checks", []),
     )
+
+
+@router.get("/governance/policy", dependencies=[Depends(require_api_key)])
+def governance_policy():
+    """Expose current data-governance source-of-truth policy (read-only)."""
+    policy = load_data_governance_policy()
+    return {
+        "document": policy.get("document", {}),
+        "governance_rules": policy.get("governance_rules", {}),
+        "alerting_rules": policy.get("alerting_rules", []),
+        "implementation_constraints_for_current_repo": policy.get(
+            "implementation_constraints_for_current_repo", {}
+        ),
+    }
+
+
+@router.get("/governance/health", dependencies=[Depends(require_api_key)])
+def governance_health():
+    """Configuration health check for data-governance policy coverage."""
+    policy = load_data_governance_policy()
+    document = policy.get("document", {})
+    rules = policy.get("governance_rules", {})
+    impl = policy.get("implementation_constraints_for_current_repo", {})
+    alerts = policy.get("alerting_rules", [])
+
+    checks = [
+        {
+            "id": "document_present",
+            "status": "pass" if document.get("source_of_truth_document") else "warn",
+            "details": {"source_of_truth_document": document.get("source_of_truth_document", "")},
+        },
+        {
+            "id": "pii_classes_present",
+            "status": "pass" if rules.get("pii_classes") else "warn",
+            "details": {"has_pii_classes": bool(rules.get("pii_classes"))},
+        },
+        {
+            "id": "retention_schedule_present",
+            "status": "pass" if rules.get("retention_schedule") else "warn",
+            "details": {"has_retention_schedule": bool(rules.get("retention_schedule"))},
+        },
+        {
+            "id": "serving_layer_masking_present",
+            "status": "pass" if rules.get("serving_layer_masking") else "warn",
+            "details": {"has_serving_layer_masking": bool(rules.get("serving_layer_masking"))},
+        },
+        {
+            "id": "alert_rules_present",
+            "status": "pass" if len(alerts) > 0 else "warn",
+            "details": {"alert_rule_count": len(alerts)},
+        },
+        {
+            "id": "score_scale_declared",
+            "status": "pass"
+            if impl.get("preserve_canonical_score_scale_current_repo") == "0-100"
+            else "warn",
+            "details": {
+                "preserve_canonical_score_scale_current_repo": impl.get(
+                    "preserve_canonical_score_scale_current_repo", ""
+                )
+            },
+        },
+    ]
+    overall_status = "pass" if all(item["status"] == "pass" for item in checks) else "warn"
+    return {
+        "overall_status": overall_status,
+        "policy_scope": document.get("scope", ""),
+        "policy_document": document.get("source_of_truth_document", ""),
+        "checks": checks,
+    }
 
 def _run_db_writes(
     db: Any,
