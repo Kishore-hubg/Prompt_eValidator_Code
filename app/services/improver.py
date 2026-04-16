@@ -139,16 +139,22 @@ _ROLE_PLACEHOLDER_THIN = (
 def is_prompt_too_thin_for_rewrite(text: str) -> bool:
     """True when auto-improve should not call the LLM rewrite (avoids invented personas).
 
-    Heuristic: very short text, fewer than three words, or a single token like AAAA
-    made of one repeated character.
+    Heuristic: truly empty/garbage input, fewer than two words, or a single token
+    made of one repeated character (e.g. "AAAA").
+
+    Threshold deliberately kept small (< 6 chars) so that short-but-real prompts
+    like "Fix my code" (11 chars) or "Write tests" (11 chars) still go through the
+    LLM rewrite path and receive a proper structured improvement — not just template
+    placeholders.  Previously this was < 12 which incorrectly blocked 3-word prompts
+    like "Fix my code" from reaching the LLM.
     """
     t = text.strip()
     if not t:
         return True
-    if len(t) < 12:
+    if len(t) < 6:          # truly empty/garbage — "hi", "a", "aaaa", etc.
         return True
     words = t.split()
-    if len(words) < 3:
+    if len(words) < 2:      # single-word input — can't meaningfully rewrite
         return True
     if len(words) == 1 and len(t) >= 2:
         letters = [c for c in t.lower() if c.isalpha()]
