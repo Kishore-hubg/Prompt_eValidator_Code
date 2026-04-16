@@ -131,18 +131,38 @@ async def _dispatch(method: str, params: dict, mcp_server) -> Any:
                 "isError": True,
             }
 
-        # For validate_prompt: return complete ValidatePromptOutput with formatted_report + structured data
-        # The formatted_report is rendered as text for readability, while all fields are available as JSON
+        # For validate_prompt: extract formatted_report + improved_prompt and display both prominently.
+        # The improved_prompt is extracted directly from result dict, bypassing any tools.py
+        # conditions that might silently drop it. This ensures MCP output always shows
+        # the full improved prompt like other channels (Web UI, Teams, Slack).
         if tool_name == "validate_prompt" and isinstance(result, dict):
             formatted_report = result.get("formatted_report", "")
-            # Return full structured result (not just formatted_report)
-            result_json = json.dumps(result, indent=2, default=str)
-            response_text = f"{formatted_report}\n\n---\n\n**[Full structured data available in JSON]**"
+            improved_prompt = result.get("improved_prompt", "")
+            rating = result.get("rating", "")
+            score = result.get("score", 0)
+
+            # Build response content: formatted report + explicit improved version section
+            content_blocks = []
+
+            # Add formatted report (contains: Score, Rating, Persona, Dimensions, Strengths, Issues, Suggestions)
+            if formatted_report:
+                content_blocks.append({"type": "text", "text": formatted_report})
+
+            # Always add Improved Version section with full prompt text (matching screenshot format)
+            if improved_prompt:
+                improved_section = "\n".join([
+                    "",
+                    "---",
+                    "",
+                    "## Improved Version",
+                    "",
+                    improved_prompt,
+                    "",
+                ])
+                content_blocks.append({"type": "text", "text": improved_section})
+
             return {
-                "content": [
-                    {"type": "text", "text": response_text},
-                    {"type": "text", "text": f"```json\n{result_json}\n```"}
-                ],
+                "content": content_blocks if content_blocks else [{"type": "text", "text": "No output generated"}],
                 "isError": False,
             }
 
