@@ -143,15 +143,17 @@ def validate_prompt_tool(db: Any, input_data: ValidatePromptInput) -> ValidatePr
             lines.append(f"• {s}")
         lines += ["", "---", ""]
 
-    # Improved Prompt
+    # Improved Prompt — rendered as Markdown (NOT a code block) so Claude Desktop
+    # displays the ## Role / ## Task / ## Codebase Context sections as real headings.
+    # Wrapping in ``` caused the whole section to appear as a collapsed code block.
     if improved and improved != input_data.prompt_text:
         improved_display = improved[:2800] + ("…" if len(improved) > 2800 else "")
         lines += [
-            "**✨ Improved Prompt:**",
+            "---",
             "",
-            "```",
+            "### ✨ Improved Prompt",
+            "",
             improved_display,
-            "```",
             "",
             "---",
             ""
