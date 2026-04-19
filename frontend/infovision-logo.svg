@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fallback vector — add infovision-logo.png in this folder for official raster. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 8 262 38" role="img" aria-labelledby="ivTitle">
+  <title id="ivTitle">InfoVision — #AccelerateDigital</title>
+  <defs>
+    <linearGradient id="ivRed" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#991b1b"/>
+      <stop offset="100%" stop-color="#ef4444"/>
+    </linearGradient>
+  </defs>
+  <text x="0" y="28" font-family="Georgia, 'Times New Roman', serif" font-size="16" font-weight="700" letter-spacing="0.22em" fill="#111827">INFO</text>
+  <path fill="url(#ivRed)" d="M92 12 L102 28 L112 12 L108 12 L102 22 L96 12 Z"/>
+  <text x="118" y="28" font-family="Georgia, 'Times New Roman', serif" font-size="16" font-weight="700" letter-spacing="0.22em" fill="#111827">ISION</text>
+  <text x="0" y="42" font-family="system-ui, Segoe UI, sans-serif" font-size="9.5" font-weight="600" fill="#111827"><tspan font-weight="500">#Accelerate</tspan><tspan font-weight="700">Digital</tspan></text>
+</svg>
