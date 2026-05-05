@@ -61,10 +61,26 @@ class SSO_AuthMiddleware(BaseHTTPMiddleware):
         self.protect_webui = protect_webui
 
     def _is_exempt(self, path: str) -> bool:
-        """Check if path is exempt from SSO."""
+        """Check if path is exempt from SSO.
+
+        Rules:
+        - Exact path "/" matches only the root (not every URL)
+        - Paths ending with "/" (e.g. "/api/v1/auth/") → prefix match
+        - All other entries → exact match OR prefix with a trailing slash
+          (e.g. "/assets" matches "/assets" and "/assets/auth.js")
+        """
         for exempt in self.EXEMPT_PATHS:
-            if path.startswith(exempt):
-                return True
+            if exempt == "/":
+                if path == "/":
+                    return True
+            elif exempt.endswith("/"):
+                # already a prefix — startswith is correct
+                if path.startswith(exempt):
+                    return True
+            else:
+                # exact OR sub-path (e.g. /assets/auth.js under /assets)
+                if path == exempt or path.startswith(exempt + "/"):
+                    return True
         return False
 
     def _get_token_from_request(self, request: Request) -> Optional[str]:
