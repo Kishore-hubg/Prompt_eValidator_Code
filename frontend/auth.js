@@ -95,7 +95,10 @@ class PromptValidatorAuth {
         this.accessToken = response.accessToken;
         this.idToken = response.idToken;           // capture ID token for backend
         this.msalInstance.setActiveAccount(this.accountInfo);
-        await this._resolveBackendUser();
+        // Fire-and-forget — do NOT await; Vercel cold-start JWKS + MongoDB can take
+        // 5-10 s and would block the "Completing sign-in..." state indefinitely.
+        // persona_id will populate in the background; app is usable immediately.
+        this._resolveBackendUser().catch(e => console.warn("Backend resolve (bg):", e));
         return true;
       }
 
@@ -113,9 +116,10 @@ class PromptValidatorAuth {
               const silentReq = { account: this.accountInfo, scopes: this.msalConfig.scopes };
               const silentRes = await this.msalInstance.acquireTokenSilent(silentReq);
               this.idToken = silentRes.idToken;
-            } catch (_) { /* non-fatal — backend will use email_hint fallback */ }
+            } catch (_) { /* non-fatal */ }
           }
-          await this._resolveBackendUser();
+          // Fire-and-forget resolve (same reason as above — avoid blocking on cold start)
+          this._resolveBackendUser().catch(e => console.warn("Backend resolve (bg):", e));
           return true;
         }
       }
@@ -195,17 +199,26 @@ class PromptValidatorAuth {
     const token = this.idToken || this.accessToken;
     if (!token) return;
     try {
-      const res = await fetch("/api/v1/auth/resolve", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": window._PROMPT_VALIDATOR_API_KEY || "infovision-dev-key",
-        },
-        body: JSON.stringify({
-          access_token: token,           // idToken preferred; backend validates aud=client_id
-          email_hint: this.accountInfo?.username,
-        }),
-      });
+      // 8-second timeout — Vercel cold start (JWKS + MongoDB) can be slow
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      let res;
+      try {
+        res = await fetch("/api/v1/auth/resolve", {
+          method: "POST",
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": window._PROMPT_VALIDATOR_API_KEY || "infovision-dev-key",
+          },
+          body: JSON.stringify({
+            access_token: token,           // idToken preferred; backend validates aud=client_id
+            email_hint: this.accountInfo?.username,
+          }),
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
       if (res.ok) {
         this.userProfile = await res.json();
         console.log("SSO: user resolved:", this.userProfile.email, "→", this.userProfile.persona_id);

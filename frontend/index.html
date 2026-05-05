@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AIMPLIFY · Prompt Validator</title>
+  <title>Prompt eValidator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -266,8 +266,8 @@
     <div style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#3b82f6,#2563eb);margin-bottom:24px">
       <span style="color:#fff;font-size:20px;font-weight:800">Ai</span>
     </div>
-    <h2 style="margin:0 0 12px;font-size:20px;font-weight:700;color:#1a1a2e">Sign in to AIMPLIFY</h2>
-    <p style="margin:0 0 24px;font-size:14px;color:#64748b">Prompt Validator · Powered by Azure Entra ID</p>
+    <h2 style="margin:0 0 12px;font-size:20px;font-weight:700;color:#1a1a2e">Sign in to Prompt eValidator</h2>
+    <p style="margin:0 0 24px;font-size:14px;color:#64748b">Enterprise Prompt Quality · Powered by Azure Entra ID</p>
     <button id="sso-login-btn" style="width:100%;background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:10px;font-weight:600;cursor:pointer;font-size:14px;font-family:inherit;transition:background .15s;margin-bottom:12px" onmouseover="this.style.background='#1e40af'" onmouseout="this.style.background='#3b82f6'">
       Sign in with Microsoft
     </button>
@@ -1629,14 +1629,19 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
   const auth = window.promptValidatorAuth;
 
   // Show "Returning from login..." if mid-redirect
-  if (sessionStorage.getItem("msal_login_in_progress")) {
+  const midRedirect = !!sessionStorage.getItem("msal_login_in_progress");
+  if (midRedirect) {
     loginBtn.disabled = true;
     loginBtn.textContent = "Completing sign-in...";
     sessionStorage.removeItem("msal_login_in_progress");
   }
 
+  // Overall init timeout — Vercel cold start can be slow; never block user > 12 s
+  const initTimeout = new Promise(resolve => setTimeout(() => resolve("timeout"), 12000));
+
   try {
-    const isAuth = await auth.init();
+    const result = await Promise.race([auth.init(), initTimeout]);
+    const isAuth = result === "timeout" ? auth.isAuthenticated() : result;
 
     if (isAuth) {
       showApp(auth.getUser());
