@@ -411,10 +411,15 @@ def _run_db_writes(
 
 
 @router.post("/validate", response_model=ValidateResponse)
-def validate_prompt(request: ValidateRequest, db: DbDep, background_tasks: BackgroundTasks):
+def validate_prompt(raw_request: Request, request: ValidateRequest, db: DbDep, background_tasks: BackgroundTasks):
+    # SSO middleware sets request.state.email from validated JWT — always prefer
+    # this over client-supplied user_email (can't be spoofed; WebUI sends none).
+    sso_email: str = getattr(raw_request.state, "email", None) or ""
+    user_email: str = sso_email or request.user_email or ""
+
     resolved_persona_id = request.persona_id
-    if request.user_email and request.persona_id == "persona_0":
-        resolved_persona_id = resolve_persona_for_user(db, email=request.user_email)
+    if user_email and request.persona_id == "persona_0":
+        resolved_persona_id = resolve_persona_for_user(db, email=user_email)
     persona = get_persona(resolved_persona_id)
     if not request.prompt_text.strip():
         raise HTTPException(status_code=400, detail="prompt_text cannot be empty.")
@@ -447,7 +452,7 @@ def validate_prompt(request: ValidateRequest, db: DbDep, background_tasks: Backg
     validation_score_10 = to_validation_score_10(score)
     source_of_truth = build_source_of_truth_payload()
     governance_payload = build_data_governance_payload(
-        user_email=request.user_email or "",
+        user_email=user_email,
         channel=request.channel,
         score_100=score,
         score_10=validation_score_10,
@@ -459,7 +464,7 @@ def validate_prompt(request: ValidateRequest, db: DbDep, background_tasks: Backg
     background_tasks.add_task(
         _run_db_writes,
         db,
-        user_email=request.user_email or "",
+        user_email=user_email,
         persona_id=resolved_persona_id,
         channel=request.channel,
         prompt_text=request.prompt_text,
@@ -492,9 +497,9 @@ def validate_prompt(request: ValidateRequest, db: DbDep, background_tasks: Backg
     )
 
 @router.post("/improve", response_model=ValidateResponse)
-def improve_only(request: ValidateRequest, db: DbDep, background_tasks: BackgroundTasks):
+def improve_only(raw_request: Request, request: ValidateRequest, db: DbDep, background_tasks: BackgroundTasks):
     request.auto_improve = True
-    return validate_prompt(request=request, db=db, background_tasks=background_tasks)
+    return validate_prompt(raw_request=raw_request, request=request, db=db, background_tasks=background_tasks)
 
 
 @router.post("/auth/resolve", response_model=OAuthResolveResponse, dependencies=[Depends(require_api_key)])
