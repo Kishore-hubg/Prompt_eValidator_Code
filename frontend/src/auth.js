@@ -11,7 +11,8 @@ class PromptValidatorAuth {
     this.msalInstance = null;
     this.accountInfo = null;
     this.accessToken = null;
-    this.idToken = null;       // ID token — used for backend /auth/resolve with OIDC scopes
+    this.idToken = null;        // ID token — used for backend /auth/resolve with OIDC scopes
+    this._tokenExpiry = 0;      // ms epoch — used to skip acquireTokenSilent when still valid
     this.userProfile = null;
     this.initialized = false;
   }
@@ -134,18 +135,9 @@ class PromptValidatorAuth {
       if (accounts.length > 0) {
         this.accountInfo = accounts[0];
         this.msalInstance.setActiveAccount(this.accountInfo);
-        // Silently acquire token to verify session still valid
+        // Silently acquire token — also captures idToken + expiry in one call (no 2nd call needed)
         const token = await this.getAccessToken();
         if (token) {
-          // idToken may be available from cached account — try to extract
-          if (!this.idToken) {
-            try {
-              const silentReq = { account: this.accountInfo, scopes: this.msalConfig.scopes };
-              const silentRes = await this.msalInstance.acquireTokenSilent(silentReq);
-              this.idToken = silentRes.idToken;
-            } catch (_) { /* non-fatal */ }
-          }
-          // Fire-and-forget resolve (same reason as above — avoid blocking on cold start)
           this._resolveBackendUser().catch(e => console.warn("Backend resolve (bg):", e));
           return true;
         }
@@ -172,7 +164,8 @@ class PromptValidatorAuth {
   }
 
   /**
-   * Silently acquire access token; fall back to redirect if silent fails
+   * Silently acquire access token; fall back to redirect if silent fails.
+   * Also captures idToken and expiry so callers don't need a second MSAL call.
    */
   async getAccessToken() {
     if (!this.msalInstance || !this.accountInfo) return null;
@@ -180,6 +173,12 @@ class PromptValidatorAuth {
     try {
       const res = await this.msalInstance.acquireTokenSilent(request);
       this.accessToken = res.accessToken;
+      // Capture idToken in same call — avoids a second acquireTokenSilent elsewhere
+      if (res.idToken) this.idToken = res.idToken;
+      // Track expiry for addAuthHeader caching (bug #4)
+      this._tokenExpiry = res.expiresOn instanceof Date
+        ? res.expiresOn.getTime()
+        : (Date.now() + 3600 * 1000);
       return res.accessToken;
     } catch (err) {
       console.warn("Silent token failed, redirecting for refresh:", err);
@@ -273,11 +272,19 @@ class PromptValidatorAuth {
   }
 
   /**
-   * Add Authorization header to fetch config
+   * Add Authorization header to fetch config.
+   * Uses cached token; only calls acquireTokenSilent when token is missing or
+   * expiring within 5 minutes — avoids MSAL overhead on every API call.
    */
   async addAuthHeader(headers = {}) {
-    const token = await this.getAccessToken();
-    return token ? { ...headers, Authorization: `Bearer ${token}` } : { ...headers };
+    const REFRESH_MARGIN = 5 * 60 * 1000; // refresh 5 min before expiry
+    const needsRefresh = !this.accessToken || Date.now() > this._tokenExpiry - REFRESH_MARGIN;
+    if (needsRefresh) {
+      await this.getAccessToken(); // updates this.accessToken + this._tokenExpiry
+    }
+    return this.accessToken
+      ? { ...headers, Authorization: `Bearer ${this.accessToken}` }
+      : { ...headers };
   }
 }
 
