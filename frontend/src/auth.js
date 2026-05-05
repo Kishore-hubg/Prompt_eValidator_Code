@@ -273,17 +273,22 @@ class PromptValidatorAuth {
 
   /**
    * Add Authorization header to fetch config.
-   * Uses cached token; only calls acquireTokenSilent when token is missing or
-   * expiring within 5 minutes — avoids MSAL overhead on every API call.
+   *
+   * IMPORTANT: sends idToken, NOT accessToken.
+   * With OIDC scopes (openid/profile/email), accessToken.aud = 00000003-... (MS Graph)
+   * which fails backend audience validation.
+   * idToken.aud = client_id — matches MICROSOFT_ALLOWED_AUDIENCES → 200 ✅
+   *
+   * Only calls acquireTokenSilent when token is missing or expiring within 5 minutes.
    */
   async addAuthHeader(headers = {}) {
     const REFRESH_MARGIN = 5 * 60 * 1000; // refresh 5 min before expiry
-    const needsRefresh = !this.accessToken || Date.now() > this._tokenExpiry - REFRESH_MARGIN;
+    const needsRefresh = !this.idToken || Date.now() > this._tokenExpiry - REFRESH_MARGIN;
     if (needsRefresh) {
-      await this.getAccessToken(); // updates this.accessToken + this._tokenExpiry
+      await this.getAccessToken(); // updates this.idToken + this._tokenExpiry
     }
-    return this.accessToken
-      ? { ...headers, Authorization: `Bearer ${this.accessToken}` }
+    return this.idToken
+      ? { ...headers, Authorization: `Bearer ${this.idToken}` }
       : { ...headers };
   }
 }
