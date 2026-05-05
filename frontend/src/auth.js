@@ -17,13 +17,40 @@ class PromptValidatorAuth {
   }
 
   /**
-   * Fetch public MSAL config from backend
+   * Fetch public MSAL config from backend.
+   * Caches in sessionStorage so redirect return skips the Vercel cold-start call.
    */
   async _fetchBackendConfig() {
+    const CACHE_KEY = "_pv_auth_cfg";
+    const CACHE_TTL = 3600 * 1000; // 1 hour
+
+    // Use cached config on redirect return — avoids Vercel cold-start in the hot path
     try {
-      const res = await fetch("/api/v1/auth/public-config");
+      const raw = sessionStorage.getItem(CACHE_KEY);
+      if (raw) {
+        const { ts, data } = JSON.parse(raw);
+        if (Date.now() - ts < CACHE_TTL) {
+          console.log("Auth config: using cached config (skip backend call)");
+          return data;
+        }
+      }
+    } catch (_) { /* corrupt cache — fall through to fetch */ }
+
+    try {
+      // 10 s timeout — Vercel cold start on first load can be slow
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 10000);
+      let res;
+      try {
+        res = await fetch("/api/v1/auth/public-config", { signal: ctrl.signal });
+      } finally {
+        clearTimeout(tid);
+      }
       if (!res.ok) throw new Error(`Config fetch failed: ${res.status}`);
-      return await res.json();
+      const data = await res.json();
+      // Cache before redirect so redirect-return is instant (no Vercel cold start)
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+      return data;
     } catch (err) {
       console.error("Failed to fetch auth config from backend:", err);
       return null;
