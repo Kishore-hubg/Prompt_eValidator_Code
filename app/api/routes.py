@@ -89,6 +89,36 @@ def health():
     return {"status": "ok"}
 
 
+@router.get("/auth/public-config", include_in_schema=True)
+def auth_public_config():
+    """Return public MSAL configuration for WebUI frontend. Not a secret."""
+    from app.core.settings import (
+        MICROSOFT_CLIENT_ID,
+        MICROSOFT_TENANT_ID,
+        MICROSOFT_ISSUER,
+        OAUTH_PROVIDER_NAME,
+        ALLOW_MOCK_OAUTH,
+    )
+    # MSAL authority must NOT include /v2.0 — MSAL appends it internally.
+    # MICROSOFT_ISSUER is the token issuer (ends in /v2.0), so strip that suffix.
+    msal_authority = MICROSOFT_ISSUER.rstrip("/")
+    if msal_authority.endswith("/v2.0"):
+        msal_authority = msal_authority[: -len("/v2.0")]
+
+    return {
+        "provider": OAUTH_PROVIDER_NAME,
+        "mock_oauth": ALLOW_MOCK_OAUTH,
+        "msal": {
+            "client_id": MICROSOFT_CLIENT_ID,
+            "authority": msal_authority,
+            "redirect_uri": None,  # frontend fills in window.location.origin
+            # Use standard OIDC scopes — no App ID URI setup required in Azure.
+            # ID token (aud=clientId) is sent to /auth/resolve instead of access token.
+            "scopes": ["openid", "profile", "email"],
+        },
+    }
+
+
 @router.get("/validation-mode")
 def validation_mode():
     provider = LLM_PROVIDER if LLM_PROVIDER in {"groq", "anthropic"} else "auto"

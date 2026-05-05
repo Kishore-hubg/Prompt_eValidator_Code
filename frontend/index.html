@@ -7,6 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- MSAL.js for Azure Entra ID SSO -->
+  <script src="https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.min.js"></script>
   <style>
     /* AIMPLIFY Brand Style Guide v1 — light shell, semantic palette, dark code panels only */
     :root {
@@ -258,7 +260,22 @@
   </style>
 </head>
 <body>
-<div class="app">
+<!-- SSO Auth Overlay -->
+<div id="sso-auth-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(2px)">
+  <div style="background:#fff;border-radius:14px;padding:40px;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.15);text-align:center">
+    <div style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#3b82f6,#2563eb);margin-bottom:24px">
+      <span style="color:#fff;font-size:20px;font-weight:800">Ai</span>
+    </div>
+    <h2 style="margin:0 0 12px;font-size:20px;font-weight:700;color:#1a1a2e">Sign in to AIMPLIFY</h2>
+    <p style="margin:0 0 24px;font-size:14px;color:#64748b">Prompt Validator · Powered by Azure Entra ID</p>
+    <button id="sso-login-btn" style="width:100%;background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:10px;font-weight:600;cursor:pointer;font-size:14px;font-family:inherit;transition:background .15s;margin-bottom:12px" onmouseover="this.style.background='#1e40af'" onmouseout="this.style.background='#3b82f6'">
+      Sign in with Microsoft
+    </button>
+    <p id="sso-error" style="margin:12px 0 0;font-size:12px;color:#ef4444;display:none"></p>
+  </div>
+</div>
+
+<div class="app" id="main-app" style="display:none">
   <div class="hero">
     <div style="flex:1;min-width:0;padding-right:120px">
       <div class="brand-lockup">
@@ -276,10 +293,13 @@
         <p>Persona-aware scoring, actionable feedback, and improved prompts—aligned to AIMPLIFY design standards.</p>
       </div>
     </div>
-    <button id="adminOpenBtn" onclick="adminOpen()" title="Admin Dashboard" type="button" style="position:absolute;top:50%;right:0;transform:translateY(-50%);background:var(--aim-surface);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;transition:border-color .15s,background .15s">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      Admin
-    </button>
+    <div style="position:absolute;top:50%;right:0;transform:translateY(-50%);display:flex;align-items:center;gap:8px">
+      <span id="sso-user-badge" style="display:none;font-size:11px;color:var(--muted);background:var(--aim-surface);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-weight:500;font-family:inherit;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="Signed in"></span>
+      <button id="adminOpenBtn" onclick="adminOpen()" title="Admin Dashboard" type="button" style="background:var(--aim-surface);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;transition:border-color .15s,background .15s">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Admin
+      </button>
+    </div>
   </div>
   <div class="main" id="mainSplit">
     <div class="card top-pane split-top">
@@ -1567,6 +1587,87 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
   });
 })();
 </script>
+
+<!-- Auth initialization script -->
+<script src="/assets/auth.js"></script>
+<script>
+(async function initSSO() {
+  const authOverlay = document.getElementById("sso-auth-overlay");
+  const mainApp = document.getElementById("main-app");
+  const loginBtn = document.getElementById("sso-login-btn");
+  const errorMsg = document.getElementById("sso-error");
+
+  function showApp(user) {
+    authOverlay.style.display = "none";
+    mainApp.style.display = "";
+    // Show user email in header if available
+    if (user && user.email) {
+      const userBadge = document.getElementById("sso-user-badge");
+      if (userBadge) {
+        userBadge.textContent = user.email;
+        userBadge.style.display = "inline";
+      }
+    }
+    // Wrap fetch to inject Bearer token on every API call
+    const _auth = window.promptValidatorAuth;
+    const originalFetch = window.fetch;
+    window.fetch = async function(...args) {
+      const [resource, config] = args;
+      const headers = await _auth.addAuthHeader(config?.headers || {});
+      return originalFetch(resource, { ...config, headers });
+    };
+  }
+
+  // If MSAL not loaded → fail open (auth.js logs warning)
+  if (!window.msal) {
+    console.warn("MSAL.js not loaded — skipping SSO");
+    authOverlay.style.display = "none";
+    mainApp.style.display = "";
+    return;
+  }
+
+  const auth = window.promptValidatorAuth;
+
+  // Show "Returning from login..." if mid-redirect
+  if (sessionStorage.getItem("msal_login_in_progress")) {
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Completing sign-in...";
+    sessionStorage.removeItem("msal_login_in_progress");
+  }
+
+  try {
+    const isAuth = await auth.init();
+
+    if (isAuth) {
+      showApp(auth.getUser());
+    } else {
+      // Need login
+      authOverlay.style.display = "flex";
+      mainApp.style.display = "none";
+
+      loginBtn.onclick = async (e) => {
+        e.preventDefault();
+        loginBtn.disabled = true;
+        loginBtn.textContent = "Redirecting to Microsoft...";
+        errorMsg.style.display = "none";
+        // loginRedirect() navigates away — no need to handle ok/fail here
+        await auth.login();
+        // Only reached if loginRedirect throws synchronously
+        errorMsg.textContent = "Sign-in failed. Please try again.";
+        errorMsg.style.display = "block";
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Sign in with Microsoft";
+      };
+    }
+  } catch (err) {
+    console.error("SSO init error:", err);
+    // Fail open — don't block access if auth crashes
+    authOverlay.style.display = "none";
+    mainApp.style.display = "";
+  }
+})();
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </body>
 </html>

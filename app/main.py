@@ -9,9 +9,10 @@ from fastapi.staticfiles import StaticFiles
 from app.api.routes import router
 from app.mcp.server import PromptValidatorMCPServer
 from app.mcp.jsonrpc_handler import handle_jsonrpc
-from app.core.settings import DATABASE_BACKEND, FRONTEND_DIR
+from app.core.settings import DATABASE_BACKEND, FRONTEND_DIR, OAUTH_PROVIDER_NAME
 from app.db.database import initialize_schema
 from app.middleware.request_logging import RequestLoggingMiddleware
+from app.middleware.auth_sso import SSO_AuthMiddleware
 
 logging.basicConfig(
     level=logging.INFO,
@@ -54,6 +55,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(RequestLoggingMiddleware)
+
+# Enable SSO auth middleware for WebUI routes (only if not mock OAuth)
+_enable_sso = OAUTH_PROVIDER_NAME.strip().lower() in {
+    "microsoft",
+    "microsoft-entra-id",
+    "azure-ad",
+    "entra",
+}
+if _enable_sso:
+    app.add_middleware(SSO_AuthMiddleware, protect_webui=True)
+    _log.info("SSO Auth Middleware enabled for WebUI routes")
+else:
+    _log.info("SSO Auth Middleware disabled (PROMPT_VALIDATOR_OAUTH_PROVIDER not set to Microsoft)")
 
 app.include_router(router)
 
