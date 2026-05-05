@@ -282,7 +282,14 @@ class PromptValidatorAuth {
    * Only calls acquireTokenSilent when token is missing or expiring within 5 minutes.
    */
   async addAuthHeader(headers = {}) {
-    const REFRESH_MARGIN = 5 * 60 * 1000; // refresh 5 min before expiry
+    // If caller already set an Authorization header (e.g. admin HMAC token,
+    // API-key bearer) — preserve it. Never overwrite with SSO idToken.
+    const alreadyHasAuth = Object.keys(headers).some(
+      k => k.toLowerCase() === "authorization"
+    );
+    if (alreadyHasAuth) return { ...headers };
+
+    const REFRESH_MARGIN = 5 * 60 * 1000;
     const needsRefresh = !this.idToken || Date.now() > this._tokenExpiry - REFRESH_MARGIN;
     if (needsRefresh) {
       await this.getAccessToken(); // updates this.idToken + this._tokenExpiry
