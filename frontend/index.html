@@ -259,17 +259,22 @@
 </head>
 <body>
 <!-- SSO Auth Overlay -->
+<style>
+@keyframes sso-spin{to{transform:rotate(360deg)}}
+.sso-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sso-spin .7s linear infinite;vertical-align:middle;margin-right:8px}
+</style>
 <div id="sso-auth-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(2px)">
-  <div style="background:#fff;border-radius:14px;padding:40px;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.15);text-align:center">
+  <div style="background:#fff;border-radius:14px;padding:40px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.15);text-align:center">
     <div style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#3b82f6,#2563eb);margin-bottom:24px">
       <span style="color:#fff;font-size:20px;font-weight:800">Ai</span>
     </div>
     <h2 style="margin:0 0 12px;font-size:20px;font-weight:700;color:#1a1a2e">Sign in to Prompt eValidator</h2>
     <p style="margin:0 0 24px;font-size:14px;color:#64748b">Enterprise Prompt Quality · Powered by Azure Entra ID</p>
-    <button id="sso-login-btn" style="width:100%;background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:10px;font-weight:600;cursor:pointer;font-size:14px;font-family:inherit;transition:background .15s;margin-bottom:12px" onmouseover="this.style.background='#1e40af'" onmouseout="this.style.background='#3b82f6'">
+    <button id="sso-login-btn" style="width:100%;background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:12px;font-weight:600;cursor:pointer;font-size:14px;font-family:inherit;transition:background .15s;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px" onmouseover="if(!this.disabled)this.style.background='#1e40af'" onmouseout="if(!this.disabled)this.style.background='#3b82f6'">
       Sign in with Microsoft
     </button>
-    <p id="sso-error" style="margin:12px 0 0;font-size:12px;color:#ef4444;display:none"></p>
+    <p id="sso-status" style="margin:8px 0 0;font-size:12px;color:#64748b;min-height:16px"></p>
+    <p id="sso-error"  style="margin:8px 0 0;font-size:12px;color:#ef4444;display:none"></p>
   </div>
 </div>
 
@@ -1593,32 +1598,46 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
 <script>
 (async function initSSO() {
   const authOverlay = document.getElementById("sso-auth-overlay");
-  const mainApp = document.getElementById("main-app");
-  const loginBtn = document.getElementById("sso-login-btn");
-  const errorMsg = document.getElementById("sso-error");
+  const mainApp    = document.getElementById("main-app");
+  const loginBtn   = document.getElementById("sso-login-btn");
+  const statusMsg  = document.getElementById("sso-status");
+  const errorMsg   = document.getElementById("sso-error");
 
+  // ── helpers ────────────────────────────────────────────────────────────────
+  function setBtn(text, loading, disabled) {
+    loginBtn.disabled = !!disabled;
+    loginBtn.style.background = disabled ? "#93c5fd" : "#3b82f6";
+    loginBtn.innerHTML = loading
+      ? `<span class="sso-spinner"></span>${text}`
+      : text;
+  }
+  function setStatus(msg) { statusMsg.textContent = msg || ""; }
+  function setError(msg) {
+    errorMsg.textContent = msg || "";
+    errorMsg.style.display = msg ? "block" : "none";
+  }
   function showApp(user) {
     authOverlay.style.display = "none";
     mainApp.style.display = "";
-    // Show user email in header if available
     if (user && user.email) {
-      const userBadge = document.getElementById("sso-user-badge");
-      if (userBadge) {
-        userBadge.textContent = user.email;
-        userBadge.style.display = "inline";
-      }
+      const badge = document.getElementById("sso-user-badge");
+      if (badge) { badge.textContent = user.email; badge.style.display = "inline"; }
     }
     // Wrap fetch to inject Bearer token on every API call
     const _auth = window.promptValidatorAuth;
-    const originalFetch = window.fetch;
+    const _orig = window.fetch;
     window.fetch = async function(...args) {
       const [resource, config] = args;
       const headers = await _auth.addAuthHeader(config?.headers || {});
-      return originalFetch(resource, { ...config, headers });
+      return _orig(resource, { ...config, headers });
     };
   }
+  function resetLoginBtn() {
+    setBtn("Sign in with Microsoft", false, false);
+    setStatus("");
+  }
 
-  // If MSAL not loaded → fail open (auth.js logs warning)
+  // ── MSAL not loaded → fail open ────────────────────────────────────────────
   if (!window.msal) {
     console.warn("MSAL.js not loaded — skipping SSO");
     authOverlay.style.display = "none";
@@ -1628,45 +1647,82 @@ table.adm-tbl tbody td{padding:0 10px;height:32px;max-height:32px;overflow:hidde
 
   const auth = window.promptValidatorAuth;
 
-  // Show "Returning from login..." if mid-redirect
+  // ── Mid-redirect: returning from Microsoft login ───────────────────────────
   const midRedirect = !!sessionStorage.getItem("msal_login_in_progress");
+  sessionStorage.removeItem("msal_login_in_progress");
+
   if (midRedirect) {
-    loginBtn.disabled = true;
-    loginBtn.textContent = "Completing sign-in...";
-    sessionStorage.removeItem("msal_login_in_progress");
+    setBtn("Completing sign-in...", true, true);
+    setStatus("Verifying with Microsoft…");
   }
 
-  // Overall init timeout — Vercel cold start can be slow; never block user > 12 s
-  const initTimeout = new Promise(resolve => setTimeout(() => resolve("timeout"), 12000));
+  // Progressive status updates so user knows it's working (not frozen)
+  let stepTimer;
+  if (midRedirect) {
+    let step = 0;
+    const steps = [
+      [1500,  "Loading security config…"],
+      [3500,  "Exchanging tokens with Microsoft…"],
+      [6000,  "Almost there…"],
+      [9000,  "This is taking longer than usual — please wait…"],
+    ];
+    stepTimer = setInterval(() => {
+      if (step < steps.length) {
+        const [, msg] = steps[step++];
+        setStatus(msg);
+      } else {
+        clearInterval(stepTimer);
+      }
+    }, 0);
+    steps.forEach(([delay, msg]) => setTimeout(() => setStatus(msg), delay));
+    stepTimer = null; // use setTimeout-based approach above
+  }
+
+  // ── Overall timeout: 15 s — then check if MSAL already finished ───────────
+  const initTimeout = new Promise(resolve => setTimeout(() => resolve("timeout"), 15000));
 
   try {
+    const t0 = Date.now();
     const result = await Promise.race([auth.init(), initTimeout]);
+    console.log(`SSO init: ${Date.now()-t0}ms, result: ${result}`);
+
     const isAuth = result === "timeout" ? auth.isAuthenticated() : result;
 
     if (isAuth) {
       showApp(auth.getUser());
-    } else {
-      // Need login
-      authOverlay.style.display = "flex";
-      mainApp.style.display = "none";
-
-      loginBtn.onclick = async (e) => {
-        e.preventDefault();
-        loginBtn.disabled = true;
-        loginBtn.textContent = "Redirecting to Microsoft...";
-        errorMsg.style.display = "none";
-        // loginRedirect() navigates away — no need to handle ok/fail here
-        await auth.login();
-        // Only reached if loginRedirect throws synchronously
-        errorMsg.textContent = "Sign-in failed. Please try again.";
-        errorMsg.style.display = "block";
-        loginBtn.disabled = false;
-        loginBtn.textContent = "Sign in with Microsoft";
-      };
+      return;
     }
+
+    // ── Auth failed / not authenticated ───────────────────────────────────────
+    authOverlay.style.display = "flex";
+    mainApp.style.display = "none";
+
+    if (midRedirect) {
+      // Came back from Microsoft but still not signed in — show actionable error
+      if (result === "timeout") {
+        setError("Sign-in is taking too long. Reload the page and try again.");
+      } else {
+        setError("Sign-in failed. Click below to try again.");
+      }
+    }
+
+    // Always re-enable button — critical: without this button stays stuck
+    resetLoginBtn();
+
+    loginBtn.onclick = async (e) => {
+      e.preventDefault();
+      setBtn("Redirecting to Microsoft…", true, true);
+      setError("");
+      setStatus("Opening Microsoft login…");
+      await auth.login();
+      // Only reached if loginRedirect throws synchronously (unlikely)
+      setError("Could not open Microsoft login. Please try again.");
+      resetLoginBtn();
+    };
+
   } catch (err) {
     console.error("SSO init error:", err);
-    // Fail open — don't block access if auth crashes
+    // Fail open — show app if auth crashes rather than blocking forever
     authOverlay.style.display = "none";
     mainApp.style.display = "";
   }
