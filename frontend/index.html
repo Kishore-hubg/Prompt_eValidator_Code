@@ -6,7 +6,7 @@
   <title>Prompt Eval</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Poppins:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     /* AIMPLIFY Brand Style Guide v1 — light shell, semantic palette, dark code panels only */
     :root {
@@ -282,10 +282,29 @@
   <div class="hero">
     <div style="flex:1;min-width:0;padding-right:120px">
       <div class="hero-main" style="display:flex;flex-direction:column;align-items:flex-start">
+        <!-- 1: InfoVision logo -->
         <img class="brand-iv-logo" src="/assets/infovision-logo.png" decoding="async" alt="InfoVision"
-             style="max-height:52px;margin-bottom:10px;align-self:flex-start"
+             style="max-height:48px;margin-bottom:12px;align-self:flex-start;opacity:0.55"
              onerror="this.onerror=null;this.src='/assets/infovision-logo.svg'"/>
-        <h1 style="font-size:34px;font-family:'Playfair Display',Georgia,serif;font-weight:800;letter-spacing:-0.01em;margin:0 0 6px">Prompt Eval</h1>
+        <!-- 2: Outline-style validator icon (matches provided reference) -->
+        <div style="margin-bottom:12px;line-height:0" aria-hidden="true">
+          <svg width="62" height="62" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="64" height="64" rx="13" fill="#111827"/>
+            <!-- Top rounded rect with checkmark -->
+            <rect x="14" y="7" width="36" height="20" rx="5" stroke="#4b7bec" stroke-width="2.2"/>
+            <path d="M23 17 L29 23 L41 12" stroke="#4b7bec" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Connector top→mid -->
+            <line x1="32" y1="27" x2="32" y2="34" stroke="#4b7bec" stroke-width="2" stroke-linecap="round"/>
+            <!-- Middle bar -->
+            <rect x="14" y="34" width="36" height="11" rx="4" stroke="#4b7bec" stroke-width="2.2"/>
+            <!-- Connector mid→bottom -->
+            <line x1="32" y1="45" x2="32" y2="50" stroke="#4b7bec" stroke-width="2" stroke-linecap="round"/>
+            <!-- Bottom bar -->
+            <rect x="14" y="50" width="36" height="8" rx="3.5" stroke="#4b7bec" stroke-width="2.2"/>
+          </svg>
+        </div>
+        <!-- 3: Title -->
+        <h1 style="margin:0 0 6px">Prompt Eval</h1>
         <p>Persona-aware scoring, actionable feedback, and improved prompts—aligned to Infovision design standards.</p>
       </div>
     </div>
@@ -318,7 +337,7 @@
             <option value="excellent">Excellent</option>
           </select>
           <button type="button" id="sampleBtn" style="display:none">Load Sample</button>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-left:auto">
             <button type="button" class="secondary" id="promptLibraryBtn" title="Prompt Library — Coming Soon" style="white-space:nowrap" onclick="return false;">Prompt Library</button>
             <span style="font-size:10px;color:var(--muted);letter-spacing:0.04em;font-weight:500">Coming Soon</span>
           </div>
