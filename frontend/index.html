@@ -282,9 +282,15 @@
   <div class="hero">
     <div style="flex:1;min-width:0;padding-right:120px;display:flex;flex-direction:column;align-items:center">
       <div class="hero-main" style="text-align:center">
-        <!-- InfoVision logo — INFO + V + ISION, centered, smaller, dark contrast -->
-        <div style="display:flex;align-items:baseline;gap:1px;margin-bottom:5px;font-family:Poppins,Arial,sans-serif;font-weight:700;justify-content:center;width:100%">
-          <span style="font-size:11px;color:#1a1a2e;letter-spacing:0.2px">INFO</span><span style="font-size:15px;color:#991b1b;line-height:1;letter-spacing:0">V</span><span style="font-size:11px;color:#1a1a2e;letter-spacing:0.2px">ISION</span>
+        <!-- InfoVision logo — INFO + V (SVG strokes) + ISION, centered -->
+        <div style="display:flex;align-items:center;gap:1px;margin-bottom:5px;font-family:Poppins,Arial,sans-serif;font-weight:700;justify-content:center;width:100%">
+          <span style="font-size:11px;color:#1a1a2e;letter-spacing:0.2px">INFO</span>
+          <!-- V icon: two diagonal strokes -->
+          <svg width="10" height="14" viewBox="0 0 10 14" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;margin:0 1px" aria-hidden="true">
+            <line x1="1" y1="1" x2="5" y2="13" stroke="#991b1b" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="9" y1="1" x2="5" y2="13" stroke="#991b1b" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <span style="font-size:11px;color:#1a1a2e;letter-spacing:0.2px">ISION</span>
         </div>
         <h1>Prompt Eval</h1>
         <p style="display:none">Persona-aware scoring, actionable feedback, and improved prompts—aligned to Infovision design standards.</p>
