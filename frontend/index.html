@@ -282,16 +282,10 @@
   <div class="hero">
     <div style="flex:1;min-width:0;padding-right:120px">
       <div class="hero-main">
-        <!-- InfoVision logo SVG — Poppins 700, zero letter-spacing, bright, smaller than h1 26px -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="134" height="20" viewBox="0 0 134 20"
-             style="display:block;margin-bottom:6px;opacity:0.75" aria-label="InfoVision" role="img">
-          <!-- INFO text — Poppins 700, 15px -->
-          <text x="0" y="15" font-family="Poppins, Arial, sans-serif" font-size="15" font-weight="700" fill="#1a1a2e" letter-spacing="-0.5">INFO</text>
-          <!-- Red V — bright #ef4444, Poppins 700, 16px (1px taller for visual balance) -->
-          <text x="48" y="15" font-family="Poppins, Arial, sans-serif" font-size="16" font-weight="700" fill="#ef4444" letter-spacing="0">V</text>
-          <!-- ISION text — Poppins 700, 15px -->
-          <text x="62" y="15" font-family="Poppins, Arial, sans-serif" font-size="15" font-weight="700" fill="#1a1a2e" letter-spacing="-0.5">ISION</text>
-        </svg>
+        <!-- InfoVision logo — plain text, no SVG rendering glitches -->
+        <div style="display:flex;align-items:baseline;gap:0;margin-bottom:6px;font-family:Poppins,Arial,sans-serif;font-weight:700">
+          <span style="font-size:15px;color:#1a1a2e;letter-spacing:-0.5px">INFO</span><span style="font-size:16px;color:#ef4444">V</span><span style="font-size:15px;color:#1a1a2e;letter-spacing:-0.5px">ISION</span>
+        </div>
         <h1>Prompt Eval</h1>
         <p style="display:none">Persona-aware scoring, actionable feedback, and improved prompts—aligned to Infovision design standards.</p>
       </div>
