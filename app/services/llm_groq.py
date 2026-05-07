@@ -563,42 +563,42 @@ def llm_rewrite_prompt(
     # ---------------------------------------------------------------------------
     persona_section_maps: dict[str, tuple[list[str], str]] = {
         "persona_0": (
-            ["## Role", "## Task", "## Context", "## Output Format", "## Constraints"],
+            ["**Role**:", "**Task**:", "**Context**:", "**Output Format**:", "**Constraints**:"],
             "Plain language. Executive-ready. No technical jargon.",
         ),
         "persona_1": (
             [
-                "## Role", "## Task", "## Codebase Context",
-                "## Acceptance Criteria", "## Edge Cases", "## Output Format",
+                "**Role**:", "**Task**:", "**Codebase Context**:",
+                "**Acceptance Criteria**:", "**Edge Cases**:", "**Output Format**:",
             ],
             "Technically precise. Carry language, framework, and version exactly as stated. "
             "Use code-block directives for expected output.",
         ),
         "persona_2": (
             [
-                "## Role", "## Report Type", "## Sprint / Project Context",
-                "## Data References", "## Output Format", "## Constraints",
+                "**Role**:", "**Report Type**:", "**Sprint / Project Context**:",
+                "**Data References**:", "**Output Format**:", "**Constraints**:",
             ],
             "Decision-ready and traceable. Keep sprint dates, audience, and data references "
             "exactly as stated — never invent them.",
         ),
         "persona_3": (
             [
-                "## Role", "## Task", "## Source Documents",
-                "## Inference Policy", "## Output Format",
+                "**Role**:", "**Task**:", "**Source Documents**:",
+                "**Inference Policy**:", "**Output Format**:",
             ],
             "Grounded in source material. Carry document names, section refs, and dates verbatim.",
         ),
         "persona_4": (
             [
-                "## Role", "## Task", "## Customer Context",
-                "## Policy / SLA Constraints", "## Output Format",
+                "**Role**:", "**Task**:", "**Customer Context**:",
+                "**Policy / SLA Constraints**:", "**Output Format**:",
             ],
             "Empathetic, compliant, concise. "
             "Tone and empathy guidance goes INSIDE ## Role (one sentence) or ## Customer Context (as a bullet). "
             "NEVER create a separate ## Tone Directive section. "
             "NEVER create a ## Next Action section — the task directive is already in ## Task. "
-            "## Task is ONE imperative sentence starting with an action verb (Draft / Write / Create).",
+            "**Task is ONE imperative sentence starting with an action verb (Draft / Write / Create).**:",
         ),
     }
     sections, style_note = persona_section_maps.get(
@@ -807,7 +807,7 @@ def llm_rewrite_prompt(
             for _heading, _body in _val.items():
                 _heading_str = str(_heading).strip()
                 if not _heading_str.startswith("#"):
-                    _heading_str = f"## {_heading_str}"
+                    _heading_str = f"**{_heading_str}**:"
                 _md_lines.append(_heading_str)
                 if _body:
                     _md_lines.append(str(_body).strip())
