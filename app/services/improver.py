@@ -17,34 +17,34 @@ from app.services.persona_loader import get_persona
 _PERSONA_SECTIONS: dict[str, dict] = {
     "persona_0": {
         "role": "You are an expert enterprise analyst and business communication specialist.",
-        "sections": ["**Role**:", "**Task**:", "**Context**:", "**Output Format**:", "**Constraints**:"],
+        "sections": ["Role:", "Task:", "Context:", "Output Format:", "Constraints:"],
     },
     "persona_1": {
         "role": "You are a senior software engineer and QA-aware coding assistant.",
         "sections": [
-            "**Role**:", "**Task**:", "**Codebase Context**:",
-            "**Acceptance Criteria**:", "**Edge Cases**:", "**Output Format**:",
+            "Role:", "Task:", "Codebase Context:",
+            "Acceptance Criteria:", "Edge Cases:", "Output Format:",
         ],
     },
     "persona_2": {
         "role": "You are a delivery-focused technical project manager.",
         "sections": [
-            "**Role**:", "**Report Type**:", "**Sprint / Project Context**:",
-            "**Data References**:", "**Output Format**:", "**Constraints**:",
+            "Role:", "Report Type:", "Sprint / Project Context:",
+            "Data References:", "Output Format:", "Constraints:",
         ],
     },
     "persona_3": {
         "role": "You are a business analysis and product delivery assistant.",
         "sections": [
-            "**Role**:", "**Task**:", "**Source Documents**:",
-            "**Inference Policy**:", "**Output Format**:",
+            "Role:", "Task:", "Source Documents:",
+            "Inference Policy:", "Output Format:",
         ],
     },
     "persona_4": {
         "role": "You are a customer support communication specialist who drafts empathetic, policy-compliant responses.",
         "sections": [
-            "**Role**:", "**Task**:", "**Customer Context**:",
-            "**Policy / SLA Constraints**:", "**Output Format**:",
+            "Role:", "Task:", "Customer Context:",
+            "Policy / SLA Constraints:", "Output Format:",
         ],
     },
 }
@@ -55,49 +55,49 @@ _PERSONA_SECTIONS: dict[str, dict] = {
 # NOT evaluation issues.
 # ---------------------------------------------------------------------------
 _PLACEHOLDERS: dict[str, str] = {
-    "**Context**:":
+    "Context:":
         "[Specify: source material (document name / URL), audience, purpose, "
         "and any relevant background information]",
-    "**Constraints**:":
+    "Constraints:":
         "[Specify: tone (formal / casual / technical), length limit, "
         "scope boundaries, and any content exclusions]",
-    "**Codebase Context**:":
+    "Codebase Context:":
         "[Specify: programming language, framework and version, "
         "relevant modules or file paths, and any architectural constraints]",
-    "**Acceptance Criteria**:":
+    "Acceptance Criteria:":
         "[Specify: measurable outcomes — e.g., all unit tests pass, "
         "response time < 200 ms, output matches schema X]",
-    "**Edge Cases**:":
+    "Edge Cases:":
         "[Specify: boundary values, null / empty inputs, "
         "duplicate records, timeout scenarios, and error states]",
-    "**Output Format**:":
+    "Output Format:":
         "[Specify: format (code blocks / prose / JSON / table), "
         "length, and structure (e.g., step-by-step / bullet list / report)]",
-    "**Sprint / Project Context**:":
+    "Sprint / Project Context:":
         "[Specify: sprint name or ID, project name, stakeholders, "
         "relevant tickets or milestones]",
-    "**Source Documents**:":
+    "Source Documents:":
         "[Specify: document names, section references, or URLs "
         "the response should be grounded in]",
-    "**Inference Policy**:":
+    "Inference Policy:":
         "[Specify: whether to infer beyond source material, "
         "citation format, and confidence thresholds]",
-    "**Tone Directive**:":
+    "Tone Directive:":
         "[Specify: tone (empathetic / professional / formal), "
         "language level, and any brand voice guidelines]",
-    "**Customer Context**:":
+    "Customer Context:":
         "[Specify: customer name, issue summary, product affected, "
         "account tier, and prior interaction history]",
-    "**Policy / SLA Constraints**:":
+    "Policy / SLA Constraints:":
         "[Specify: applicable policies, SLA windows, escalation rules, "
         "and compliance requirements]",
-    "**Next Action**:":
+    "Next Action:":
         "[Specify: what the agent should offer the customer next — "
         "e.g., escalate, schedule callback, send article]",
-    "**Report Type**:":
+    "Report Type:":
         "[Specify: report type — e.g., sprint retrospective, "
         "velocity report, risk summary, stakeholder update]",
-    "**Data References**:":
+    "Data References:":
         "[Specify: data sources, dashboards, metric names, "
         "and date ranges the report should reference]",
 }
@@ -319,19 +319,19 @@ def improve_prompt(
     for section in cfg["sections"]:
         lines.append(section)
 
-        if section == "**Role**:":
+        if section == "Role:":
             lines.append(_ROLE_PLACEHOLDER_THIN if thin_input else cfg["role"])
 
-        elif section in ("**Task**:", "**Report Type**:"):
+        elif section in ("Task:", "Report Type:"):
             lines.append(task_stmt)
 
-        elif section == "**Codebase Context**:":
+        elif section == "Codebase Context:":
             if tech_stack:
                 lines.append("\n".join(f"- {t}" for t in tech_stack))
             else:
                 lines.append(_PLACEHOLDERS.get(section, "[Not specified in original — add before using]"))
 
-        elif section == "**Acceptance Criteria**:":
+        elif section == "Acceptance Criteria:":
             # Extract quality/test requirements directly from original text
             criteria_kws = ("unit test", "integration test", "test", "coverage",
                             "error handling", "validation", "schema", "response time",
@@ -348,25 +348,25 @@ def improve_prompt(
             else:
                 lines.append(_PLACEHOLDERS.get(section, "[Not specified in original — add before using]"))
 
-        elif section == "**Edge Cases**:":
+        elif section == "Edge Cases:":
             if edge_cases:
                 lines.append("\n".join(f"- {e}" for e in edge_cases))
             else:
                 lines.append(_PLACEHOLDERS.get(section, "[Not specified in original — add before using]"))
 
-        elif section == "**Output Format**:":
+        elif section == "Output Format:":
             if output_fmt:
                 lines.append(output_fmt)
             else:
                 lines.append(_PLACEHOLDERS.get(section, "[Not specified in original — add before using]"))
 
-        elif section == "**Constraints**:":
+        elif section == "Constraints:":
             if constraints:
                 lines.append("\n".join(f"- {c}" for c in constraints))
             else:
                 lines.append(_PLACEHOLDERS.get(section, "[Not specified in original — add before using]"))
 
-        elif section == "**Context**:":
+        elif section == "Context:":
             # Extract purpose/audience hints that add meaningful context BEYOND the task.
             # Require len > 40 to avoid echoing the task sentence itself.
             context_kws = ("to help", "so that", "audience", "stakeholder",
@@ -383,28 +383,28 @@ def improve_prompt(
             else:
                 lines.append(_PLACEHOLDERS.get(section, "[Not specified in original — add before using]"))
 
-        elif section == "**Source Documents**:":
+        elif section == "Source Documents:":
             lines.append(_PLACEHOLDERS.get(section, "[Not specified in original — add before using]"))
 
-        elif section == "**Inference Policy**:":
+        elif section == "Inference Policy:":
             lines.append(_PLACEHOLDERS.get(section, "[Not specified in original — add before using]"))
 
-        elif section == "**Sprint / Project Context**:":
+        elif section == "Sprint / Project Context:":
             lines.append(_PLACEHOLDERS.get(section, "[Not specified in original — add before using]"))
 
-        elif section == "**Data References**:":
+        elif section == "Data References:":
             lines.append(_PLACEHOLDERS.get(section, "[Not specified in original — add before using]"))
 
-        elif section == "**Tone Directive**:":
+        elif section == "Tone Directive:":
             lines.append(_PLACEHOLDERS.get(section, "[Not specified in original — add before using]"))
 
-        elif section == "**Customer Context**:":
+        elif section == "Customer Context:":
             lines.append(_PLACEHOLDERS.get(section, "[Not specified in original — add before using]"))
 
-        elif section == "**Policy / SLA Constraints**:":
+        elif section == "Policy / SLA Constraints:":
             lines.append(_PLACEHOLDERS.get(section, "[Not specified in original — add before using]"))
 
-        elif section == "**Next Action**:":
+        elif section == "Next Action:":
             lines.append(_PLACEHOLDERS.get(section, "[Not specified in original — add before using]"))
 
         else:
